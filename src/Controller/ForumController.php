@@ -1,0 +1,240 @@
+<?php
+
+namespace App\Controller;
+
+use App\Entity\ForumPosts;
+use App\Entity\Comments;
+use App\Entity\Interactions;
+use App\Entity\Users;
+use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Routing\Annotation\Route;
+
+#[Route('/forum')]
+class ForumController extends AbstractController
+{
+    #[Route('/', name: 'app_forum_index')]
+    public function index(EntityManagerInterface $em, Request $request): Response
+    {
+        $userId = $request->getSession()->get('user_id');
+        $isLoggedIn = !empty($userId);
+
+        $posts = $em->getRepository(ForumPosts::class)->findBy([], ['createdAt' => 'DESC']);
+        $postsData = [];
+
+        foreach ($posts as $post) {
+            $postId = $post->getId();
+            
+            // Count comments
+            $commentCount = $em->getRepository(Comments::class)->count(['postId' => $postId]);
+            
+            // Count likes (type LIKE or LOVE etc. let's just count all interactions or type = 'like')
+            // Using generic count matching 'type' => 'like' (ignoring case usually or just enforce lower/upper)
+            $likeCount = $em->getRepository(Interactions::class)->count(['postId' => $postId]);
+
+            // Optional: determine if currentUser liked it
+            $userLiked = false;
+            if ($isLoggedIn) {
+                $interaction = $em->getRepository(Interactions::class)->findOneBy(['postId' => $postId, 'userId' => $userId]);
+                if ($interaction) {
+                    $userLiked = true;
+                }
+            }
+
+            $postsData[] = [
+                'post' => $post,
+                'commentCount' => $commentCount,
+                'likeCount' => $likeCount,
+                'userLiked' => $userLiked
+            ];
+        }
+
+        return $this->render('FrontOffice/forum/index.html.twig', [
+            'postsData' => $postsData,
+            'isLoggedIn' => $isLoggedIn
+        ]);
+    }
+
+    #[Route('/post/new', name: 'app_forum_create', methods: ['POST'])]
+    public function create(Request $request, EntityManagerInterface $em): Response
+    {
+        $userId = $request->getSession()->get('user_id');
+        if (!$userId) {
+            return $this->redirectToRoute('app_login');
+        }
+
+        $user = $em->getRepository(Users::class)->find($userId);
+        $title = $request->request->get('title');
+        $content = $request->request->get('content');
+        $imageFile = $request->files->get('image');
+
+        $post = new ForumPosts();
+        $post->setTitle($title);
+        $post->setContent($content);
+        $post->setCreatedAt(new \DateTime());
+        $post->setUpdatedAt(new \DateTime());
+        $post->setUserId($user->getId());
+        $post->setAuthorName($user->getFullName());
+        
+        $imageName = 'default_post.png';
+        if ($imageFile) {
+            $originalFilename = pathinfo($imageFile->getClientOriginalName(), PATHINFO_FILENAME);
+            $newFilename = $originalFilename . '-' . uniqid() . '.' . $imageFile->guessExtension();
+
+            try {
+                $imageFile->move(
+                    $this->getParameter('kernel.project_dir') . '/public/uploads/forum',
+                    $newFilename
+                );
+                $imageName = $newFilename;
+            } catch (\Exception $e) {
+                // Ignore upload failure, use default
+            }
+        }
+
+        $post->setImageUrl($imageName);
+
+        $em->persist($post);
+        $em->flush();
+
+        return $this->redirectToRoute('app_forum_index');
+    }
+
+    #[Route('/post/{id}', name: 'app_forum_show', methods: ['GET'])]
+    public function show(int $id, EntityManagerInterface $em, Request $request): Response
+    {
+        $userId = $request->getSession()->get('user_id');
+        $isLoggedIn = !empty($userId);
+
+        $post = $em->getRepository(ForumPosts::class)->find($id);
+        if (!$post) {
+            return $this->redirectToRoute('app_forum_index');
+        }
+
+        $comments = $em->getRepository(Comments::class)->findBy(['postId' => $id], ['createdAt' => 'ASC']);
+        $likeCount = $em->getRepository(Interactions::class)->count(['postId' => $id]);
+        
+        $userLiked = false;
+        if ($isLoggedIn) {
+            $interaction = $em->getRepository(Interactions::class)->findOneBy(['postId' => $id, 'userId' => $userId]);
+            if ($interaction) {
+                $userLiked = true;
+            }
+        }
+
+        return $this->render('FrontOffice/forum/show.html.twig', [
+            'post' => $post,
+            'comments' => $comments,
+            'likeCount' => $likeCount,
+            'userLiked' => $userLiked,
+            'isLoggedIn' => $isLoggedIn,
+            'currentUserId' => $userId
+        ]);
+    }
+
+    #[Route('/post/{id}/comment', name: 'app_forum_comment', methods: ['POST'])]
+    public function comment(int $id, Request $request, EntityManagerInterface $em): Response
+    {
+        $userId = $request->getSession()->get('user_id');
+        if (!$userId) {
+            return $this->redirectToRoute('app_login');
+        }
+
+        $user = $em->getRepository(Users::class)->find($userId);
+        $post = $em->getRepository(ForumPosts::class)->find($id);
+
+        if ($post && $user) {
+            $content = $request->request->get('content');
+            if (!empty(trim($content))) {
+                $comment = new Comments();
+                $comment->setContent($content);
+                $comment->setCreatedAt(new \DateTime());
+                $comment->setPostId($post->getId());
+                $comment->setUserId($user->getId());
+                $comment->setAuthorName($user->getFullName());
+
+                $em->persist($comment);
+                $em->flush();
+            }
+        }
+
+        return $this->redirectToRoute('app_forum_show', ['id' => $id]);
+    }
+
+    #[Route('/post/{id}/react', name: 'app_forum_react', methods: ['POST'])]
+    public function react(int $id, Request $request, EntityManagerInterface $em): Response
+    {
+        $userId = $request->getSession()->get('user_id');
+        if (!$userId) {
+            return $this->json(['error' => 'Not authenticated'], 401);
+        }
+
+        $post = $em->getRepository(ForumPosts::class)->find($id);
+        if (!$post) {
+            return $this->json(['error' => 'Post not found'], 404);
+        }
+        
+        $type = $request->query->get('type', 'LIKE');
+        $validTypes = ['LIKE', 'LOVE', 'HAHA', 'WOW', 'SAD', 'ANGRY'];
+        if (!in_array($type, $validTypes)) {
+            $type = 'LIKE';
+        }
+
+        $existingInteraction = $em->getRepository(Interactions::class)->findOneBy([
+            'postId' => $id,
+            'userId' => $userId
+        ]);
+
+        if ($existingInteraction) {
+            if ($existingInteraction->getType() === $type) {
+                // Remove if clicking same reaction
+                $em->remove($existingInteraction);
+                $em->flush();
+                $reacted = false;
+                $currentType = null;
+            } else {
+                // Change reaction type
+                $existingInteraction->setType($type);
+                $em->flush();
+                $reacted = true;
+                $currentType = $type;
+            }
+        } else {
+            // New reaction
+            $interaction = new Interactions();
+            $interaction->setPostId($id);
+            $interaction->setUserId($userId);
+            $interaction->setType($type);
+            $interaction->setCreatedAt(new \DateTime());
+
+            $em->persist($interaction);
+            $em->flush();
+            $reacted = true;
+            $currentType = $type;
+        }
+
+        $totalCount = $em->getRepository(Interactions::class)->count(['postId' => $id]);
+        return $this->json(['reacted' => $reacted, 'type' => $currentType, 'count' => $totalCount]);
+    }
+
+    #[Route('/post/{id}/delete', name: 'app_forum_delete', methods: ['POST'])]
+    public function delete(int $id, Request $request, EntityManagerInterface $em): Response
+    {
+        $userId = $request->getSession()->get('user_id');
+        if (!$userId) {
+            return $this->redirectToRoute('app_login');
+        }
+
+        $post = $em->getRepository(ForumPosts::class)->find($id);
+        if ($post && $post->getUserId() === $userId) {
+            // Optional: delete related comments and interactions or rely on DB CASCADE
+            // Since constraints have CASCADE, deleting the post deletes comments/interactions seamlessly.
+            $em->remove($post);
+            $em->flush();
+        }
+
+        return $this->redirectToRoute('app_forum_index');
+    }
+}

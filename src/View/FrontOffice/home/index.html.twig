@@ -19,7 +19,7 @@
             {% if isLoggedIn %}
                 <a href="#startup" class="nav-link">Startup</a>
                 <a href="#mentorship" class="nav-link">Mentorship</a>
-                <a href="#forum" class="nav-link">Forum</a>
+                <a href="{{ path('app_forum_index') }}" class="nav-link">Forum</a>
                 <a href="#evaluation" class="nav-link">Evaluation</a>
             {% else %}
                 <a href="{{ path('app_login') }}" class="nav-link">Startup</a>
