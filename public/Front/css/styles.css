@@ -1,0 +1,468 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap');
+
+:root {
+    --primary: #7a5cff;
+    --primary-hover: #6f56ff;
+    --primary-light: #8d79ff;
+    --primary-lighter: #cdb5ff;
+    --bg-light: #ffffff;
+    --bg-gradient: linear-gradient(to bottom, #ffffff 0%, #ffffff 35%, #f3ecff 60%, #cdb5ff 100%);
+    --text-main: #333333;
+    --shadow-main: 0 12px 24px rgba(120, 80, 255, 0.25);
+    --shadow-hover: 0 16px 32px rgba(120, 80, 255, 0.35);
+}
+
+body.dark-mode {
+    --primary: #9d85ff;
+    --primary-hover: #b5a4ff;
+    --primary-light: #c8bdff;
+    --primary-lighter: #e2dcff;
+    --bg-light: #12121e;
+    --bg-gradient: linear-gradient(to bottom, #12121e 0%, #1a1a2e 35%, #2a2040 60%, #3d2a66 100%);
+    --text-main: #f0f0f0;
+    --shadow-main: 0 12px 24px rgba(0, 0, 0, 0.5);
+    --shadow-hover: 0 16px 32px rgba(0, 0, 0, 0.7);
+}
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Poppins', sans-serif;
+    color: var(--text-main);
+    background: var(--bg-gradient);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow-x: hidden;
+}
+
+/* NAVBAR */
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 22px 5%;
+    position: relative;
+    z-index: 10;
+}
+
+.brand {
+    display: flex;
+    flex-direction: column;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.brand-title {
+    font-size: 24px;
+    font-weight: 800;
+    color: var(--primary);
+    line-height: 1;
+    margin: 0;
+}
+
+.brand-sub {
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--primary-light);
+    line-height: 1;
+    margin: 0;
+}
+
+.nav-links {
+    display: flex;
+    gap: 40px;
+}
+
+.nav-link {
+    color: var(--primary-light);
+    font-size: 16px;
+    font-weight: 600;
+    text-decoration: none;
+    padding-bottom: 6px;
+    transition: color 0.3s ease, border-bottom 0.3s ease;
+    border-bottom: 3px solid transparent;
+}
+
+.nav-link:hover, .nav-link.selected {
+    color: var(--primary-hover);
+    border-bottom: 3px solid var(--primary-hover);
+}
+
+.auth-buttons {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.btn-pill, .btn-cta {
+    background: linear-gradient(to right, #7a5cff, #b58bff);
+    color: white;
+    font-weight: 700;
+    padding: 10px 24px;
+    border-radius: 999px;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    box-shadow: var(--shadow-main);
+    transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+    font-family: inherit;
+    font-size: 14px;
+}
+
+.btn-pill:hover, .btn-cta:hover, .signBtn:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-hover);
+}
+
+.btn-cta {
+    font-size: 18px;
+    padding: 14px 32px;
+    background: linear-gradient(to right, #7a5cff, #d2a7ff);
+}
+
+.btn-cta-outline {
+    background: transparent;
+    color: var(--primary-light);
+    font-weight: 900;
+    padding: 12px 26px;
+    border-radius: 999px;
+    text-decoration: none;
+    border: 2px solid transparent;
+    transition: color 0.3s ease;
+    font-size: 18px;
+}
+
+.btn-cta-outline:hover {
+    color: var(--primary-hover);
+}
+
+.signup-link {
+    color: var(--primary-light);
+    font-size: 16px;
+    font-weight: 700;
+    text-decoration: none;
+    transition: color 0.3s;
+}
+
+.signup-link:hover {
+    color: var(--primary-hover);
+}
+
+/* HERO SECTION */
+.hero-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 60px 8%;
+    flex-grow: 1;
+}
+
+.hero-left {
+    max-width: 600px;
+    animation: slideUp 0.8s ease backwards;
+}
+
+.hero-title {
+    font-size: 74px;
+    font-weight: 900;
+    background: linear-gradient(to right, #6f56ff, #c19bff);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin: 0 0 20px 0;
+    line-height: 1.1;
+}
+
+.hero-subtitle {
+    font-size: 22px;
+    font-weight: 500;
+    color: var(--primary-light);
+    margin-bottom: 40px;
+    line-height: 1.5;
+}
+
+.cta-row {
+    display: flex;
+    gap: 18px;
+    align-items: center;
+}
+
+.hero-art-img {
+    height: 480px;
+    object-fit: contain;
+    animation: float 6s ease-in-out infinite;
+    filter: drop-shadow(0 20px 30px rgba(120,80,255,0.2));
+}
+
+/* LOGIN / SIGNUP SPLIT LAYOUT */
+.split-layout {
+    display: flex;
+    min-height: 100vh;
+    background: transparent; /* Let body gradient show */
+}
+
+.split-left {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    padding: 40px;
+}
+
+.split-right {
+    flex: 1.2;
+    position: relative;
+    overflow: hidden;
+    background: transparent;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.split-right img {
+    height: 90%;
+    object-fit: cover;
+    mix-blend-mode: multiply;
+}
+
+.right-overlay {
+    position: absolute;
+    bottom: 10%;
+    left: 10%;
+    text-align: left;
+    max-width: 80%;
+    background: rgba(255, 255, 255, 0.4);
+    backdrop-filter: blur(8px);
+    padding: 30px;
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.6);
+}
+
+.rightTitle {
+    font-size: 32px;
+    font-weight: 800;
+    color: var(--primary-hover);
+    margin: 0 0 10px 0;
+}
+
+.rightSub {
+    font-size: 16px;
+    color: #444;
+    line-height: 1.6;
+    margin: 0;
+}
+
+/* CARDS AND FORMS (Login / Signup) */
+.auth-card {
+    background: rgba(255, 255, 255, 0.4);
+    backdrop-filter: blur(25px);
+    -webkit-backdrop-filter: blur(25px);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    padding: 50px;
+    border-radius: 24px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.05);
+    width: 100%;
+    max-width: 440px;
+    position: relative;
+    z-index: 2;
+}
+
+.welcome-title {
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--primary-hover);
+    margin: 0 0 30px 0;
+    text-align: center;
+}
+
+.field-label {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--primary-light);
+    margin-bottom: 8px;
+}
+
+.pillField {
+    width: 100%;
+    padding: 14px 20px;
+    border-radius: 99px;
+    border: 1px solid #e2d9ff;
+    background: #fcfaff;
+    font-family: inherit;
+    font-size: 14px;
+    box-sizing: border-box;
+    margin-bottom: 20px;
+    transition: all 0.3s;
+}
+
+.pillField:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(122, 92, 255, 0.15);
+}
+
+.password-wrap {
+    position: relative;
+    margin-bottom: 20px;
+}
+
+.password-wrap input {
+    margin-bottom: 0;
+}
+
+.eyeBtn {
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--primary-light);
+    font-size: 16px;
+}
+
+.signBtn {
+    width: 100%;
+    background: var(--primary-hover);
+    color: white;
+    padding: 15px;
+    font-size: 16px;
+    font-weight: 700;
+    border: none;
+    border-radius: 99px;
+    cursor: pointer;
+    box-shadow: var(--shadow-main);
+    transition: all 0.3s;
+    margin-top: 10px;
+}
+
+.socialBtn {
+    width: 100%;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 99px;
+    padding: 12px;
+    margin-top: 15px;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: all 0.3s;
+}
+
+.socialBtn:hover {
+    background: #f7f7f7;
+}
+
+.socialBtn img {
+    height: 24px;
+}
+
+.auth-bottom {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 25px;
+    gap: 8px;
+    font-size: 14px;
+    color: #666;
+}
+
+.link-alt {
+    color: var(--primary-hover);
+    font-weight: 700;
+    text-decoration: none;
+}
+
+/* Animations */
+@keyframes slideUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes float {
+    0% { transform: translateY(0px) rotate(0deg); }
+    50% { transform: translateY(-20px) rotate(1deg); }
+    100% { transform: translateY(0px) rotate(0deg); }
+}
+
+/* FUTURISTIC DESIGN ADDITIONS */
+.futuristic-nav {
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
+}
+
+.glow-text {
+    text-shadow: 0 0 10px rgba(122, 92, 255, 0.4), 0 0 20px rgba(122, 92, 255, 0.2);
+}
+
+.glow-btn {
+    position: relative;
+    overflow: hidden;
+}
+
+.glow-btn::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.3) 50%, rgba(255,255,255,0) 100%);
+    transform: rotate(45deg);
+    animation: btnGlow 3s infinite linear;
+}
+
+@keyframes btnGlow {
+    0% { transform: translateX(-100%) rotate(45deg); }
+    100% { transform: translateX(100%) rotate(45deg); }
+}
+
+.user-badge {
+    background: linear-gradient(45deg, #6f56ff, #d2a7ff);
+    color: white;
+    font-weight: 700;
+    padding: 8px 16px;
+    border-radius: 999px;
+    font-size: 14px;
+    box-shadow: 0 4px 15px rgba(122, 92, 255, 0.4);
+}
+
+.futuristic-footer {
+    text-align: center;
+    padding: 20px 0;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border-top: 1px solid rgba(255, 255, 255, 0.3);
+    font-size: 14px;
+    color: var(--primary-light);
+    margin-top: auto;
+}
+
+/* Dark Mode Component Overrides */
+body.dark-mode .futuristic-nav, body.dark-mode .futuristic-footer {
+    background: rgba(20, 20, 35, 0.5);
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+body.dark-mode .auth-card {
+    background: rgba(30, 30, 45, 0.85);
+    color: var(--text-main);
+}
+
+body.dark-mode .pillField {
+    background: #2a2a3f;
+    border-color: #3f3f5a;
+    color: white;
+}
+
+body.dark-mode .welcome-title, body.dark-mode .rightTitle {
+    color: var(--primary-lighter);
+}

@@ -1,0 +1,84 @@
+{% extends 'FrontOffice/base.html.twig' %}
+
+{% block title %}My Profile - StartupFlow Tunisia{% endblock %}
+
+{% block body %}
+    <!-- Top Navbar Replica for Profile (Or we could include a generic nav partial later) -->
+    <nav class="navbar futuristic-nav">
+        <!-- Brand -->
+        <a href="{{ path('app_home') }}" class="brand">
+            <h1 class="brand-title glow-text">StartupFlow</h1>
+            <p class="brand-sub">Tunisia</p>
+        </a>
+
+        <!-- Menu -->
+        <div class="nav-links">
+            <a href="{{ path('app_home') }}" class="nav-link">Home</a>
+            <a href="#startup" class="nav-link">Startup</a>
+            <a href="#mentorship" class="nav-link">Mentorship</a>
+            <a href="{{ path('app_forum_index') }}" class="nav-link">Forum</a>
+            <a href="#evaluation" class="nav-link">Evaluation</a>
+        </div>
+
+        <!-- Auth buttons -->
+        <div class="auth-buttons">
+            <button id="themeToggleBtn" class="btn-pill" style="padding: 8px 15px; background: transparent; border: 2px solid var(--primary-light); color: var(--primary-light);">🌓</button>
+            <a href="{{ path('app_profile') }}" class="btn-pill glow-btn" style="background: linear-gradient(to right, #d2a7ff, #7a5cff);">{{ user.fullName ?: 'Profile' }}</a>
+            <a href="{{ path('app_logout') }}" class="signup-link">Sign out</a>
+        </div>
+    </nav>
+
+    <main class="hero-container" style="justify-content: center; align-items: flex-start; padding-top: 60px;">
+        <div class="auth-card" style="max-width: 500px; width: 100%; border-radius: 20px; background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(15px); box-shadow: 0 10px 30px rgba(122, 92, 255, 0.2);">
+            <h2 class="welcome-title">My Profile</h2>
+            
+            {% if message %}
+                <div style="background: #e2f5ec; color: #1f7d54; padding: 12px; border-radius: 8px; margin-bottom: 20px; font-weight: 500; font-size: 14px; text-align: center;">
+                    {{ message }}
+                </div>
+            {% endif %}
+
+            <form action="{{ path('app_profile') }}" method="POST">
+                <label class="field-label">Full Name</label>
+                <input type="text" name="name" class="pillField" value="{{ user.fullName }}" required>
+                
+                <label class="field-label">Email Address</label>
+                <input type="email" name="email" class="pillField" value="{{ user.email }}" required>
+                
+                <label class="field-label">Role (Non-editable)</label>
+                <input type="text" class="pillField" value="{{ user.role }}" disabled style="background:#f0f0f0; border-color:#e0e0e0; color:#888;">
+                
+                <label class="field-label">New Password (Leave blank to keep current)</label>
+                <input type="password" name="password" class="pillField" placeholder="Enter new password">
+
+                <button type="submit" class="signBtn glow-btn">Save Changes</button>
+            </form>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer futuristic-footer">
+        <p>&copy; {{ 'now'|date('Y') }} StartupFlow Tunisia. All rights reserved.</p>
+    </footer>
+{% endblock %}
+
+{% block javascripts %}
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        // Theme Toggle Logic
+        const toggleBtn = document.getElementById('themeToggleBtn');
+        if (toggleBtn) {
+            toggleBtn.addEventListener('click', () => {
+                const isDark = document.body.classList.contains('dark-mode');
+                if (isDark) {
+                    document.body.classList.remove('dark-mode');
+                    localStorage.setItem('theme', 'light');
+                } else {
+                    document.body.classList.add('dark-mode');
+                    localStorage.setItem('theme', 'dark');
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

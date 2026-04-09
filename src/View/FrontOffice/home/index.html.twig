@@ -1,0 +1,187 @@
+{% extends 'FrontOffice/base.html.twig' %}
+
+{% block title %}StartupFlow Tunisia - Home{% endblock %}
+
+{% set isLoggedIn = app.request.session.get('user_id') is not empty %}
+
+{% block body %}
+    <!-- Top Navbar -->
+    <nav class="navbar futuristic-nav">
+        <!-- Brand -->
+        <a href="{{ path('app_home') }}" class="brand">
+            <h1 class="brand-title glow-text">StartupFlow</h1>
+            <p class="brand-sub">Tunisia</p>
+        </a>
+
+        <!-- Menu -->
+        <div class="nav-links">
+            <a href="{{ path('app_home') }}" class="nav-link selected">Home</a>
+            {% if isLoggedIn %}
+                <a href="#startup" class="nav-link">Startup</a>
+                <a href="#mentorship" class="nav-link">Mentorship</a>
+                <a href="{{ path('app_forum_index') }}" class="nav-link">Forum</a>
+                <a href="#evaluation" class="nav-link">Evaluation</a>
+            {% else %}
+                <a href="{{ path('app_login') }}" class="nav-link">Startup</a>
+                <a href="{{ path('app_login') }}" class="nav-link">Mentorship</a>
+                <a href="{{ path('app_login') }}" class="nav-link">Forum</a>
+                <a href="{{ path('app_login') }}" class="nav-link">Evaluation</a>
+            {% endif %}
+        </div>
+
+        <!-- Auth buttons & Theme Toggle -->
+        <div class="auth-buttons">
+            <button id="themeToggleBtn" class="btn-pill" style="padding: 8px 15px; background: transparent; border: 2px solid var(--primary-light); color: var(--primary-light);">🌓</button>
+            {% if isLoggedIn %}
+                <a href="{{ path('app_profile') }}" class="btn-pill glow-btn" style="background: linear-gradient(to right, #d2a7ff, #7a5cff);">My Profile</a>
+                <a href="{{ path('app_logout') }}" class="signup-link">Sign out</a>
+            {% else %}
+                <a href="{{ path('app_login') }}" class="btn-pill glow-btn">log in</a>
+                <a href="{{ path('app_register') }}" class="signup-link">sign up</a>
+            {% endif %}
+        </div>
+    </nav>
+
+    <!-- Hero Content -->
+    <main class="hero-container">
+        <!-- Left text -->
+        <div class="hero-left">
+            <h1 class="hero-title">StartupFlow Tunisia</h1>
+            <p class="hero-subtitle">Startup Incubation &amp; Innovation Management Platform</p>
+
+            <div class="cta-row">
+                <a href="#" class="btn-cta glow-btn">GET STARTED</a>
+                <a href="#" class="btn-cta-outline">GET INCORPORATED</a>
+            </div>
+        </div>
+
+        <!-- Right image (3D Cube) -->
+        <div class="hero-right" id="threed-cube-container" style="width: 100%; height: 480px; display: flex; justify-content: center; align-items: center;">
+            <!-- Three.js Canvas -->
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer futuristic-footer">
+        <p>&copy; {{ 'now'|date('Y') }} StartupFlow Tunisia. All rights reserved.</p>
+    </footer>
+{% endblock %}
+
+{% block javascripts %}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            // Theme Toggle Logic
+            const toggleBtn = document.getElementById('themeToggleBtn');
+            if (toggleBtn) {
+                toggleBtn.addEventListener('click', () => {
+                    const isDark = document.body.classList.contains('dark-mode');
+                    if (isDark) {
+                        document.body.classList.remove('dark-mode');
+                        localStorage.setItem('theme', 'light');
+                    } else {
+                        document.body.classList.add('dark-mode');
+                        localStorage.setItem('theme', 'dark');
+                    }
+                });
+            }
+
+            const container = document.getElementById('threed-cube-container');
+            
+            if (!container) return;
+
+            // 3D Scene setup
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
+            const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+            
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            container.appendChild(renderer.domElement);
+
+            // Futuristic Cube (Outer wireframe)
+            const geometry = new THREE.BoxGeometry(2.5, 2.5, 2.5);
+            const material = new THREE.MeshStandardMaterial({  
+                color: 0x7a5cff,
+                wireframe: true,
+                emissive: 0x6f56ff,
+                emissiveIntensity: 0.8,
+                transparent: true,
+                opacity: 0.9
+            });
+            const cube = new THREE.Mesh(geometry, material);
+            scene.add(cube);
+
+            // Inner solid core
+            const coreGeometry = new THREE.BoxGeometry(1.8, 1.8, 1.8);
+            const coreMaterial = new THREE.MeshPhongMaterial({
+                color: 0xcdb5ff,
+                shininess: 150,
+                transparent: true,
+                opacity: 0.8
+            });
+            const core = new THREE.Mesh(coreGeometry, coreMaterial);
+            scene.add(core);
+
+            // Particles
+            const particleGeo = new THREE.BufferGeometry();
+            const particleCount = 200;
+            const posArray = new Float32Array(particleCount * 3);
+            for(let i=0; i<particleCount*3; i++) {
+                posArray[i] = (Math.random() - 0.5) * 10;
+            }
+            particleGeo.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+            const particleMat = new THREE.PointsMaterial({
+                size: 0.05,
+                color: 0xcdb5ff,
+                transparent: true,
+                opacity: 0.6
+            });
+            const particles = new THREE.Points(particleGeo, particleMat);
+            scene.add(particles);
+
+            // Lighting
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            scene.add(ambientLight);
+
+            const pointLight = new THREE.PointLight(0xffffff, 2);
+            pointLight.position.set(5, 5, 5);
+            scene.add(pointLight);
+
+            const pointLight2 = new THREE.PointLight(0x7a5cff, 2);
+            pointLight2.position.set(-5, -5, -5);
+            scene.add(pointLight2);
+
+            camera.position.z = 5;
+
+            // Animation Loop
+            function animate() {
+                requestAnimationFrame(animate);
+                
+                // Rotate cube and core
+                cube.rotation.x += 0.005;
+                cube.rotation.y += 0.01;
+                
+                core.rotation.x -= 0.008;
+                core.rotation.y -= 0.008;
+
+                // Rotate particles slowly
+                particles.rotation.y += 0.002;
+                particles.rotation.x += 0.001;
+
+                renderer.render(scene, camera);
+            }
+
+            animate();
+
+            // Responsive resize
+            window.addEventListener('resize', () => {
+                if (container) {
+                    camera.aspect = container.clientWidth / container.clientHeight;
+                    camera.updateProjectionMatrix();
+                    renderer.setSize(container.clientWidth, container.clientHeight);
+                }
+            });
+        });
+    </script>
+{% endblock %}

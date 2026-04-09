@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <title>{% block title %}StartupFlow Tunisia{% endblock %}</title>
+        <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 128 128%22><text y=%221.2em%22 font-size=%2296%22>🚀</text></svg>">
+        {% block stylesheets %}
+            <link rel="stylesheet" href="{{ asset('Front/css/styles.css') }}?v=2">
+            <style>
+                .rec-tab { cursor: pointer; padding: 10px; text-align: center; font-weight: bold; width: 50%; border-bottom: 2px solid transparent; color: var(--text, #fff); opacity: 0.6; }
+                .rec-tab.active { border-bottom-color: var(--primary, #6f56ff); opacity: 1; }
+                .rec-response { background: rgba(255,255,255,0.05); padding: 10px; border-radius: 6px; margin-top: 10px; border-left: 3px solid var(--primary); }
+                .rec-status { font-size: 0.8em; padding: 3px 8px; border-radius: 10px; background: rgba(111,86,255,0.2); }
+            </style>
+        {% endblock %}
+
+        {% block javascripts %}
+        {% endblock %}
+        
+    </head>
+    <body>
+        <script>
+            // Set theme immediately to avoid flash
+            if (localStorage.getItem('theme') === 'dark') {
+                document.body.classList.add('dark-mode');
+            }
+        </script>
+        {% block body %}{% endblock %}
+
+        {% if app.request.session.get('user_id') %}
+            <!-- Reclamation Floating Button inside semantic footer layer visually -->
+            <button id="reclamationBtn" style="position: fixed; bottom: 20px; right: 20px; z-index: 1000; padding: 12px 20px; background: linear-gradient(135deg, var(--primary, #6f56ff), #b58bff); color: white; border: none; border-radius: 50px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 15px rgba(111, 86, 255, 0.4); font-family: 'Inter', sans-serif; transition: transform 0.2s;">
+                ⚠️ Report Issue
+            </button>
+
+            <!-- Reclamation Modal -->
+            <div id="reclamationModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1001; align-items: center; justify-content: center; backdrop-filter: blur(5px);">
+                <div class="auth-card" style="width: 450px; max-width: 95%; max-height: 90vh; overflow-y: auto; padding: 25px; box-sizing: border-box;">
+                    
+                    <div style="display: flex; margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.2);">
+                        <div class="rec-tab active" id="tabSubmit">Submit New</div>
+                        <div class="rec-tab" id="tabMine">My Reclamations</div>
+                    </div>
+                    
+                    <!-- Submit Form -->
+                    <form id="reclamationForm">
+                        <div style="margin-bottom: 15px;">
+                            <label style="display: block; margin-bottom: 5px; font-weight: bold; color: var(--primary-light);">Title (Issue Type)</label>
+                            <select id="recTitle" required class="pillField" style="width: 100%; margin-bottom: 0;">
+                                <option value="">Select a category...</option>
+                                <option value="User problem">User problem</option>
+                                <option value="System Problem">System Problem</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+
+                        <div id="targetUserDiv" style="display: none; margin-bottom: 15px;">
+                            <label style="display: block; margin-bottom: 5px; font-weight: bold; color: var(--primary-light);">Target User</label>
+                            <select id="recTargetUser" class="pillField" style="width: 100%; margin-bottom: 0;">
+                                <option value="">Loading users...</option>
+                            </select>
+                        </div>
+
+                        <div style="margin-bottom: 15px;">
+                            <label style="display: block; margin-bottom: 5px; font-weight: bold; color: var(--primary-light);">Description</label>
+                            <textarea id="recDescription" required rows="4" class="pillField" style="width: 100%; margin-bottom: 0; resize: vertical;"></textarea>
+                        </div>
+
+                        <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                            <button type="button" class="closeReclamationBtn" style="padding: 10px 15px; background: transparent; border: 1px solid var(--primary-light); color: var(--text-main); border-radius: 999px; cursor: pointer; font-weight: bold;">Cancel</button>
+                            <button type="submit" class="signBtn" style="width: auto; margin-top: 0; padding: 10px 20px;">Submit</button>
+                        </div>
+                    </form>
+
+                    <!-- My Reclamations List -->
+                    <div id="myReclamationsList" style="display: none;">
+                        <div id="mineLoader" style="text-align: center; padding: 20px;">Loading...</div>
+                        <div id="mineContent"></div>
+                        <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+                            <button type="button" class="closeReclamationBtn" style="padding: 10px 15px; background: transparent; border: 1px solid var(--border, #3a3b58); color: var(--text, #ffffff); border-radius: 6px; cursor: pointer;">Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <script>
+                document.addEventListener('DOMContentLoaded', () => {
+                    const btn = document.getElementById('reclamationBtn');
+                    const modal = document.getElementById('reclamationModal');
+                    const closeBtns = document.querySelectorAll('.closeReclamationBtn');
+                    const titleSelect = document.getElementById('recTitle');
+                    const targetUserDiv = document.getElementById('targetUserDiv');
+                    const form = document.getElementById('reclamationForm');
+                    const userSelect = document.getElementById('recTargetUser');
+
+                    const tabSubmit = document.getElementById('tabSubmit');
+                    const tabMine = document.getElementById('tabMine');
+                    const myReclamationsList = document.getElementById('myReclamationsList');
+
+                    if (btn) {
+                        // Open modal
+                        btn.addEventListener('click', () => {
+                            modal.style.display = 'flex';
+                            if (tabMine.classList.contains('active')) {
+                                loadMyReclamations();
+                            }
+                        });
+                    }
+
+                    // Close modal
+                    closeBtns.forEach(c => {
+                        c.addEventListener('click', () => {
+                            modal.style.display = 'none';
+                            form.reset();
+                            targetUserDiv.style.display = 'none';
+                        });
+                    });
+
+                    // Tab switching
+                    tabSubmit.addEventListener('click', () => {
+                        tabSubmit.classList.add('active');
+                        tabMine.classList.remove('active');
+                        form.style.display = 'block';
+                        myReclamationsList.style.display = 'none';
+                    });
+
+                    tabMine.addEventListener('click', () => {
+                        tabMine.classList.add('active');
+                        tabSubmit.classList.remove('active');
+                        form.style.display = 'none';
+                        myReclamationsList.style.display = 'block';
+                        loadMyReclamations();
+                    });
+
+                    function loadMyReclamations() {
+                        const content = document.getElementById('mineContent');
+                        const loader = document.getElementById('mineLoader');
+                        loader.style.display = 'block';
+                        content.innerHTML = '';
+
+                        fetch('/reclamation/mine')
+                            .then(res => res.json())
+                            .then(data => {
+                                loader.style.display = 'none';
+                                if (data.status === 'success') {
+                                    if (data.reclamations.length === 0) {
+                                        content.innerHTML = '<p style="text-align:center; color:#999;">No reclamations submitted yet.</p>';
+                                        return;
+                                    }
+                                    let html = '';
+                                    data.reclamations.forEach(r => {
+                                        html += `
+                                        <div style="background: rgba(122, 92, 255, 0.05); padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 1px solid rgba(122, 92, 255, 0.2); color: var(--text-main);">
+                                            <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+                                                <strong style="color:var(--primary);">${r.title}</strong>
+                                                <span class="rec-status">${r.status}</span>
+                                            </div>
+                                            <p style="margin:0 0 10px 0; font-size:0.9em;">${r.description}</p>
+                                            <small style="color:var(--primary-light);">${r.date}</small>
+                                        `;
+                                        
+                                        if (r.responses && r.responses.length > 0) {
+                                            r.responses.forEach(res => {
+                                                html += `
+                                                <div class="rec-response" style="background: rgba(122, 92, 255, 0.1); border-left: 3px solid var(--primary); padding: 10px; border-radius: 6px; margin-top: 10px;">
+                                                    <strong style="color: var(--primary-hover);">Support (${res.admin_name}):</strong>
+                                                    <p style="margin: 5px 0 0 0; font-size: 0.9em; overflow-wrap: break-word;">${res.content}</p>
+                                                    <small style="color: var(--primary-light); font-size: 0.8em;">${res.date}</small>
+                                                </div>
+                                                `;
+                                            });
+                                        }
+
+                                        html += `</div>`;
+                                    });
+                                    content.innerHTML = html;
+                                }
+                            });
+                    }
+
+                    // Check title changes
+                    titleSelect.addEventListener('change', (e) => {
+                        if (e.target.value === 'User problem') {
+                            targetUserDiv.style.display = 'block';
+                            userSelect.required = true;
+                            
+                            // Fetch users
+                            userSelect.innerHTML = '<option value="">Loading users...</option>';
+                            fetch('/reclamation/users')
+                                .then(res => res.json())
+                                .then(data => {
+                                    userSelect.innerHTML = '<option value="">Select a user...</option>';
+                                    data.users.forEach(u => {
+                                        const opt = document.createElement('option');
+                                        opt.value = u.id;
+                                        opt.textContent = u.name;
+                                        userSelect.appendChild(opt);
+                                    });
+                                })
+                                .catch(err => {
+                                    userSelect.innerHTML = '<option value="">Error loading users</option>';
+                                });
+                        } else {
+                            targetUserDiv.style.display = 'none';
+                            userSelect.required = false;
+                            userSelect.value = '';
+                        }
+                    });
+
+                    // Handle Form submit
+                    form.addEventListener('submit', (e) => {
+                        e.preventDefault();
+                        
+                        const data = {
+                            title: titleSelect.value,
+                            description: document.getElementById('recDescription').value,
+                            targetId: userSelect.value || null
+                        };
+
+                        fetch('/reclamation/submit', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify(data)
+                        })
+                        .then(res => res.json())
+                        .then(result => {
+                            if (result.status === 'success') {
+                                // Switch to my reclamations immediately
+                                tabMine.click();
+                            } else if (result.status === 'unauthorized') {
+                                window.location.href = '/login';
+                            } else {
+                                alert('Error: ' + result.message);
+                            }
+                        })
+                        .catch(err => {
+                            alert('Something went wrong!');
+                        });
+                    });
+                });
+            </script>
+        {% endif %}
+    </body>
+</html>
