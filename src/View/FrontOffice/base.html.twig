@@ -580,10 +580,36 @@
                 cursor: pointer;
                 display: flex; align-items: center; justify-content: center;
             }
+            #global-chat-badge {
+                position: absolute;
+                top: -5px;
+                right: -5px;
+                background: #ff4757;
+                color: white;
+                font-size: 0.7rem;
+                font-weight: bold;
+                padding: 4px 8px;
+                border-radius: 10px;
+                display: none;
+                border: 2px solid var(--bg-light, #fff);
+                box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            }
+            body.dark-mode #global-chat-badge {
+                border-color: #1a1a2e;
+            }
+            .unread-pill {
+                background: var(--primary);
+                color: white;
+                font-size: 0.7rem;
+                padding: 2px 6px;
+                border-radius: 10px;
+                margin-left: auto;
+            }
         </style>
 
         <div id="global-chat-btn" onclick="toggleChatWindow()">
             💬
+            <div id="global-chat-badge">0</div>
         </div>
 
         <div id="global-chat-window">
@@ -639,13 +665,15 @@
                         box.innerHTML = '<div style="padding:20px;text-align:center;color:#888;">No contacts available.</div>';
                     } else {
                         data.forEach(c => {
+                            const unreadHtml = c.unread > 0 ? `<span class="unread-pill">${c.unread}</span>` : '';
                             box.innerHTML += `
                                 <div class="chat-contact" onclick="openConversation(${c.id}, '${c.name.replace(/'/g, "\\'")}')">
                                     <div class="chat-avatar">${c.name.charAt(0)}</div>
-                                    <div>
+                                    <div style="flex:1;">
                                         <div style="font-weight:bold;">${c.name}</div>
                                         <div style="font-size:0.8rem;opacity:0.7;">${c.role.charAt(0) + c.role.slice(1).toLowerCase()}</div>
                                     </div>
+                                    ${unreadHtml}
                                 </div>
                             `;
                         });
@@ -719,9 +747,34 @@
                 .then(res => {
                     if(res.status === 'success') {
                         loadHistory(); // refresh UI
+                        updateGlobalUnread(); // Update immediately locally
                     }
                 });
             }
+
+            // GLOBAL SYNC ENGINE (Polling)
+            function updateGlobalUnread() {
+                fetch('{{ path('app_chat_poll') }}', { cache: "no-store" })
+                .then(r => r.json())
+                .then(data => {
+                    const badge = document.getElementById('global-chat-badge');
+                    if (data.unreadCount > 0) {
+                        badge.innerText = data.unreadCount;
+                        badge.style.display = 'block';
+                    } else {
+                        badge.style.display = 'none';
+                    }
+                    
+                    // Also refresh contacts if list is open
+                    if (isChatOpen && !currentChatUserId) {
+                        loadContacts();
+                    }
+                });
+            }
+
+            // Start global engine immediately on load
+            updateGlobalUnread();
+            setInterval(updateGlobalUnread, 3000); // 3-second global sync
         </script>
         {% endif %}
     </body>

@@ -2,7 +2,7 @@
 
 namespace App\Controller;
 
-use App\Entity\Message;
+use App\Entity\MentorshipMessage;
 use App\Entity\Users;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -11,13 +11,12 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Annotation\Route;
 
 #[Route('/chat')]
-class ChatController extends AbstractController
+class MentorshipChatController extends AbstractController
 {
     #[Route('/contacts', name: 'app_chat_contacts', methods: ['GET'])]
     public function contacts(Request $request, EntityManagerInterface $em): JsonResponse
     {
         $userId = $request->getSession()->get('user_id');
-        $userRole = $request->getSession()->get('user_role');
 
         if (!$userId) {
             return $this->json(['error' => 'Unauthorized'], 401);
@@ -28,10 +27,18 @@ class ChatController extends AbstractController
         $contacts = [];
         foreach ($users as $u) {
             if ($u->getId() !== $userId) {
+                // Count unread messages from this specific user
+                $unreadCount = $em->getRepository(MentorshipMessage::class)->count([
+                    'senderId' => $u->getId(),
+                    'receiverId' => $userId,
+                    'isRead' => false
+                ]);
+
                 $contacts[] = [
                     'id' => $u->getId(),
                     'name' => $u->getFullName(),
-                    'role' => $u->getRole()
+                    'role' => $u->getRole(),
+                    'unread' => $unreadCount
                 ];
             }
         }
@@ -48,10 +55,9 @@ class ChatController extends AbstractController
             return $this->json(['error' => 'Unauthorized'], 401);
         }
 
-        // Fetch messages between userId and contactId
         $qb = $em->createQueryBuilder()
             ->select('m')
-            ->from(Message::class, 'm')
+            ->from(MentorshipMessage::class, 'm')
             ->where('(m.senderId = :userId AND m.receiverId = :contactId) OR (m.senderId = :contactId AND m.receiverId = :userId)')
             ->setParameter('userId', $userId)
             ->setParameter('contactId', $contactId)
@@ -68,13 +74,12 @@ class ChatController extends AbstractController
                 'createdAt' => $msg->getCreatedAt()->format('H:i')
             ];
 
-            // Mark as read if user is the receiver
             if ($msg->getReceiverId() === $userId && !$msg->isRead()) {
                 $msg->setRead(true);
             }
         }
         
-        $em->flush(); // Commit read statuses
+        $em->flush();
 
         return $this->json($history);
     }
@@ -96,11 +101,10 @@ class ChatController extends AbstractController
             return $this->json(['error' => 'Invalid data payload'], 400);
         }
 
-        $msg = new Message();
+        $msg = new MentorshipMessage();
         $msg->setSenderId($userId);
         $msg->setReceiverId($receiverId);
         $msg->setContent($content);
-        // IsRead and CreatedAt handled securely in constructor
 
         $em->persist($msg);
         $em->flush();
@@ -114,5 +118,21 @@ class ChatController extends AbstractController
                 'createdAt' => $msg->getCreatedAt()->format('H:i')
             ]
         ]);
+    }
+
+    #[Route('/poll', name: 'app_chat_poll', methods: ['GET'])]
+    public function poll(Request $request, EntityManagerInterface $em): JsonResponse
+    {
+        $userId = $request->getSession()->get('user_id');
+        if (!$userId) {
+            return $this->json(['unreadCount' => 0]);
+        }
+
+        $unreadCount = $em->getRepository(MentorshipMessage::class)->count([
+            'receiverId' => $userId,
+            'isRead' => false
+        ]);
+
+        return $this->json(['unreadCount' => $unreadCount]);
     }
 }
