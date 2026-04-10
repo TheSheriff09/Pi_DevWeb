@@ -1,0 +1,350 @@
+{% extends 'FrontOffice/base.html.twig' %}
+
+{% block title %}StartupFlow Tunisia - {{ post.title }}{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .post-container {
+            max-width: 900px;
+            margin: 100px auto 50px;
+            padding: 40px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            color: var(--text-main);
+            position: relative;
+            z-index: 2;
+        }
+
+        body.dark-mode .post-container {
+            background: rgba(30, 30, 45, 0.8);
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .post-header {
+            margin-bottom: 20px;
+        }
+
+        .post-title {
+            font-size: 2.5rem;
+            color: var(--primary-lighter);
+            margin-bottom: 10px;
+        }
+
+        .post-meta {
+            color: #b0a8d6;
+            font-size: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 15px;
+        }
+
+        .post-image {
+            width: 100%;
+            max-height: 400px;
+            object-fit: cover;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            box-shadow: var(--shadow-main);
+        }
+
+        .post-content {
+            font-size: 1.1rem;
+            line-height: 1.8;
+            color: #111; /* Light mode contrast */
+            margin-bottom: 40px;
+            white-space: pre-wrap;
+        }
+        body.dark-mode .post-content {
+            color: #e2dcff;
+        }
+
+        .post-actions {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 40px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding-top: 20px;
+            align-items: center;
+            position: relative;
+        }
+
+        /* REACTION SYSTEM */
+        .reaction-container {
+            position: relative;
+        }
+        .reactions-box {
+            position: absolute;
+            bottom: 45px;
+            left: 50%;
+            transform: translateX(-50%) scale(0);
+            background: white;
+            border-radius: 30px;
+            padding: 8px 12px;
+            display: flex;
+            gap: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            transition: transform 0.2s ease-out;
+            z-index: 10;
+        }
+        body.dark-mode .reactions-box {
+            background: #2a2a3c;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+        }
+        .reaction-container:hover .reactions-box {
+            transform: translateX(-50%) scale(1);
+        }
+        .reaction-emoji {
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .reaction-emoji:hover {
+            transform: scale(1.3) translateY(-5px);
+        }
+
+        .like-btn {
+            background: rgba(0, 0, 0, 0.05);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            color: #111;
+            padding: 8px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+        }
+        body.dark-mode .like-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
+            color: var(--text-main);
+        }
+
+        .like-btn:hover {
+            background: rgba(0, 0, 0, 0.1);
+        }
+        body.dark-mode .like-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .like-btn.liked {
+            background: rgba(255, 71, 87, 0.2);
+            border-color: #ff4757;
+            color: #ff4757;
+        }
+        body.dark-mode .like-btn.liked {
+            background: rgba(255, 71, 87, 0.2);
+            border-color: #ff4757;
+            color: #ff4757;
+        }
+
+        .delete-btn {
+            background: rgba(255, 71, 87, 0.1);
+            border: 1px solid #ff4757;
+            color: #ff4757;
+            padding: 8px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+
+        .delete-btn:hover {
+            background: rgba(255, 71, 87, 0.3);
+            color: white;
+        }
+
+        /* Comments Section */
+        .comments-section {
+            margin-top: 20px;
+        }
+
+        .comments-title {
+            font-size: 1.8rem;
+            color: var(--primary-lighter);
+            margin-bottom: 20px;
+        }
+
+        .comment {
+            background: rgba(0, 0, 0, 0.05);
+            padding: 15px 20px;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+        }
+        body.dark-mode .comment {
+            background: rgba(0, 0, 0, 0.2);
+            border-color: rgba(255, 255, 255, 0.05);
+        }
+
+        .comment-meta {
+            font-size: 0.85rem;
+            color: #666;
+            margin-bottom: 8px;
+        }
+        body.dark-mode .comment-meta {
+            color: #b0a8d6;
+        }
+
+        .comment-content {
+            font-size: 1rem;
+            color: #111;
+        }
+        body.dark-mode .comment-content {
+            color: #e2dcff;
+        }
+
+        .add-comment {
+            margin-top: 30px;
+            background: rgba(0, 0, 0, 0.02);
+            padding: 20px;
+            border-radius: 12px;
+        }
+        body.dark-mode .add-comment {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+    </style>
+{% endblock %}
+
+{% block body %}
+
+
+    <div class="post-container">
+        <div class="post-header">
+            <a href="{{ path('app_forum_index') }}" style="color: var(--primary-light); text-decoration: none; margin-bottom: 20px; display: inline-block;">&larr; Back to Forum</a>
+            <h1 class="post-title" style="color: #000;">{{ post.title }}</h1>
+            <div class="post-meta">
+                <span style="color: #666;">Posted by <strong style="color: var(--primary);">{{ post.authorName }}</strong></span>
+                <span style="color: #666;">{{ post.createdAt|date('F j, Y, g:i a') }}</span>
+            </div>
+        </div>
+
+        {% if post.imageUrl %}
+            <img src="{{ asset('uploads/forum/' ~ post.imageUrl) }}" onerror="this.src='{{ asset('Front/images/default_post.png') }}'" alt="Post Image" class="post-image">
+        {% endif %}
+
+        <div class="post-content">
+            {{ post.content }}
+        </div>
+
+        <div class="post-actions">
+            {% if isLoggedIn %}
+                <div class="reaction-container">
+                    <div class="reactions-box">
+                        <span class="reaction-emoji" onclick="toggleLike('LIKE', '👍')">👍</span>
+                        <span class="reaction-emoji" onclick="toggleLike('LOVE', '❤️')">❤️</span>
+                        <span class="reaction-emoji" onclick="toggleLike('HAHA', '😆')">😆</span>
+                        <span class="reaction-emoji" onclick="toggleLike('WOW', '😲')">😲</span>
+                        <span class="reaction-emoji" onclick="toggleLike('SAD', '😢')">😢</span>
+                        <span class="reaction-emoji" onclick="toggleLike('ANGRY', '😡')">😡</span>
+                    </div>
+                    <button id="likeButton" class="like-btn {{ userLiked ? 'liked' : '' }}" onclick="toggleLike('LIKE', '👍')">
+                        <span id="likeIcon">{{ userLiked ? '❤️' : '🤍' }}</span> <span id="likeText">React</span> (<span id="likeCount">{{ likeCount }}</span>)
+                    </button>
+                </div>
+            {% else %}
+                <a href="{{ path('app_login') }}" class="like-btn">🤍 React ({{ likeCount }})</a>
+            {% endif %}
+
+            <div style="color: #b0a8d6; margin-left: 10px;">💬 {{ comments|length }} Comments</div>
+            
+            <!-- Spacer -->
+            <div style="flex: 1;"></div>
+
+            {% if isLoggedIn and currentUserId == post.userId %}
+                <form action="{{ path('app_forum_delete', {'id': post.id}) }}" method="post" onsubmit="return confirm('Are you sure you want to delete this post?');">
+                    <button type="submit" class="delete-btn">Delete Post</button>
+                </form>
+            {% endif %}
+        </div>
+
+        <div class="comments-section">
+            <h2 class="comments-title" style="color: #000;">Comments</h2>
+            
+            {% for comment in comments %}
+                <div class="comment">
+                    <div class="comment-meta">
+                        <strong>{{ comment.authorName }}</strong> - {{ comment.createdAt|date('M d, Y H:i') }}
+                    </div>
+                    <div class="comment-content">
+                        {{ comment.content }}
+                    </div>
+                </div>
+            {% else %}
+                <p style="color: #888;">No comments yet. Be the first to share your thoughts!</p>
+            {% endfor %}
+
+            {% if isLoggedIn %}
+                <div class="add-comment">
+                    <h3 style="margin-bottom: 15px; color: var(--primary);">Add a Discussion</h3>
+                    <form action="{{ path('app_forum_comment', {'id': post.id}) }}" method="post">
+                        <textarea name="content" class="pillField" rows="3" style="border-radius: 12px; resize: vertical; margin-bottom: 15px; color: #000;" placeholder="Write your comment here..." required></textarea>
+                        <button type="submit" class="signBtn" style="padding: 10px 25px;">Post Comment</button>
+                    </form>
+                </div>
+            {% else %}
+                <div class="add-comment" style="text-align: center;">
+                    <p style="color: #888; margin-bottom: 15px;">You must be logged in to post a comment.</p>
+                    <a href="{{ path('app_login') }}" class="btn-pill" style="border: 1px solid var(--primary);">Log In</a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            // Dark mode overrides
+            const isDark = document.body.classList.contains('dark-mode');
+            if(isDark) {
+                document.querySelector('.post-title').style.color = "var(--primary-lighter)";
+                document.querySelector('.comments-title').style.color = "var(--primary-lighter)";
+            }
+        });
+
+        async function toggleLike(typeStr, emojiChar) {
+            const button = document.getElementById('likeButton');
+            const icon = document.getElementById('likeIcon');
+            const text = document.getElementById('likeText');
+            const countDisplay = document.getElementById('likeCount');
+            
+            try {
+                const response = await fetch(`{{ path('app_forum_react', {'id': post.id}) }}?type=${typeStr}`, {
+                    method: 'POST',
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.reacted) {
+                        button.classList.add('liked');
+                        icon.innerText = emojiChar;
+                        text.innerText = data.type.charAt(0) + data.type.slice(1).toLowerCase();
+                    } else {
+                        button.classList.remove('liked');
+                        icon.innerText = '🤍';
+                        text.innerText = 'React';
+                    }
+                    if(countDisplay) {
+                        countDisplay.innerText = data.count;
+                    }
+                } else if (response.status === 401) {
+                    window.location.href = "{{ path('app_login') }}";
+                }
+            } catch (error) {
+                console.error("Error toggling like:", error);
+            }
+        }
+    </script>
+{% endblock %}

@@ -1,0 +1,130 @@
+{% extends "FrontOffice/base.html.twig" %}
+
+{% block title %}My Startups - StartupFlow Tunisia{% endblock %}
+
+{% block body %}
+<div class="auth-container" style="min-height: 100vh; padding: 40px 20px;">
+    <div class="auth-card" style="max-width: 1200px; margin: 0 auto;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; border-bottom: 2px solid rgba(255,255,255,0.1); padding-bottom: 20px;">
+            <div>
+                <h1 style="color: var(--primary, #6f56ff); margin: 0; font-size: 2.5em;">My Startups</h1>
+                <p style="color: var(--text-secondary, #aaa); margin: 10px 0 0 0;">Manage your startup portfolio</p>
+            </div>
+            <a href="{{ path('app_entrepreneur_startup_new') }}" class="pill-btn" style="background: linear-gradient(135deg, var(--primary, #6f56ff), #b58bff); padding: 12px 25px; text-decoration: none; display: inline-flex; align-items: center; gap: 8px;">
+                <span style="font-size: 1.2em;">+</span> Add New Startup
+            </a>
+        </div>
+
+        {% if startups is empty %}
+            <div style="text-align: center; padding: 60px 20px; background: rgba(255,255,255,0.03); border-radius: 12px; border: 2px dashed rgba(255,255,255,0.1);">
+                <div style="font-size: 4em; margin-bottom: 20px; opacity: 0.5;">🚀</div>
+                <h3 style="color: var(--text, #fff); margin-bottom: 15px;">No startups yet</h3>
+                <p style="color: var(--text-secondary, #aaa); margin-bottom: 25px;">Start by adding your first startup to your portfolio</p>
+                <a href="{{ path('app_entrepreneur_startup_new') }}" class="pill-btn" style="background: linear-gradient(135deg, var(--primary, #6f56ff), #b58bff); padding: 12px 25px; text-decoration: none;">
+                    Create Your First Startup
+                </a>
+            </div>
+        {% else %}
+            <div style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
+                    <thead>
+                        <tr style="background: rgba(255,255,255,0.05);">
+                            <th style="padding: 15px; text-align: left; border-bottom: 2px solid var(--primary, #6f56ff); color: var(--primary-light, #9d88ff); font-weight: 600;">Name</th>
+                            <th style="padding: 15px; text-align: left; border-bottom: 2px solid var(--primary, #6f56ff); color: var(--primary-light, #9d88ff); font-weight: 600;">Sector</th>
+                            <th style="padding: 15px; text-align: left; border-bottom: 2px solid var(--primary, #6f56ff); color: var(--primary-light, #9d88ff); font-weight: 600;">Stage</th>
+                            <th style="padding: 15px; text-align: left; border-bottom: 2px solid var(--primary, #6f56ff); color: var(--primary-light, #9d88ff); font-weight: 600;">Status</th>
+                            <th style="padding: 15px; text-align: left; border-bottom: 2px solid var(--primary, #6f56ff); color: var(--primary-light, #9d88ff); font-weight: 600;">Funding</th>
+                            <th style="padding: 15px; text-align: left; border-bottom: 2px solid var(--primary, #6f56ff); color: var(--primary-light, #9d88ff); font-weight: 600;">KPI Score</th>
+                            <th style="padding: 15px; text-align: left; border-bottom: 2px solid var(--primary, #6f56ff); color: var(--primary-light, #9d88ff); font-weight: 600;">Created</th>
+                            <th style="padding: 15px; text-align: center; border-bottom: 2px solid var(--primary, #6f56ff); color: var(--primary-light, #9d88ff); font-weight: 600;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for startup in startups %}
+                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.05); transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.03)'" onmouseout="this.style.background='transparent'">
+                            <td style="padding: 15px;">
+                                <div style="display: flex; align-items: center; gap: 12px;">
+                                    {% if startup.imageURL %}
+                                        <img src="{{ startup.imageURL }}" alt="{{ startup.name }}" style="width: 40px; height: 40px; border-radius: 8px; object-fit: cover;">
+                                    {% else %}
+                                        <div style="width: 40px; height: 40px; border-radius: 8px; background: linear-gradient(135deg, var(--primary, #6f56ff), #b58bff); display: flex; align-items: center; justify-content: center; font-weight: bold; color: white;">
+                                            {{ startup.name|first|upper }}
+                                        </div>
+                                    {% endif %}
+                                    <div>
+                                        <div style="font-weight: 600;">
+                                            <a href="{{ path('app_entrepreneur_startup_show', {'id': startup.startupID}) }}" style="color: var(--text, #fff); text-decoration: none;">
+                                                {{ startup.name }}
+                                            </a>
+                                        </div>
+                                        {% if startup.description %}
+                                            <div style="font-size: 0.85em; color: var(--text-secondary, #aaa); margin-top: 2px;">{{ startup.description|slice(0, 80) }}{% if startup.description|length > 80 %}...{% endif %}</div>
+                                        {% endif %}
+                                        <div style="font-size: 0.75em; color: var(--primary-light, #9d88ff); margin-top: 4px; display: flex; gap: 8px; flex-wrap: wrap;">
+                                            {% if startup.incubatorProgram %}<span><strong style="color:#aaa">Incubator:</strong> {{ startup.incubatorProgram }}</span>{% endif %}
+                                            {% if startup.lastEvaluationDate %}<span><strong style="color:#aaa">Last Eval:</strong> {{ startup.lastEvaluationDate|date('Y-m-d') }}</span>{% endif %}
+                                            {% if startup.mentorID %}<span><strong style="color:#aaa">Mentor:</strong> #{{ startup.mentorID }}</span>{% endif %}
+                                            {% if startup.founderID %}<span><strong style="color:#aaa">Founder:</strong> #{{ startup.founderID }}</span>{% endif %}
+                                            {% if startup.businessPlanID %}<span><strong style="color:#aaa">Plan ID:</strong> #{{ startup.businessPlanID }}</span>{% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td style="padding: 15px; color: var(--text, #fff);">
+                                {% if startup.sector %}
+                                    <span style="background: rgba(111,86,255,0.2); color: var(--primary-light, #9d88ff); padding: 4px 10px; border-radius: 12px; font-size: 0.85em;">{{ startup.sector }}</span>
+                                {% else %}
+                                    <span style="color: var(--text-secondary, #aaa);">—</span>
+                                {% endif %}
+                            </td>
+                            <td style="padding: 15px; color: var(--text, #fff);">
+                                {% if startup.stage %}
+                                    <span style="background: rgba(76,175,80,0.2); color: #81c784; padding: 4px 10px; border-radius: 12px; font-size: 0.85em;">{{ startup.stage }}</span>
+                                {% else %}
+                                    <span style="color: var(--text-secondary, #aaa);">—</span>
+                                {% endif %}
+                            </td>
+                            <td style="padding: 15px; color: var(--text, #fff);">
+                                {% if startup.status %}
+                                    <span style="background: {% if startup.status == 'Active' %}rgba(76,175,80,0.2); color: #81c784;{% elseif startup.status == 'Pending' %}rgba(255,152,0,0.2); color: #ffb74d;{% else %}rgba(244,67,54,0.2); color: #e57373;{% endif %} padding: 4px 10px; border-radius: 12px; font-size: 0.85em;">{{ startup.status }}</span>
+                                {% else %}
+                                    <span style="color: var(--text-secondary, #aaa);">—</span>
+                                {% endif %}
+                            </td>
+                            <td style="padding: 15px; color: var(--text, #fff);">
+                                {% if startup.fundingAmount %}
+                                    <div style="font-weight: 600;">${{ startup.fundingAmount|number_format(0, '.', ',') }}</div>
+                                {% else %}
+                                    <span style="color: var(--text-secondary, #aaa);">—</span>
+                                {% endif %}
+                            </td>
+                            <td style="padding: 15px; color: var(--text, #fff);">
+                                {% if startup.kPIscore %}
+                                    <div style="font-weight: 600; color: {% if startup.kPIscore >= 80 %}#81c784;{% elseif startup.kPIscore >= 60 %}#ffb74d;{% else %}#e57373;{% endif %};">{{ startup.kPIscore }}/100</div>
+                                {% else %}
+                                    <span style="color: var(--text-secondary, #aaa);">—</span>
+                                {% endif %}
+                            </td>
+                            <td style="padding: 15px; color: var(--text, #fff);">
+                                {% if startup.creationDate %}
+                                    <div>{{ startup.creationDate|date('M d, Y') }}</div>
+                                {% else %}
+                                    <span style="color: var(--text-secondary, #aaa);">—</span>
+                                {% endif %}
+                            </td>
+                            <td style="padding: 15px; text-align: center;">
+                                <div style="display: flex; gap: 8px; justify-content: center;">
+                                    <a href="{{ path('app_entrepreneur_startup_show', {'id': startup.startupID}) }}" style="background: rgba(111,86,255,0.2); color: #9d88ff; padding: 6px 12px; border-radius: 6px; text-decoration: none; font-size: 0.85em; transition: all 0.2s;" onmouseover="this.style.background='rgba(111,86,255,0.3)'" onmouseout="this.style.background='rgba(111,86,255,0.2)'">View</a>
+                                    <a href="{{ path('app_entrepreneur_startup_edit', {'id': startup.startupID}) }}" style="background: rgba(33,150,243,0.2); color: #64b5f6; padding: 6px 12px; border-radius: 6px; text-decoration: none; font-size: 0.85em; transition: all 0.2s;" onmouseover="this.style.background='rgba(33,150,243,0.3)'" onmouseout="this.style.background='rgba(33,150,243,0.2)'">Edit</a>
+                                    <a href="{{ path('app_entrepreneur_startup_delete', {'id': startup.startupID}) }}" onclick="return confirm('Are you sure you want to delete this startup?');" style="background: rgba(244,67,54,0.2); color: #e57373; padding: 6px 12px; border-radius: 6px; text-decoration: none; font-size: 0.85em; transition: all 0.2s;" onmouseover="this.style.background='rgba(244,67,54,0.3)'" onmouseout="this.style.background='rgba(244,67,54,0.2)'">Delete</a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
