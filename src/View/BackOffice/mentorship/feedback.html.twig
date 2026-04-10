@@ -1,0 +1,57 @@
+{% extends 'BackOffice/mentorship/base_mentorship.html.twig' %}
+
+{% block title %}Manage Feedback - Mentorship Admin{% endblock %}
+
+{% block header_title %}Manage Feedback{% endblock %}
+
+{% block body %}
+    <div class="card" style="width: 100%; padding: 30px;">
+        <h3 style="margin-bottom: 20px; color: var(--primary-lighter); text-align: left;">Evaluations Scrubber</h3>
+        
+        <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                <thead>
+                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
+                        <th style="padding: 15px; color: #b0a8d6;">Date Issued</th>
+                        <th style="padding: 15px; color: #b0a8d6;">Author (Entrepreneur)</th>
+                        <th style="padding: 15px; color: #b0a8d6;">Target (Mentor)</th>
+                        <th style="padding: 15px; color: #b0a8d6;">Rating</th>
+                        <th style="padding: 15px; color: #b0a8d6; width: 30%;">Comment</th>
+                        <th style="padding: 15px; color: #b0a8d6; text-align: right;">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in feedbacks %}
+                        {% set e = item.evaluation %}
+                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                            <td style="padding: 15px; color: #b0a8d6;">{{ e.createdAt|date('Y-m-d H:i') }}</td>
+                            <td style="padding: 15px; font-weight: 500;">{{ item.entrepreneurName }}</td>
+                            <td style="padding: 15px;">{{ item.mentorName }}</td>
+                            <td style="padding: 15px;">
+                                {% set r = e.rating %}
+                                <span style="color: #f1c40f; font-size: 1.1em; letter-spacing: 1px;">
+                                    {% for i in 1..5 %}
+                                        {% if i <= r %}★{% else %}☆{% endif %}
+                                    {% endfor %}
+                                </span>
+                            </td>
+                            <td style="padding: 15px; font-size: 0.9em; font-style: italic; color: var(--text-main); white-space: normal;">
+                                "{{ e.comment }}"
+                            </td>
+                            <td style="padding: 15px; text-align: right;">
+                                <form method="post" style="margin: 0;">
+                                    <input type="hidden" name="evaluation_id" value="{{ e.evaluationID }}">
+                                    <button type="submit" class="btn-pill" style="background: rgba(231, 76, 60, 0.2); color: #e74c3c; border: none; padding: 5px 12px; font-size: 0.8rem; cursor: pointer;" onclick="return confirm('WARNING: Permanently delete this evaluation?');">Scrub Record</button>
+                                </form>
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="6" style="padding: 20px; text-align: center; color: #b0a8d6;">No Feedback records located globally.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endblock %}

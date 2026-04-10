@@ -1,0 +1,52 @@
+{% extends 'BackOffice/mentorship/base_mentorship.html.twig' %}
+
+{% block title %}Manage Sessions - Mentorship Admin{% endblock %}
+
+{% block header_title %}Manage Sessions{% endblock %}
+
+{% block body %}
+    <div class="card" style="width: 100%; padding: 30px;">
+        <h3 style="margin-bottom: 20px; color: var(--primary-lighter); text-align: left;">Surveillance Overview</h3>
+        
+        <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                <thead>
+                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
+                        <th style="padding: 15px; color: #b0a8d6;">Session ID</th>
+                        <th style="padding: 15px; color: #b0a8d6;">Participants</th>
+                        <th style="padding: 15px; color: #b0a8d6;">Scheduled Date</th>
+                        <th style="padding: 15px; color: #b0a8d6;">Status</th>
+                        <th style="padding: 15px; color: #b0a8d6; text-align: center;">Follow-up Nodes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in sessions %}
+                        {% set s = item.session %}
+                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                            <td style="padding: 15px;">#{{ s.sessionID }}</td>
+                            <td style="padding: 15px;">
+                                <strong style="color: var(--primary-lighter);">E:</strong> {{ item.entrepreneurName }}<br>
+                                <strong style="color: var(--primary-lighter);">M:</strong> {{ item.mentorName }}
+                            </td>
+                            <td style="padding: 15px; color: #b0a8d6;">{{ s.sessionDate|date('Y-m-d') }}</td>
+                            <td style="padding: 15px;">
+                                <span style="display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 0.85em; font-weight: bold; background: rgba(0,0,0,0.1); 
+                                {% if s.status|lower == 'completed' %}color: #2ecc71;{% elseif s.status|lower == 'planned' %}color: #3498db;{% else %}color: #f1c40f;{% endif %}">
+                                    {{ s.status|upper }}
+                                </span>
+                            </td>
+                            <td style="padding: 15px; text-align: center;">
+                                <span style="color: #f1c40f; font-weight: bold; margin-right: 15px;">📝 Notes: {{ item.notes }}</span>
+                                <span style="color: #e74c3c; font-weight: bold;">✅ Todos: {{ item.todos }}</span>
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="5" style="padding: 20px; text-align: center; color: #b0a8d6;">No Sessions tracked.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endblock %}

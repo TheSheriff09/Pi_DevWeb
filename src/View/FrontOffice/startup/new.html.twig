@@ -1,0 +1,130 @@
+{% extends "FrontOffice/base.html.twig" %}
+
+{% block title %}Add New Startup - StartupFlow Tunisia{% endblock %}
+
+{% block body %}
+<div class="auth-container" style="min-height: 100vh; padding: 40px 20px;">
+    <div class="auth-card" style="max-width: 800px; margin: 0 auto;">
+        <div style="margin-bottom: 30px; text-align: center;">
+            <h1 style="color: var(--primary, #6f56ff); margin: 0; font-size: 2.5em;">Add New Startup</h1>
+            <p style="color: var(--text-secondary, #aaa); margin: 10px 0 0 0;">Fill in the details to add your startup to the portfolio</p>
+        </div>
+
+        {% if error %}
+            <div style="background: rgba(244,67,54,0.2); border: 1px solid rgba(244,67,54,0.5); color: #e57373; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                {{ error }}
+            </div>
+        {% endif %}
+
+        <form method="post" style="display: grid; gap: 20px;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div>
+                    <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--primary-light, #9d88ff);">Startup Name *</label>
+                    <input type="text" name="name" required class="pillField" style="width: 100%;" placeholder="Enter startup name">
+                </div>
+                <div>
+                    <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--primary-light, #9d88ff);">Sector</label>
+                    <select name="sector" class="pillField" style="width: 100%;">
+                        <option value="">Select sector...</option>
+                        <option value="Technology">Technology</option>
+                        <option value="Healthcare">Healthcare</option>
+                        <option value="Finance">Finance</option>
+                        <option value="Education">Education</option>
+                        <option value="E-commerce">E-commerce</option>
+                        <option value="Real Estate">Real Estate</option>
+                        <option value="Manufacturing">Manufacturing</option>
+                        <option value="Food & Beverage">Food & Beverage</option>
+                        <option value="Transportation">Transportation</option>
+                        <option value="Energy">Energy</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+            </div>
+
+            <div>
+                <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--primary-light, #9d88ff);">Description</label>
+                <textarea name="description" rows="4" class="pillField" style="width: 100%; resize: vertical;" placeholder="Describe your startup, mission, and vision..."></textarea>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div>
+                    <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--primary-light, #9d88ff);">Image URL</label>
+                    <input type="url" name="imageURL" class="pillField" style="width: 100%;" placeholder="https://example.com/image.jpg">
+                </div>
+                <div>
+                    <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--primary-light, #9d88ff);">Creation Date</label>
+                    <input type="date" name="creationDate" class="pillField" style="width: 100%;">
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px;">
+                <div>
+                    <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--primary-light, #9d88ff);">Stage</label>
+                    <select name="stage" class="pillField" style="width: 100%;">
+                        <option value="">Select stage...</option>
+                        <option value="Idea">Idea</option>
+                        <option value="Prototype">Prototype</option>
+                        <option value="MVP">MVP</option>
+                        <option value="Early Stage">Early Stage</option>
+                        <option value="Growth">Growth</option>
+                        <option value="Mature">Mature</option>
+                    </select>
+                </div>
+                <div>
+                    <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--primary-light, #9d88ff);">Status</label>
+                    <select name="status" class="pillField" style="width: 100%;">
+                        <option value="">Select status...</option>
+                        <option value="Active">Active</option>
+                        <option value="Pending">Pending</option>
+                        <option value="Inactive">Inactive</option>
+                    </select>
+                </div>
+                <div>
+                    <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--primary-light, #9d88ff);">Incubator Program</label>
+                    <input type="text" name="incubatorProgram" class="pillField" style="width: 100%;" placeholder="Program name (if any)">
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div>
+                    <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--primary-light, #9d88ff);">Funding Amount ($)</label>
+                    <input type="number" name="fundingAmount" step="0.01" min="0" class="pillField" style="width: 100%;" placeholder="0.00">
+                </div>
+                <div>
+                    <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--primary-light, #9d88ff);">KPI Score (0-100)</label>
+                    <input type="number" name="kPIscore" step="0.01" min="0" max="100" class="pillField" style="width: 100%;" placeholder="0.00">
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px;">
+                <div>
+                    <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--primary-light, #9d88ff);">Mentor ID</label>
+                    <input type="number" name="mentorID" min="1" class="pillField" style="width: 100%;" placeholder="Mentor ID (optional)">
+                </div>
+                <div>
+                    <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--primary-light, #9d88ff);">Founder ID</label>
+                    <input type="number" name="founderID" min="1" class="pillField" style="width: 100%;" placeholder="Founder ID (optional)">
+                </div>
+                <div>
+                    <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--primary-light, #9d88ff);">Business Plan ID</label>
+                    <input type="number" name="businessPlanID" min="1" class="pillField" style="width: 100%;" placeholder="Business Plan ID (optional)">
+                </div>
+            </div>
+
+            <div>
+                <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--primary-light, #9d88ff);">Last Evaluation Date</label>
+                <input type="date" name="lastEvaluationDate" class="pillField" style="width: 100%;">
+            </div>
+
+            <div style="display: flex; gap: 15px; justify-content: center; margin-top: 30px;">
+                <button type="submit" class="pill-btn" style="background: linear-gradient(135deg, var(--primary, #6f56ff), #b58bff); padding: 12px 30px; border: none; font-size: 1.1em;">
+                    Create Startup
+                </button>
+                <a href="{{ path('app_entrepreneur_startups') }}" class="pill-btn" style="background: transparent; border: 2px solid var(--primary, #6f56ff); color: var(--primary, #6f56ff); padding: 10px 30px; text-decoration: none; display: inline-flex; align-items: center; justify-content: center;">
+                    Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Evaluation Admin - Dashboard</title>
+    <link rel="stylesheet" href="{{ asset('Back/css/styles.css') }}?v=2">
+</head>
+<body>
+    <script>
+        if (localStorage.getItem('admin_theme') === 'dark') {
+            document.body.classList.add('dark-mode');
+        }
+    </script>
+
+    <!-- SIDEBAR FOR EVALUATION MODULE -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <h2>Evaluation Admin</h2>
+        </div>
+        <ul class="sidebar-menu">
+            <li><a href="{{ path('app_admin_panel') }}" style="color: #ff9d9d;">&larr; Main Admin</a></li>
+            <li><a href="{{ path('app_admin_evaluation_dashboard') }}" class="{{ current_menu == 'dashboard' ? 'active' : '' }}">Dashboard</a></li>
+            <li><a href="{{ path('app_admin_evaluation_applications') }}" class="{{ current_menu == 'applications' ? 'active' : '' }}">Manage Applications</a></li>
+            <li><a href="{{ path('app_admin_evaluation_evaluations') }}" class="{{ current_menu == 'evaluations' ? 'active' : '' }}">Manage Evaluations</a></li>
+        </ul>
+        <div class="sidebar-footer">
+            <a href="{{ path('app_logout') }}" class="logout-btn glow-btn">Sign Out</a>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <div class="main-content">
+        <!-- TOPBAR -->
+        <header class="topbar">
+            <div class="topbar-left">
+                <h2>Overview</h2>
+            </div>
+            <div class="topbar-right">
+                <button id="themeToggleBtn" class="btn-pill" style="border: 2px solid var(--primary-light); background: transparent; color: var(--primary-light);">🌓</button>
+                <div class="user-profile">
+                    <div class="avatar" style="background-color: var(--primary);">
+                        <span style="color: white; font-weight: bold;">A</span>
+                    </div>
+                    <span>Admin</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- DASHBOARD SPECIFIC CONTENT -->
+        <main class="dashboard-content" style="position: relative; z-index: 2;">
+            
+            <div class="dashboard-cards" style="margin-bottom: 40px;">
+                <div class="card">
+                    <h3 style="font-size: 2.5rem; color: var(--primary-lighter);">{{ applicationsCount }}</h3>
+                    <p style="text-transform: uppercase; font-size: 0.9rem; letter-spacing: 1px;">Funding Applications</p>
+                </div>
+                <div class="card">
+                    <h3 style="font-size: 2.5rem; color: #a18bff;">{{ evaluationsCount }}</h3>
+                    <p style="text-transform: uppercase; font-size: 0.9rem; letter-spacing: 1px;">Funding Evaluations</p>
+                </div>
+            </div>
+
+            <div class="card" style="width: 100%;">
+                <h3 style="margin-bottom: 20px; color: var(--primary-lighter);">Latest Funding Applications</h3>
+                <div style="overflow-x: auto;">
+                    <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                        <thead>
+                            <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
+                                <th style="padding: 15px; color: #b0a8d6;">ID</th>
+                                <th style="padding: 15px; color: #b0a8d6;">Amount</th>
+                                <th style="padding: 15px; color: #b0a8d6;">Status</th>
+                                <th style="padding: 15px; color: #b0a8d6;">Submission Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for app in latestApplications %}
+                                <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                    <td style="padding: 15px;">{{ app.id }}</td>
+                                    <td style="padding: 15px; font-weight: 500;">${{ app.amount|number_format(2) }}</td>
+                                    <td style="padding: 15px;">{{ app.status }}</td>
+                                    <td style="padding: 15px; color: #b0a8d6;">{{ app.submissionDate|date('Y-m-d') }}</td>
+                                </tr>
+                            {% else %}
+                                <tr>
+                                    <td colspan="4" style="padding: 15px; text-align: center; color: #b0a8d6;">No applications found.</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+        </main>
+        
+        <footer class="futuristic-footer" style="padding: 20px; text-align: center; border-top: 1px solid rgba(255, 255, 255, 0.1);">
+            <p style="color: #b0a8d6;">&copy; {{ 'now'|date('Y') }} StartupFlow Admin.</p>
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const toggleBtn = document.getElementById('themeToggleBtn');
+            if (toggleBtn) {
+                toggleBtn.addEventListener('click', () => {
+                    const isDark = document.body.classList.contains('dark-mode');
+                    if (isDark) {
+                        document.body.classList.remove('dark-mode');
+                        localStorage.setItem('admin_theme', 'light');
+                    } else {
+                        document.body.classList.add('dark-mode');
+                        localStorage.setItem('admin_theme', 'dark');
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,29 @@
+{% extends 'FrontOffice/base.html.twig' %}
+
+{% block title %}Book Session - StartupFlow{% endblock %}
+
+{% block body %}
+<div class="container" style="padding: 40px 20px; max-width: 600px; margin: auto;">
+    
+    <a href="{{ path('app_mentor_profile', {'id': mentorId}) }}" style="color: var(--primary-light); text-decoration: none; margin-bottom: 20px; display: inline-block;">&larr; Back to Profile</a>
+
+    <div class="mentorship-card" style="padding: 30px;">
+        <h2 style="color: var(--text-main); margin-top: 0;">Book a Session</h2>
+        <p style="color: var(--text-main); opacity: 0.8; margin-bottom: 20px;">
+            You are requesting a session on <strong>{{ schedule.availableDate|date('D, M j, Y') }}</strong><br>
+            Time: <strong>{{ schedule.startTime|date('H:i') }} - {{ schedule.endTime|date('H:i') }}</strong>
+        </p>
+
+        <form method="post" action="{{ path('app_mentorship_book', {'mentorId': mentorId, 'scheduleId': schedule.scheduleID}) }}">
+            <div style="margin-bottom: 15px;">
+                <label style="display: block; color: var(--primary-light); margin-bottom: 5px;">What do you want to discuss? (Topic)</label>
+                <textarea name="topic" required rows="4" style="width: 100%; border-radius: 8px; border: 1px solid rgba(122,92,255,0.3); background: transparent; color: var(--text-main); padding: 10px; box-sizing: border-box;"></textarea>
+            </div>
+            
+            <button type="submit" class="btn-pill" style="width: 100%; padding: 12px; background: var(--primary); color: white; font-weight: bold; font-size: 1.1em; border: none; cursor: pointer; border-radius: 8px;">
+                Confirm Booking
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

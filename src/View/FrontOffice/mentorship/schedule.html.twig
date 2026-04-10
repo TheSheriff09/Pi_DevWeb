@@ -1,0 +1,100 @@
+{% extends 'FrontOffice/base.html.twig' %}
+
+{% block title %}My Schedule - StartupFlow{% endblock %}
+
+{% block body %}
+<div class="container" style="padding: 40px 20px; max-width: 900px; margin: auto;">
+    <h2 style="color: var(--text-main, #fff); margin-bottom: 30px;">Manage My Availability</h2>
+
+    <div class="mentorship-card" style="margin-bottom: 30px;">
+        <h3 style="margin-top: 0;">Add Time Slot</h3>
+        <form method="post" style="display: flex; gap: 15px; align-items: flex-end; flex-wrap: wrap;">
+            <div>
+                <label style="display: block; color: var(--primary-light); margin-bottom: 5px;">Date</label>
+                <input type="date" name="date" required min="{{ 'now'|date('Y-m-d') }}" style="padding: 10px; border-radius: 8px; border: 1px solid rgba(122,92,255,0.3); background: transparent; color: var(--text-main);">
+            </div>
+            <div>
+                <label style="display: block; color: var(--primary-light); margin-bottom: 5px;">Start Time</label>
+                <input type="time" name="start_time" required style="padding: 10px; border-radius: 8px; border: 1px solid rgba(122,92,255,0.3); background: transparent; color: var(--text-main);">
+            </div>
+            <div>
+                <label style="display: block; color: var(--primary-light); margin-bottom: 5px;">End Time</label>
+                <input type="time" name="end_time" required style="padding: 10px; border-radius: 8px; border: 1px solid rgba(122,92,255,0.3); background: transparent; color: var(--text-main);">
+            </div>
+            <button type="submit" class="btn-pill" style="background: var(--primary); color: white; border: none; padding: 10px 20px; height: max-content;">+ Add Slot</button>
+        </form>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px;">
+        {% for slot in schedules %}
+            <div class="mentorship-card" style="position: relative;">
+                <p style="margin: 0 0 10px; font-weight: bold;">
+                    📅 {{ slot.availableDate|date('D, M j, Y') }}
+                </p>
+                <p style="margin: 0 0 15px; color: var(--primary-light);">
+                    ⏰ {{ slot.startTime|date('H:i') }} - {{ slot.endTime|date('H:i') }}
+                </p>
+                
+                {% if slot.isBooked %}
+                    <span style="background: rgba(231, 76, 60, 0.2); color: #e74c3c; padding: 3px 8px; border-radius: 10px; font-size: 0.8em; font-weight: bold;">Booked</span>
+                {% else %}
+                    <span style="background: rgba(46, 204, 113, 0.2); color: #2ecc71; padding: 3px 8px; border-radius: 10px; font-size: 0.8em; font-weight: bold;">Available</span>
+                    
+                    <button class="delete-btn btn-pill" data-id="{{ slot.scheduleID }}" style="position: absolute; right: 15px; bottom: 15px; background: transparent; border: 1px solid #e74c3c; color: #e74c3c; padding: 5px 10px; font-size: 0.8em; cursor: pointer;">Delete</button>
+                {% endif %}
+            </div>
+        {% else %}
+            <div style="grid-column: 1 / -1; text-align: center; color: #aaa;">You have no scheduled slots.</div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Delete Schedule Modal -->
+<div id="deleteScheduleModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index: 1000; align-items: center; justify-content: center;">
+    <div style="background: var(--bg-light); padding: 30px; border-radius: 12px; border: 1px solid rgba(122,92,255,0.2); width: 100%; max-width: 400px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); text-align: center;">
+        <h3 style="margin-top: 0; color: var(--text-main);">Remove Slot</h3>
+        <p style="color: var(--text-main); opacity: 0.8; margin-bottom: 25px;">Are you sure you want to remove this available time slot?</p>
+        <div style="display: flex; gap: 10px; justify-content: center;">
+            <button type="button" onclick="closeDeleteScheduleModal()" class="btn-pill" style="background: transparent; border: 1px solid rgba(255,255,255,0.3); color: var(--text-main); padding: 8px 20px; cursor: pointer;">Cancel</button>
+            <button type="button" onclick="confirmDeleteSchedule()" class="btn-pill" style="background: #e74c3c; border: none; color: white; padding: 8px 20px; cursor: pointer;">Delete</button>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentDeleteScheduleId = null;
+let currentDeleteScheduleBtn = null;
+
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.delete-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            currentDeleteScheduleId = btn.getAttribute('data-id');
+            currentDeleteScheduleBtn = btn;
+            document.getElementById('deleteScheduleModal').style.display = 'flex';
+        });
+    });
+});
+
+function confirmDeleteSchedule() {
+    if(currentDeleteScheduleId) {
+        fetch(`/mentorship/schedule/delete/${currentDeleteScheduleId}`, { method: 'POST' })
+        .then(res => res.json())
+        .then(data => {
+            if(data.status === 'success') {
+                currentDeleteScheduleBtn.parentElement.remove();
+                closeDeleteScheduleModal();
+            } else {
+                alert(data.message);
+                closeDeleteScheduleModal();
+            }
+        });
+    }
+}
+
+function closeDeleteScheduleModal() {
+    document.getElementById('deleteScheduleModal').style.display = 'none';
+    currentDeleteScheduleId = null;
+    currentDeleteScheduleBtn = null;
+}
+</script>
+{% endblock %}

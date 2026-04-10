@@ -1,0 +1,95 @@
+{% extends 'BackOffice/mentorship/base_mentorship.html.twig' %}
+
+{% block title %}Manage Bookings - Mentorship Admin{% endblock %}
+
+{% block header_title %}Manage Bookings{% endblock %}
+
+{% block body %}
+    <div class="card" style="width: 100%; padding: 30px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h3 style="margin: 0; color: var(--primary-lighter); text-align: left;">Global Bookings Ledger</h3>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn-pill filter-btn" data-filter="all" style="background: rgba(111, 86, 255, 0.2); color: #8d79ff; border: 1px solid #8d79ff; padding: 6px 15px;">All</button>
+                <button class="btn-pill filter-btn" data-filter="pending" style="background: transparent; color: #8d79ff; border: 1px solid rgba(255,255,255,0.2); padding: 6px 15px;">Pending</button>
+                <button class="btn-pill filter-btn" data-filter="approved" style="background: transparent; color: #8d79ff; border: 1px solid rgba(255,255,255,0.2); padding: 6px 15px;">Approved</button>
+            </div>
+        </div>
+        
+        <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                <thead>
+                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
+                        <th style="padding: 15px; color: #b0a8d6;">Request ID</th>
+                        <th style="padding: 15px; color: #b0a8d6;">Topic</th>
+                        <th style="padding: 15px; color: #b0a8d6;">Entrepreneur</th>
+                        <th style="padding: 15px; color: #b0a8d6;">Mentor</th>
+                        <th style="padding: 15px; color: #b0a8d6;">Status</th>
+                        <th style="padding: 15px; color: #b0a8d6; text-align: right;">Admin Override</th>
+                    </tr>
+                </thead>
+                <tbody id="bookingsTableBody">
+                    {% for item in bookings %}
+                        {% set b = item.booking %}
+                        <tr class="booking-row" data-status="{{ b.status|lower }}" style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                            <td class="booking-id" style="padding: 15px;">#{{ b.bookingID }}</td>
+                            <td style="padding: 15px; font-weight: 500;">{{ b.topic }}</td>
+                            <td style="padding: 15px; color: #b0a8d6;">{{ item.entrepreneurName }}</td>
+                            <td style="padding: 15px; color: #b0a8d6;">{{ item.mentorName }}</td>
+                            <td style="padding: 15px;">
+                                <span style="display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 0.85em; font-weight: bold; background: rgba(0,0,0,0.1); 
+                                {% if b.status|lower == 'approved' %}color: #2ecc71;{% elseif b.status|lower == 'rejected' %}color: #e74c3c;{% else %}color: #f1c40f;{% endif %}">
+                                    {{ b.status|upper }}
+                                </span>
+                            </td>
+                            <td style="padding: 15px; text-align: right;">
+                                {% if b.status|upper == 'PENDING' %}
+                                    <form method="post" style="display: inline-block; margin: 0;">
+                                        <input type="hidden" name="booking_id" value="{{ b.bookingID }}">
+                                        <button type="submit" name="action" value="accept" class="btn-pill" style="background: rgba(46, 204, 113, 0.2); color: #2ecc71; border: none; padding: 4px 10px; font-size: 0.75rem;" onclick="return confirm('Force approval of this booking?');">Approve</button>
+                                        <button type="submit" name="action" value="reject" class="btn-pill" style="background: rgba(231, 76, 60, 0.2); color: #e74c3c; border: none; padding: 4px 10px; font-size: 0.75rem; margin-left: 5px;" onclick="return confirm('Force rejection of this booking?');">Reject</button>
+                                    </form>
+                                {% else %}
+                                    <span style="font-size: 0.8em; color: #666; font-style: italic;">Resolved</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="6" style="padding: 20px; text-align: center; color: #b0a8d6;">No Bookings found in the system.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const filterBtns = document.querySelectorAll('.filter-btn');
+        filterBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                // Update active state visuals
+                filterBtns.forEach(b => {
+                    b.style.background = 'transparent';
+                    b.style.border = '1px solid rgba(255,255,255,0.2)';
+                });
+                this.style.background = 'rgba(111, 86, 255, 0.2)';
+                this.style.border = '1px solid #8d79ff';
+
+                const status = this.getAttribute('data-filter');
+                const rows = document.querySelectorAll('.booking-row');
+                
+                rows.forEach(row => {
+                    if (status === 'all' || row.getAttribute('data-status') === status) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+            });
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,81 @@
+{% extends 'BackOffice/mentorship/base_mentorship.html.twig' %}
+
+{% block title %}Manage Mentors - Mentorship Admin{% endblock %}
+
+{% block header_title %}Manage Mentors{% endblock %}
+
+{% block body %}
+    <div class="card" style="width: 100%; padding: 30px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h3 style="margin: 0; color: var(--primary-lighter); text-align: left;">Mentor Directory</h3>
+            <input type="text" id="mentorSearchInput" placeholder="Search by name or email..." class="form-input" style="padding: 10px 15px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.1); color: var(--text-main); width: 250px;">
+        </div>
+        
+        <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse; text-align: left;" id="mentorsTable">
+                <thead>
+                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
+                        <th style="padding: 15px; color: #b0a8d6;">ID</th>
+                        <th style="padding: 15px; color: #b0a8d6;">Mentor Name</th>
+                        <th style="padding: 15px; color: #b0a8d6;">Email</th>
+                        <th style="padding: 15px; color: #b0a8d6;">Completed Sessions</th>
+                        <th style="padding: 15px; color: #b0a8d6;">Average Rating</th>
+                        <th style="padding: 15px; color: #b0a8d6; text-align: right;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in mentors %}
+                        <tr class="mentor-row" style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                            <td class="mentor-id" style="padding: 15px;">#{{ item.user.id }}</td>
+                            <td class="mentor-name" style="padding: 15px; font-weight: 500;">
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <div style="width: 32px; height: 32px; background: #6f56ff; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">
+                                        {{ item.user.fullName|slice(0,1)|upper }}
+                                    </div>
+                                    {{ item.user.fullName }}
+                                </div>
+                            </td>
+                            <td class="mentor-email" style="padding: 15px; color: #b0a8d6;">{{ item.user.email }}</td>
+                            <td style="padding: 15px; color: var(--primary-lighter); font-weight: bold;">{{ item.sessionsCount }}</td>
+                            <td style="padding: 15px;">
+                                <span style="display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 0.85em; font-weight: bold; background: rgba(241, 196, 15, 0.1); color: #f1c40f;">
+                                    ★ {{ item.rating|number_format(1) }}
+                                </span>
+                            </td>
+                            <td style="padding: 15px; text-align: right;">
+                                <a href="#" class="btn-pill" style="background: rgba(111, 86, 255, 0.2); color: #8d79ff; padding: 6px 12px; font-size: 0.8rem;" onclick="alert('Viewing detailed profile temporarily offline'); return false;">View</a>
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="6" style="padding: 20px; text-align: center; color: #b0a8d6;">No Mentors found in the system.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const searchInput = document.getElementById('mentorSearchInput');
+        if (searchInput) {
+            searchInput.addEventListener('keyup', function() {
+                const term = this.value.toLowerCase();
+                const rows = document.querySelectorAll('.mentor-row');
+                rows.forEach(row => {
+                    const name = row.querySelector('.mentor-name').textContent.toLowerCase();
+                    const email = row.querySelector('.mentor-email').textContent.toLowerCase();
+                    if (name.includes(term) || email.includes(term)) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+            });
+        }
+    });
+</script>
+{% endblock %}
