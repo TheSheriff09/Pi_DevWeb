@@ -88,12 +88,12 @@
                     <form method="post">
                         <div class="form-group">
                             <label for="score">Assigned Score (0-100)</label>
-                            <input type="number" id="score" name="score" min="0" max="100" value="{{ evaluation.score }}" required>
+                            <input type="number" id="score" name="score" min="0" max="100" value="{{ evaluation.score }}">
                         </div>
                         
                         <div class="form-group">
                             <label for="decision">Decision</label>
-                            <select id="decision" name="decision" required>
+                            <select id="decision" name="decision">
                                 <option value="Approved" {% if evaluation.decision == 'Approved' %}selected{% endif %}>Approved</option>
                                 <option value="Rejected" {% if evaluation.decision == 'Rejected' %}selected{% endif %}>Rejected</option>
                                 <option value="Needs Revision" {% if evaluation.decision == 'Needs Revision' %}selected{% endif %}>Needs Revision</option>
@@ -102,7 +102,7 @@
 
                         <div class="form-group">
                             <label for="riskLevel">Risk Level</label>
-                            <select id="riskLevel" name="riskLevel" required>
+                            <select id="riskLevel" name="riskLevel">
                                 <option value="Low" {% if evaluation.riskLevel == 'Low' %}selected{% endif %}>Low</option>
                                 <option value="Medium" {% if evaluation.riskLevel == 'Medium' %}selected{% endif %}>Medium</option>
                                 <option value="High" {% if evaluation.riskLevel == 'High' %}selected{% endif %}>High</option>
@@ -112,12 +112,12 @@
 
                         <div class="form-group">
                             <label for="fundingCategory">Funding Category</label>
-                            <input type="text" id="fundingCategory" name="fundingCategory" value="{{ evaluation.fundingCategory }}" required>
+                            <input type="text" id="fundingCategory" name="fundingCategory" value="{{ evaluation.fundingCategory }}">
                         </div>
 
                         <div class="form-group">
                             <label for="evaluationComments">Evaluation Comments</label>
-                            <textarea id="evaluationComments" name="evaluationComments" rows="5" required>{{ evaluation.evaluationComments }}</textarea>
+                            <textarea id="evaluationComments" name="evaluationComments" rows="5">{{ evaluation.evaluationComments }}</textarea>
                         </div>
                         
                         <div style="margin-top: 30px; text-align: right;">
@@ -131,3 +131,4 @@
     </div>
 </body>
 </html>
+

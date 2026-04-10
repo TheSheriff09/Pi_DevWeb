@@ -87,22 +87,22 @@
                     <form method="post">
                         <div class="form-group">
                             <label for="title">Title</label>
-                            <input type="text" id="title" name="title" value="{{ businessPlan.title }}" required>
+                            <input type="text" id="title" name="title" value="{{ businessPlan.title }}">
                         </div>
                         
                         <div class="form-group">
                             <label for="fundingRequired">Funding Required ($)</label>
-                            <input type="number" step="0.01" id="fundingRequired" name="fundingRequired" value="{{ businessPlan.fundingRequired }}" required>
+                            <input type="number" step="0.01" id="fundingRequired" name="fundingRequired" value="{{ businessPlan.fundingRequired }}">
                         </div>
 
                         <div class="form-group">
                             <label for="timeline">Timeline</label>
-                            <input type="text" id="timeline" name="timeline" value="{{ businessPlan.timeline }}" required>
+                            <input type="text" id="timeline" name="timeline" value="{{ businessPlan.timeline }}">
                         </div>
 
                         <div class="form-group">
                             <label for="status">Status</label>
-                            <select id="status" name="status" required>
+                            <select id="status" name="status">
                                 <option value="Pending" {% if businessPlan.status == 'Pending' %}selected{% endif %}>Pending</option>
                                 <option value="Approved" {% if businessPlan.status == 'Approved' %}selected{% endif %}>Approved</option>
                                 <option value="Rejected" {% if businessPlan.status == 'Rejected' %}selected{% endif %}>Rejected</option>
@@ -121,3 +121,4 @@
     </div>
 </body>
 </html>
+

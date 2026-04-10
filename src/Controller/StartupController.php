@@ -11,6 +11,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 class StartupController extends AbstractController
 {
@@ -35,7 +36,7 @@ class StartupController extends AbstractController
     }
     
     #[Route('/entrepreneur/startups/new', name: 'app_entrepreneur_startup_new')]
-    public function new(Request $request, EntityManagerInterface $em): Response
+    public function new(Request $request, EntityManagerInterface $em, ValidatorInterface $validator): Response
     {
         // Check if user is logged in and has entrepreneur role
         $userId = $request->getSession()->get('user_id');
@@ -94,6 +95,14 @@ class StartupController extends AbstractController
             // Set the current user as the owner
             $startup->setUserId($userId);
             
+            $errors = $validator->validate($startup);
+            if (count($errors) > 0) {
+                foreach ($errors as $error) {
+                    $this->addFlash('error', ucfirst($error->getPropertyPath()) . ': ' . $error->getMessage());
+                }
+                return $this->redirectToRoute('app_entrepreneur_startup_new');
+            }
+            
             try {
                 $em->persist($startup);
                 $em->flush();
@@ -143,7 +152,7 @@ class StartupController extends AbstractController
     }
 
     #[Route('/entrepreneur/startups/{id}/edit', name: 'app_entrepreneur_startup_edit')]
-    public function edit(Request $request, EntityManagerInterface $em, int $id): Response
+    public function edit(Request $request, EntityManagerInterface $em, int $id, ValidatorInterface $validator): Response
     {
         // Check if user is logged in and has entrepreneur role
         $userId = $request->getSession()->get('user_id');
@@ -197,6 +206,14 @@ class StartupController extends AbstractController
             
             if ($request->request->get('businessPlanID')) {
                 $startup->setBusinessPlanID(intval($request->request->get('businessPlanID')));
+            }
+            
+            $errors = $validator->validate($startup);
+            if (count($errors) > 0) {
+                foreach ($errors as $error) {
+                    $this->addFlash('error', ucfirst($error->getPropertyPath()) . ': ' . $error->getMessage());
+                }
+                return $this->redirectToRoute('app_entrepreneur_startup_edit', ['id' => $startup->getId()]);
             }
             
             try {

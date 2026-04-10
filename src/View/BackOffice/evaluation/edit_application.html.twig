@@ -88,22 +88,22 @@
                     <form method="post">
                         <div class="form-group">
                             <label for="amount">Requested Amount ($)</label>
-                            <input type="number" step="0.01" id="amount" name="amount" value="{{ application.amount }}" required>
+                            <input type="number" step="0.01" id="amount" name="amount" value="{{ application.amount }}">
                         </div>
                         
                         <div class="form-group">
                             <label for="applicationReason">Application Reason</label>
-                            <input type="text" id="applicationReason" name="applicationReason" value="{{ application.applicationReason }}" required>
+                            <input type="text" id="applicationReason" name="applicationReason" value="{{ application.applicationReason }}">
                         </div>
 
                         <div class="form-group">
                             <label for="paymentSchedule">Payment Schedule</label>
-                            <input type="text" id="paymentSchedule" name="paymentSchedule" value="{{ application.paymentSchedule }}" required>
+                            <input type="text" id="paymentSchedule" name="paymentSchedule" value="{{ application.paymentSchedule }}">
                         </div>
 
                         <div class="form-group">
                             <label for="status">Application Status</label>
-                            <select id="status" name="status" required>
+                            <select id="status" name="status">
                                 <option value="Pending" {% if application.status == 'Pending' %}selected{% endif %}>Pending</option>
                                 <option value="Under Review" {% if application.status == 'Under Review' %}selected{% endif %}>Under Review</option>
                                 <option value="Approved" {% if application.status == 'Approved' %}selected{% endif %}>Approved</option>
@@ -122,3 +122,4 @@
     </div>
 </body>
 </html>
+

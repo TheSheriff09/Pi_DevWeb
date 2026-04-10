@@ -87,22 +87,22 @@
                     <form method="post">
                         <div class="form-group">
                             <label for="name">Startup Name</label>
-                            <input type="text" id="name" name="name" value="{{ startup.name }}" required>
+                            <input type="text" id="name" name="name" value="{{ startup.name }}">
                         </div>
                         
                         <div class="form-group">
                             <label for="sector">Sector</label>
-                            <input type="text" id="sector" name="sector" value="{{ startup.sector }}" required>
+                            <input type="text" id="sector" name="sector" value="{{ startup.sector }}">
                         </div>
 
                         <div class="form-group">
                             <label for="kPIscore">KPI Score</label>
-                            <input type="number" step="0.1" id="kPIscore" name="kPIscore" value="{{ startup.kPIscore }}" required>
+                            <input type="number" step="0.1" id="kPIscore" name="kPIscore" value="{{ startup.kPIscore }}">
                         </div>
 
                         <div class="form-group">
                             <label for="stage">Stage</label>
-                            <select id="stage" name="stage" required>
+                            <select id="stage" name="stage">
                                 <option value="Idea" {% if startup.stage == 'Idea' %}selected{% endif %}>Idea</option>
                                 <option value="MVP" {% if startup.stage == 'MVP' %}selected{% endif %}>MVP</option>
                                 <option value="Seed" {% if startup.stage == 'Seed' %}selected{% endif %}>Seed</option>
@@ -113,7 +113,7 @@
 
                         <div class="form-group">
                             <label for="status">Status</label>
-                            <select id="status" name="status" required>
+                            <select id="status" name="status">
                                 <option value="Active" {% if startup.status == 'Active' %}selected{% endif %}>Active</option>
                                 <option value="Pending" {% if startup.status == 'Pending' %}selected{% endif %}>Pending</option>
                                 <option value="Suspended" {% if startup.status == 'Suspended' %}selected{% endif %}>Suspended</option>
@@ -131,3 +131,4 @@
     </div>
 </body>
 </html>
+

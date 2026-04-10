@@ -62,6 +62,12 @@ class AdminForumController extends AbstractController
             $posts = $em->getRepository(ForumPosts::class)->findBy([], ['createdAt' => 'DESC']);
         }
 
+        if ($request->isXmlHttpRequest()) {
+            return $this->render('BackOffice/forum/_posts_tbody.html.twig', [
+                'posts' => $posts
+            ]);
+        }
+
         return $this->render('BackOffice/forum/posts.html.twig', [
             'posts' => $posts,
             'current_menu' => 'posts',

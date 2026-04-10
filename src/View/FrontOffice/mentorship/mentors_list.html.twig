@@ -8,70 +8,62 @@
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
         <h2 style="color: var(--text-main, #fff); font-size: 2em; margin: 0;">Find <span style="color: var(--primary, #6f56ff);">Mentors</span></h2>
         
-        <form method="get" action="{{ path('app_mentors_list') }}" style="display: flex; gap: 10px; align-items: center;">
-            <input type="text" name="q" value="{{ search }}" placeholder="Search by name or expertise..." 
+        <form id="mentorSearchForm" style="display: flex; gap: 10px; align-items: center;" onsubmit="event.preventDefault();">
+            <input type="text" id="searchInput" name="q" value="{{ search }}" placeholder="Search by name or expertise..." 
                    style="padding: 10px 15px; border-radius: 8px; border: 1px solid rgba(122,92,255,0.3); background: transparent; color: var(--text-main); width: 250px;">
             <label style="color: var(--text-main); display: flex; align-items: center; gap: 5px;">
-                <input type="checkbox" name="available_only" value="1" {% if app.request.query.get('available_only') %}checked{% endif %}>
+                <input type="checkbox" id="availableOnly" name="available_only" value="1" {% if app.request.query.get('available_only') %}checked{% endif %}>
                 Available Only
             </label>
-            <button type="submit" class="btn-pill" style="background: var(--primary); color: white; border: none; padding: 10px 20px;">Search</button>
         </form>
     </div>
 
-    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;">
-        {% for mentor in mentors %}
-            <div class="card mentorship-card mentor-card" data-mentor-id="{{ mentor.id }}" style="text-align: center;">
-                <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #6f56ff, #d2a7ff); border-radius: 50%; margin: 0 auto 15px; display: flex; align-items: center; justify-content: center; font-size: 2em; font-weight: bold; color: white;">
-                    {{ mentor.fullName|slice(0,1)|upper }}
-                </div>
-                <h3 style="margin: 0 0 5px;">{{ mentor.fullName }}</h3>
-                <p style="margin: 0 0 10px; font-size: 0.9em; height: 40px; overflow: hidden; opacity: 0.9;">
-                    {{ mentor.mentorExpertise ?: 'General Mentor' }}
-                </p>
-
-                {% set rating = mentorRatings[mentor.id] %}
-                {% if rating %}
-                    <div style="margin-bottom: 15px; font-size: 0.95em; color: #f1c40f; font-weight: bold;">
-                        ⭐ {{ rating.avg }} <span style="font-weight: normal; color: var(--text-main); opacity: 0.7; font-size: 0.85em;">({{ rating.count }} reviews)</span>
-                    </div>
-                {% else %}
-                    <div style="margin-bottom: 15px; font-size: 0.85em; color: var(--text-main); opacity: 0.5;">
-                        No ratings yet
-                    </div>
-                {% endif %}
-                
-                <div style="display: flex; justify-content: center; gap: 10px;">
-                    <a href="{{ path('app_mentor_profile', {'id': mentor.id}) }}" class="btn-pill" style="padding: 8px 15px; background: transparent; border: 1px solid var(--primary); color: var(--primary); text-decoration: none;">View Profile</a>
-                    
-                    <button class="favorite-btn btn-pill" data-id="{{ mentor.id }}" style="padding: 8px 15px; background: transparent; border: 1px solid rgba(122,92,255,0.3); color: {{ mentor.id in favoriteIds ? '#ff5656' : 'var(--text-main)' }}; cursor: pointer;">
-                        {% if mentor.id in favoriteIds %}❤️{% else %}🤍{% endif %}
-                    </button>
-                </div>
-            </div>
-        {% else %}
-            <div style="grid-column: 1 / -1; text-align: center; padding: 40px; background: rgba(255,255,255,0.05); border-radius: 12px; color: #aaa;">
-                No mentors found matching your search.
-            </div>
-        {% endfor %}
+    <div id="mentorsGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;">
+        {% include 'FrontOffice/mentorship/_mentors_list_cards.html.twig' %}
     </div>
 </div>
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-    document.querySelectorAll('.favorite-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            const mentorId = btn.getAttribute('data-id');
-            fetch(`/mentorship/mentor/${mentorId}/toggle-favorite`, { method: 'POST' })
-            .then(res => res.json())
-            .then(data => {
-                if(data.status === 'success') {
-                    btn.innerHTML = data.action === 'added' ? '❤️' : '🤍';
-                    btn.style.color = data.action === 'added' ? '#ff5656' : 'var(--text-main)';
-                }
+    function bindFavoriteBtns() {
+        document.querySelectorAll('.favorite-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const mentorId = btn.getAttribute('data-id');
+                fetch(`/mentorship/mentor/${mentorId}/toggle-favorite`, { method: 'POST', headers: {'X-Requested-With': 'XMLHttpRequest'} })
+                .then(res => res.json())
+                .then(data => {
+                    if(data.status === 'success') {
+                        btn.innerHTML = data.action === 'added' ? '❤️' : '🤍';
+                        btn.style.color = data.action === 'added' ? '#ff5656' : 'var(--text-main)';
+                    }
+                });
             });
         });
-    });
+    }
+    
+    bindFavoriteBtns();
+
+    const searchInput = document.getElementById('searchInput');
+    const availableOnly = document.getElementById('availableOnly');
+    const mentorsGrid = document.getElementById('mentorsGrid');
+
+    function fetchMentors() {
+        const q = searchInput.value;
+        const available = availableOnly.checked ? '1' : '';
+        fetch(`{{ path('app_mentors_list') }}?q=${encodeURIComponent(q)}&available_only=${available}`, {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(res => res.text())
+        .then(html => {
+            mentorsGrid.innerHTML = html;
+            bindFavoriteBtns(); // Re-bind interactive buttons after DOM update
+        });
+    }
+
+    searchInput.addEventListener('keyup', fetchMentors);
+    availableOnly.addEventListener('change', fetchMentors);
 });
 </script>
 {% endblock %}

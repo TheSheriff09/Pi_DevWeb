@@ -11,6 +11,9 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
+use Symfony\Contracts\HttpClient\HttpClientInterface;
+use Symfony\Component\HttpFoundation\JsonResponse;
 
 #[Route('/forum')]
 class ForumController extends AbstractController
@@ -57,8 +60,52 @@ class ForumController extends AbstractController
         ]);
     }
 
+    #[Route('/ai/generate', name: 'app_forum_ai_generate', methods: ['POST'])]
+    public function generateAiContent(Request $request, HttpClientInterface $client): JsonResponse
+    {
+        $userId = $request->getSession()->get('user_id');
+        if (!$userId) {
+            return $this->json(['error' => 'Unauthorized'], 401);
+        }
+
+        $data = json_decode($request->getContent(), true);
+        $prompt = $data['prompt'] ?? null;
+        
+        if (!$prompt) {
+            return $this->json(['error' => 'No prompt provided.'], 400);
+        }
+
+        $apiKey = $_ENV['GEMINI_API_KEY'] ?? null;
+        
+        if ($apiKey) {
+            try {
+                $response = $client->request('POST', 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=' . $apiKey, [
+                    'json' => [
+                        'contents' => [
+                            ['parts' => [['text' => "Write a small paragraph for a forum post based on this idea. Do not include quotes or conversational filler, just the raw post text: " . $prompt]]]
+                        ]
+                    ]
+                ]);
+
+                $result = $response->toArray();
+                $content = $result['candidates'][0]['content']['parts'][0]['text'] ?? '';
+                
+                if ($content) {
+                    return $this->json(['content' => trim($content)]);
+                }
+            } catch (\Exception $e) {
+                // Fallback to simulated if API fails
+            }
+        }
+
+        // Simulated Fallback
+        $simulated = "Hey community! I wanted to start a discussion about " . htmlspecialchars($prompt) . ". I've been thinking a lot about the implications of this and how it impacts our workflows. What are your thoughts or experiences with this? I'd love to hear some different perspectives!";
+        
+        return $this->json(['content' => $simulated]);
+    }
+
     #[Route('/post/new', name: 'app_forum_create', methods: ['POST'])]
-    public function create(Request $request, EntityManagerInterface $em): Response
+    public function create(Request $request, EntityManagerInterface $em, ValidatorInterface $validator): Response
     {
         $userId = $request->getSession()->get('user_id');
         if (!$userId) {
@@ -96,9 +143,18 @@ class ForumController extends AbstractController
 
         $post->setImageUrl($imageName);
 
+        $errors = $validator->validate($post);
+        if (count($errors) > 0) {
+            foreach ($errors as $error) {
+                $this->addFlash('error', ucfirst($error->getPropertyPath()) . ': ' . $error->getMessage());
+            }
+            return $this->redirectToRoute('app_forum_index');
+        }
+
         $em->persist($post);
         $em->flush();
 
+        $this->addFlash('success', 'Post created successfully!');
         return $this->redirectToRoute('app_forum_index');
     }
 
@@ -135,7 +191,7 @@ class ForumController extends AbstractController
     }
 
     #[Route('/post/{id}/comment', name: 'app_forum_comment', methods: ['POST'])]
-    public function comment(int $id, Request $request, EntityManagerInterface $em): Response
+    public function comment(int $id, Request $request, EntityManagerInterface $em, ValidatorInterface $validator): Response
     {
         $userId = $request->getSession()->get('user_id');
         if (!$userId) {
@@ -154,6 +210,12 @@ class ForumController extends AbstractController
                 $comment->setPostId($post->getId());
                 $comment->setUserId($user->getId());
                 $comment->setAuthorName($user->getFullName());
+
+                $errors = $validator->validate($comment);
+                if (count($errors) > 0) {
+                    $this->addFlash('error', 'Comment validation failed: ' . $errors[0]->getMessage());
+                    return $this->redirectToRoute('app_forum_show', ['id' => $id]);
+                }
 
                 $em->persist($comment);
                 $em->flush();

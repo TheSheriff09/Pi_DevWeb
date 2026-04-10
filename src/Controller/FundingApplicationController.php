@@ -10,11 +10,12 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 class FundingApplicationController extends AbstractController
 {
     #[Route('/entrepreneur/startups/{startupId}/funding/new', name: 'app_entrepreneur_funding_new')]
-    public function new(Request $request, EntityManagerInterface $em, int $startupId): Response
+    public function new(Request $request, EntityManagerInterface $em, int $startupId, ValidatorInterface $validator): Response
     {
         $userId = $request->getSession()->get('user_id');
         $userRole = $request->getSession()->get('user_role');
@@ -45,6 +46,14 @@ class FundingApplicationController extends AbstractController
             $application->setProjectId($startupId);
             $application->setStatus('Pending');
             $application->setSubmissionDate(new \DateTime());
+            
+            $errors = $validator->validate($application);
+            if (count($errors) > 0) {
+                foreach ($errors as $error) {
+                    $this->addFlash('error', ucfirst($error->getPropertyPath()) . ': ' . $error->getMessage());
+                }
+                return $this->redirectToRoute('app_entrepreneur_funding_new', ['startupId' => $startupId]);
+            }
             
             $em->persist($application);
             $em->flush();

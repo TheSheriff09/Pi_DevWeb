@@ -23,56 +23,86 @@
                         <th style="padding: 15px; color: #b0a8d6; text-align: right;">Actions</th>
                     </tr>
                 </thead>
-                <tbody>
-                    {% for item in mentors %}
-                        <tr class="mentor-row" style="border-bottom: 1px solid rgba(255,255,255,0.05);">
-                            <td class="mentor-id" style="padding: 15px;">#{{ item.user.id }}</td>
-                            <td class="mentor-name" style="padding: 15px; font-weight: 500;">
-                                <div style="display: flex; align-items: center; gap: 10px;">
-                                    <div style="width: 32px; height: 32px; background: #6f56ff; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">
-                                        {{ item.user.fullName|slice(0,1)|upper }}
-                                    </div>
-                                    {{ item.user.fullName }}
-                                </div>
-                            </td>
-                            <td class="mentor-email" style="padding: 15px; color: #b0a8d6;">{{ item.user.email }}</td>
-                            <td style="padding: 15px; color: var(--primary-lighter); font-weight: bold;">{{ item.sessionsCount }}</td>
-                            <td style="padding: 15px;">
-                                <span style="display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 0.85em; font-weight: bold; background: rgba(241, 196, 15, 0.1); color: #f1c40f;">
-                                    ★ {{ item.rating|number_format(1) }}
-                                </span>
-                            </td>
-                            <td style="padding: 15px; text-align: right;">
-                                <a href="#" class="btn-pill" style="background: rgba(111, 86, 255, 0.2); color: #8d79ff; padding: 6px 12px; font-size: 0.8rem;" onclick="alert('Viewing detailed profile temporarily offline'); return false;">View</a>
-                            </td>
-                        </tr>
-                    {% else %}
-                        <tr>
-                            <td colspan="6" style="padding: 20px; text-align: center; color: #b0a8d6;">No Mentors found in the system.</td>
-                        </tr>
-                    {% endfor %}
+                <tbody id="mentorsTableBody">
+                    {% include 'BackOffice/mentorship/_mentors_tbody.html.twig' %}
                 </tbody>
             </table>
+        </div>
+    </div>
+
+    <!-- Mentor Profile Popup Modal -->
+    <div id="mentorModalOverlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; backdrop-filter: blur(5px);">
+        <div style="background: var(--bg-dark, #1a1a2e); border: 1px solid rgba(111, 86, 255, 0.3); border-radius: 15px; width: 400px; max-width: 90%; position: relative; padding: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+            <button onclick="closeMentorModal()" style="position: absolute; top: 15px; right: 15px; background: transparent; border: none; font-size: 1.5rem; color: #b0a8d6; cursor: pointer;">&times;</button>
+            <div style="text-align: center; margin-bottom: 20px;">
+                <div id="modalAvatar" style="width: 70px; height: 70px; background: linear-gradient(135deg, #6f56ff, #d2a7ff); border-radius: 50%; margin: 0 auto 15px; display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: bold; color: white;">
+                    A
+                </div>
+                <h2 id="modalName" style="color: var(--text-main); margin: 0 0 5px;">Mentor Name</h2>
+                <p id="modalEmail" style="color: var(--primary-lighter); margin: 0; font-size: 0.9rem;">email@example.com</p>
+            </div>
+            
+            <div style="background: rgba(255,255,255,0.02); border-radius: 10px; padding: 15px; margin-bottom: 20px;">
+                <h4 style="color: #b0a8d6; margin: 0 0 10px; font-size: 0.85rem; text-transform: uppercase;">Expertise</h4>
+                <p id="modalExpertise" style="color: var(--text-main); margin: 0; font-size: 0.95rem;">Software Engineering, Marketing</p>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;">
+                <div style="background: rgba(111, 86, 255, 0.1); padding: 15px; border-radius: 10px; text-align: center;">
+                    <span style="display: block; font-size: 1.5rem; font-weight: bold; color: var(--text-main);" id="modalSessions">0</span>
+                    <span style="font-size: 0.8rem; color: #b0a8d6;">Completed Sessions</span>
+                </div>
+                <div style="background: rgba(241, 196, 15, 0.1); padding: 15px; border-radius: 10px; text-align: center;">
+                    <span style="display: block; font-size: 1.5rem; font-weight: bold; color: #f1c40f;" id="modalRating">★ 0.0</span>
+                    <span style="font-size: 0.8rem; color: #b0a8d6;">Average Rating</span>
+                </div>
+            </div>
+
+            <div style="text-align: center; color: #b0a8d6; font-size: 0.8rem;">
+                Joined: <span id="modalJoined">YYYY-MM-DD</span>
+            </div>
         </div>
     </div>
 {% endblock %}
 
 {% block javascripts %}
 <script>
+    function openMentorModal(btn) {
+        document.getElementById('modalAvatar').innerText = btn.getAttribute('data-name').charAt(0).toUpperCase();
+        document.getElementById('modalName').innerText = btn.getAttribute('data-name');
+        document.getElementById('modalEmail').innerText = btn.getAttribute('data-email');
+        document.getElementById('modalExpertise').innerText = btn.getAttribute('data-expertise');
+        document.getElementById('modalSessions').innerText = btn.getAttribute('data-sessions');
+        document.getElementById('modalRating').innerText = "★ " + btn.getAttribute('data-rating');
+        document.getElementById('modalJoined').innerText = btn.getAttribute('data-joined');
+
+        document.getElementById('mentorModalOverlay').style.display = 'flex';
+    }
+
+    function closeMentorModal() {
+        document.getElementById('mentorModalOverlay').style.display = 'none';
+    }
+
+    // Close on click outside
+    document.getElementById('mentorModalOverlay').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeMentorModal();
+        }
+    });
+
     document.addEventListener("DOMContentLoaded", function() {
         const searchInput = document.getElementById('mentorSearchInput');
+        const tableBody = document.getElementById('mentorsTableBody');
+
         if (searchInput) {
             searchInput.addEventListener('keyup', function() {
-                const term = this.value.toLowerCase();
-                const rows = document.querySelectorAll('.mentor-row');
-                rows.forEach(row => {
-                    const name = row.querySelector('.mentor-name').textContent.toLowerCase();
-                    const email = row.querySelector('.mentor-email').textContent.toLowerCase();
-                    if (name.includes(term) || email.includes(term)) {
-                        row.style.display = '';
-                    } else {
-                        row.style.display = 'none';
-                    }
+                const term = this.value;
+                fetch(`{{ path('app_admin_mentorship_mentors') }}?search=${encodeURIComponent(term)}`, {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                })
+                .then(response => response.text())
+                .then(html => {
+                    tableBody.innerHTML = html;
                 });
             });
         }

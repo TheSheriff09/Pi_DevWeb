@@ -317,10 +317,25 @@
             
             <form method="post" action="{{ path('app_forum_create') }}" enctype="multipart/form-data">
                 <label class="field-label" style="color: var(--text-main);" for="title">Title</label>
-                <input type="text" id="title" name="title" class="pillField" style="color: #000;" required>
+                <input type="text" id="title" name="title" class="pillField" style="color: #000;">
                 
+                <!-- AI Assistant Module -->
+                <div style="background: rgba(111, 86, 255, 0.05); border: 1px solid rgba(111, 86, 255, 0.2); border-radius: 12px; padding: 15px; margin: 15px 0;">
+                    <label class="field-label" style="color: var(--primary); display: flex; align-items: center; gap: 8px;">
+                        <span>✨</span> AI Assistant
+                    </label>
+                    <p style="font-size: 0.8rem; color: #888; margin-bottom: 10px;">Not sure what to write? Give me a topic and I'll draft it for you!</p>
+                    <div style="display: flex; gap: 10px;">
+                        <input type="text" id="aiPromptInput" class="pillField" placeholder="e.g. Benefits of using AI in startups" style="border: 1px solid rgba(111, 86, 255, 0.3); color: #000; flex: 1;">
+                        <button type="button" id="aiGenerateBtn" class="btn-pill glow-btn" style="padding: 10px 15px; font-size: 0.9rem;" onclick="generateAiDraft()">Draft</button>
+                    </div>
+                    <div id="aiLoadingIndicator" style="display: none; margin-top: 10px; font-size: 0.85rem; color: var(--primary); font-weight: bold; align-items: center; gap: 8px;">
+                        <span style="display: inline-block; animation: spin 1s linear infinite;">⏳</span> AI is generating your draft...
+                    </div>
+                </div>
+
                 <label class="field-label" style="color: var(--text-main);" for="content">Content</label>
-                <textarea id="content" name="content" class="pillField" rows="5" style="border-radius: 12px; resize: vertical; color: #000;" required></textarea>
+                <textarea id="content" name="content" class="pillField" rows="5" style="border-radius: 12px; resize: vertical; color: #000;"></textarea>
                 
                 <label class="field-label" style="color: var(--text-main);" for="image">Upload Image (Optional)</label>
                 <input type="file" id="image" name="image" class="pillField" style="padding: 10px; color: var(--text-main);" accept="image/*">
@@ -337,8 +352,64 @@
 
 {% block javascripts %}
     {{ parent() }}
+    <style>
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+    </style>
     <script>
+        async function generateAiDraft() {
+            const promptInput = document.getElementById('aiPromptInput');
+            const targetTextArea = document.getElementById('content');
+            const generateBtn = document.getElementById('aiGenerateBtn');
+            const loadingIndicator = document.getElementById('aiLoadingIndicator');
+            
+            const prompt = promptInput.value.trim();
+            if(!prompt) {
+                if(typeof window.showCustomToast === 'function') {
+                    window.showCustomToast('error', 'Please enter a topic for the AI to draft.');
+                } else {
+                    alert('Please enter a topic for the AI.');
+                }
+                return;
+            }
 
+            generateBtn.disabled = true;
+            generateBtn.style.opacity = '0.5';
+            loadingIndicator.style.display = 'flex';
+
+            try {
+                const response = await fetch(`{{ path('app_forum_ai_generate') }}`, {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest' 
+                    },
+                    body: JSON.stringify({ prompt: prompt })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    targetTextArea.value = data.content;
+                    
+                    if(typeof window.showCustomToast === 'function') {
+                        window.showCustomToast('success', 'AI draft generated! Feel free to edit the text below.');
+                    }
+                } else {
+                    if(response.status === 401) {
+                        window.location.href = "{{ path('app_login') }}";
+                    } else {
+                        throw new Error("Failed to generate content");
+                    }
+                }
+            } catch (e) {
+                if(typeof window.showCustomToast === 'function') {
+                    window.showCustomToast('error', 'Error reaching AI Assistant. Try again.');
+                }
+            } finally {
+                generateBtn.disabled = false;
+                generateBtn.style.opacity = '1';
+                loadingIndicator.style.display = 'none';
+            }
+        }
 
         async function toggleFeedLike(postId, typeStr, emojiChar) {
             const button = document.getElementById('likeBtn_' + postId);

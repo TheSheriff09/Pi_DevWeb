@@ -38,6 +38,7 @@ class MentorEvaluations
 
     #[ORM\Column(name: '`comment`', type: Types::TEXT, nullable: true)]
     #[Assert\Type('string')]
+    #[Assert\NotBlank(message: 'Please provide a comment.')]
     private ?string $comment = null;
 
     #[ORM\Column(name: '`createdAt`', type: Types::DATETIME_MUTABLE)]

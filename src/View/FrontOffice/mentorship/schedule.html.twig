@@ -11,15 +11,15 @@
         <form method="post" style="display: flex; gap: 15px; align-items: flex-end; flex-wrap: wrap;">
             <div>
                 <label style="display: block; color: var(--primary-light); margin-bottom: 5px;">Date</label>
-                <input type="date" name="date" required min="{{ 'now'|date('Y-m-d') }}" style="padding: 10px; border-radius: 8px; border: 1px solid rgba(122,92,255,0.3); background: transparent; color: var(--text-main);">
+                <input type="date" name="date" min="{{ 'now'|date('Y-m-d') }}" style="padding: 10px; border-radius: 8px; border: 1px solid rgba(122,92,255,0.3); background: transparent; color: var(--text-main);">
             </div>
             <div>
                 <label style="display: block; color: var(--primary-light); margin-bottom: 5px;">Start Time</label>
-                <input type="time" name="start_time" required style="padding: 10px; border-radius: 8px; border: 1px solid rgba(122,92,255,0.3); background: transparent; color: var(--text-main);">
+                <input type="time" name="start_time" style="padding: 10px; border-radius: 8px; border: 1px solid rgba(122,92,255,0.3); background: transparent; color: var(--text-main);">
             </div>
             <div>
                 <label style="display: block; color: var(--primary-light); margin-bottom: 5px;">End Time</label>
-                <input type="time" name="end_time" required style="padding: 10px; border-radius: 8px; border: 1px solid rgba(122,92,255,0.3); background: transparent; color: var(--text-main);">
+                <input type="time" name="end_time" style="padding: 10px; border-radius: 8px; border: 1px solid rgba(122,92,255,0.3); background: transparent; color: var(--text-main);">
             </div>
             <button type="submit" class="btn-pill" style="background: var(--primary); color: white; border: none; padding: 10px 20px; height: max-content;">+ Add Slot</button>
         </form>

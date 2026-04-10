@@ -23,12 +23,15 @@ class Schedule
     private ?int $mentorID = null;
 
     #[ORM\Column(name: '`availableDate`', type: Types::DATE_MUTABLE)]
+    #[Assert\NotBlank(message: 'Available Date cannot be empty.')]
     private ?\DateTimeInterface $availableDate = null;
 
     #[ORM\Column(name: '`startTime`', type: Types::TIME_MUTABLE)]
+    #[Assert\NotBlank(message: 'Start Time cannot be empty.')]
     private ?\DateTimeInterface $startTime = null;
 
     #[ORM\Column(name: '`endTime`', type: Types::TIME_MUTABLE)]
+    #[Assert\NotBlank(message: 'End Time cannot be empty.')]
     private ?\DateTimeInterface $endTime = null;
 
     #[ORM\Column(name: '`isBooked`', type: Types::BOOLEAN)]

@@ -26,6 +26,13 @@
             <li><a href="{{ path('app_admin_mentorship_bookings')|default('#') }}" class="{{ current_menu|default('') == 'bookings' ? 'active' : '' }}">Manage Bookings</a></li>
             <li><a href="{{ path('app_admin_mentorship_sessions')|default('#') }}" class="{{ current_menu|default('') == 'sessions' ? 'active' : '' }}">Manage Sessions</a></li>
             <li><a href="{{ path('app_admin_mentorship_feedback')|default('#') }}" class="{{ current_menu|default('') == 'feedback' ? 'active' : '' }}">Manage Feedback</a></li>
+                    <li style="margin-top:20px; border-top:1px solid rgba(255,255,255,0.1); padding-top:10px;"><a href="{{ path('app_admin_panel') }}" style="color:var(--primary-light);">Global Modules</a></li>
+            <li><a href="{{ path('app_admin_forum_dashboard') }}">Forum</a></li>
+            <li><a href="{{ path('app_admin_startup_dashboard') }}">Startup</a></li>
+            <li><a href="{{ path('app_admin_evaluation_dashboard') }}">Evaluation</a></li>
+            <li><a href="{{ path('app_admin_users') }}">Users</a></li>
+            <li><a href="{{ path('app_admin_mentorship') }}">Mentorship</a></li>
+            <li><a href="{{ path('app_admin_reclamations') }}">Reclamation & Response</a></li>
         </ul>
         <div class="sidebar-footer">
             <a href="{{ path('app_logout') }}" class="logout-btn glow-btn">Sign Out</a>
@@ -82,3 +89,4 @@
     {% block javascripts %}{% endblock %}
 </body>
 </html>
+

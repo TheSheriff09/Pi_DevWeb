@@ -25,19 +25,19 @@
 
                 <form method="post" action="">
                     <label class="field-label" for="signup-name">Full Name</label>
-                    <input type="text" id="signup-name" name="name" class="pillField" placeholder="Full Name" required autofocus>
+                    <input type="text" id="signup-name" name="name" class="pillField" placeholder="Full Name" autofocus>
 
                     <label class="field-label" for="signup-email">Email</label>
-                    <input type="email" id="signup-email" name="email" class="pillField" placeholder="Entrepreneur@startupflow.in" required>
+                    <input type="email" id="signup-email" name="email" class="pillField" placeholder="Entrepreneur@startupflow.in">
 
                     <label class="field-label" for="signup-password">Password</label>
                     <div class="password-wrap">
-                        <input type="password" id="signup-password" name="password" class="pillField" placeholder="**************" required>
+                        <input type="password" id="signup-password" name="password" class="pillField" placeholder="**************">
                         <button type="button" class="eyeBtn" onclick="togglePass('signup-password')">👁</button>
                     </div>
 
                     <label class="field-label" for="signup-role">Role</label>
-                    <select id="signup-role" name="role" class="pillField" required onchange="handleRoleChange(this.value)">
+                    <select id="signup-role" name="role" class="pillField" onchange="handleRoleChange(this.value)">
                         <option value="" disabled selected>Select your role</option>
                         <option value="entrepreneur">Entrepreneur</option>
                         <option value="mentor">Mentor</option>

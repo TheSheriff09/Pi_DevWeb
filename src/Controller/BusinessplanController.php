@@ -9,11 +9,12 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 class BusinessplanController extends AbstractController
 {
     #[Route('/entrepreneur/startups/{startupId}/businessplan/new', name: 'app_entrepreneur_businessplan_new')]
-    public function new(Request $request, EntityManagerInterface $em, int $startupId): Response
+    public function new(Request $request, EntityManagerInterface $em, int $startupId, ValidatorInterface $validator): Response
     {
         $userId = $request->getSession()->get('user_id');
         $userRole = $request->getSession()->get('user_role');
@@ -59,6 +60,14 @@ class BusinessplanController extends AbstractController
             $bp->setStartupID($startupId);
             $bp->setUserId($userId);
             
+            $errors = $validator->validate($bp);
+            if (count($errors) > 0) {
+                foreach ($errors as $error) {
+                    $this->addFlash('error', ucfirst($error->getPropertyPath()) . ': ' . $error->getMessage());
+                }
+                return $this->redirectToRoute('app_entrepreneur_businessplan_new', ['startupId' => $startupId]);
+            }
+            
             $em->persist($bp);
             $em->flush();
             
@@ -75,7 +84,7 @@ class BusinessplanController extends AbstractController
     }
 
     #[Route('/entrepreneur/businessplan/{id}/edit', name: 'app_entrepreneur_businessplan_edit')]
-    public function edit(Request $request, EntityManagerInterface $em, int $id): Response
+    public function edit(Request $request, EntityManagerInterface $em, int $id, ValidatorInterface $validator): Response
     {
         $userId = $request->getSession()->get('user_id');
         $userRole = $request->getSession()->get('user_role');
@@ -106,6 +115,14 @@ class BusinessplanController extends AbstractController
             $bp->setTimeline($request->request->get('timeline'));
             $bp->setStatus($request->request->get('status'));
             $bp->setLastUpdate(new \DateTime());
+            
+            $errors = $validator->validate($bp);
+            if (count($errors) > 0) {
+                foreach ($errors as $error) {
+                    $this->addFlash('error', ucfirst($error->getPropertyPath()) . ': ' . $error->getMessage());
+                }
+                return $this->redirectToRoute('app_entrepreneur_businessplan_edit', ['id' => $bp->getBusinessPlanID()]);
+            }
             
             $em->flush();
 

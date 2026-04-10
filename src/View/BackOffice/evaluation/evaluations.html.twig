@@ -84,6 +84,13 @@
             <li><a href="{{ path('app_admin_evaluation_dashboard') }}" class="{{ current_menu == 'dashboard' ? 'active' : '' }}">Dashboard</a></li>
             <li><a href="{{ path('app_admin_evaluation_applications') }}" class="{{ current_menu == 'applications' ? 'active' : '' }}">Manage Applications</a></li>
             <li><a href="{{ path('app_admin_evaluation_evaluations') }}" class="{{ current_menu == 'evaluations' ? 'active' : '' }}">Manage Evaluations</a></li>
+                    <li style="margin-top:20px; border-top:1px solid rgba(255,255,255,0.1); padding-top:10px;"><a href="{{ path('app_admin_panel') }}" style="color:var(--primary-light);">Global Modules</a></li>
+            <li><a href="{{ path('app_admin_forum_dashboard') }}">Forum</a></li>
+            <li><a href="{{ path('app_admin_startup_dashboard') }}">Startup</a></li>
+            <li><a href="{{ path('app_admin_evaluation_dashboard') }}">Evaluation</a></li>
+            <li><a href="{{ path('app_admin_users') }}">Users</a></li>
+            <li><a href="{{ path('app_admin_mentorship') }}">Mentorship</a></li>
+            <li><a href="{{ path('app_admin_reclamations') }}">Reclamation & Response</a></li>
         </ul>
         <div class="sidebar-footer">
             <a href="{{ path('app_logout') }}" class="logout-btn glow-btn">Sign Out</a>
@@ -197,3 +204,4 @@
     </script>
 </body>
 </html>
+

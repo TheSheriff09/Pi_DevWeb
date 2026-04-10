@@ -11,12 +11,13 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 #[Route('/mentorship')]
 class BookingController extends AbstractController
 {
     #[Route('/book/{mentorId}/{scheduleId}', name: 'app_mentorship_book')]
-    public function bookSession(int $mentorId, int $scheduleId, Request $request, EntityManagerInterface $em): Response
+    public function bookSession(int $mentorId, int $scheduleId, Request $request, EntityManagerInterface $em, ValidatorInterface $validator): Response
     {
         $userId = $request->getSession()->get('user_id');
         if (!$userId) {
@@ -45,39 +46,43 @@ class BookingController extends AbstractController
         }
 
         if ($request->isMethod('POST')) {
-            $topic = $request->request->get('topic');
-            if (!empty($topic)) {
+            $topic = $request->request->get('topic', '');
                 
-                $startup = $em->getRepository(Startup::class)->findOneBy(['founderID' => $userId]);
-                if (!$startup) {
-                    $startup = $em->getRepository(Startup::class)->findOneBy(['userId' => $userId]);
-                }
-                $startupId = $startup ? $startup->getStartupID() : 0;
+            $startup = $em->getRepository(Startup::class)->findOneBy(['founderID' => $userId]);
+            if (!$startup) {
+                $startup = $em->getRepository(Startup::class)->findOneBy(['userId' => $userId]);
+            }
+            $startupId = $startup ? $startup->getStartupID() : 0;
 
-                $maxId = $em->createQueryBuilder()
-                    ->select('MAX(b.bookingID)')
-                    ->from(Booking::class, 'b')
-                    ->getQuery()
-                    ->getSingleScalarResult();
+            $maxId = $em->createQueryBuilder()
+                ->select('MAX(b.bookingID)')
+                ->from(Booking::class, 'b')
+                ->getQuery()
+                ->getSingleScalarResult();
 
-                $booking = new Booking();
-                $booking->setBookingID(($maxId ?? 0) + 1);
-                $booking->setEntrepreneurID($userId);
-                $booking->setMentorID($mentorId);
-                $booking->setStartupID($startupId);
-                $booking->setRequestedDate($schedule->getAvailableDate());
-                $booking->setRequestedTime($schedule->getStartTime());
-                $booking->setTopic($topic);
-                $booking->setStatus('PENDING');
-                $booking->setCreationDate(new \DateTime());
+            $booking = new Booking();
+            $booking->setBookingID(($maxId ?? 0) + 1);
+            $booking->setEntrepreneurID($userId);
+            $booking->setMentorID($mentorId);
+            $booking->setStartupID($startupId);
+            $booking->setRequestedDate($schedule->getAvailableDate());
+            $booking->setRequestedTime($schedule->getStartTime());
+            $booking->setTopic($topic);
+            $booking->setStatus('PENDING');
+            $booking->setCreationDate(new \DateTime());
                 
-                try {
-                    $em->persist($booking);
-                    $em->flush();
-                    return $this->redirectToRoute('app_my_bookings');
-                } catch (\Exception $e) {
-                    dd('Booking creation failed: ' . $e->getMessage() . ' - StackTrace: ' . $e->getTraceAsString());
-                }
+            $errors = $validator->validate($booking);
+            if (count($errors) > 0) {
+                $this->addFlash('error', 'Booking validation failed: ' . $errors[0]->getMessage());
+                return $this->redirectToRoute('app_mentorship_book', ['mentorId' => $mentorId, 'scheduleId' => $scheduleId]);
+            }
+                
+            try {
+                $em->persist($booking);
+                $em->flush();
+                return $this->redirectToRoute('app_my_bookings');
+            } catch (\Exception $e) {
+                dd('Booking creation failed: ' . $e->getMessage() . ' - StackTrace: ' . $e->getTraceAsString());
             }
         }
 

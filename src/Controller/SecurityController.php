@@ -8,6 +8,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 class SecurityController extends AbstractController
 {
@@ -51,7 +52,7 @@ class SecurityController extends AbstractController
     }
 
     #[Route('/register', name: 'app_register')]
-    public function register(Request $request, EntityManagerInterface $em): Response
+    public function register(Request $request, EntityManagerInterface $em, ValidatorInterface $validator): Response
     {
         if ($request->isMethod('POST')) {
             $name = $request->request->get('name');
@@ -77,6 +78,16 @@ class SecurityController extends AbstractController
                 $user->setMentorExpertise($request->request->get('mentorExpertise'));
             } elseif ($role === 'evaluator') {
                 $user->setEvaluatorLevel($request->request->get('evaluatorLevel'));
+            }
+            
+            $errors = $validator->validate($user);
+            if (count($errors) > 0) {
+                foreach ($errors as $error) {
+                    $this->addFlash('error', ucfirst($error->getPropertyPath()) . ': ' . $error->getMessage());
+                }
+                return $this->render('FrontOffice/security/signup.html.twig', [
+                    'error' => 'Please fix the highlighted errors.'
+                ]);
             }
             
             try {

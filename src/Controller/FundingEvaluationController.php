@@ -11,6 +11,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 class FundingEvaluationController extends AbstractController
 {
@@ -21,8 +22,13 @@ class FundingEvaluationController extends AbstractController
         $userRole = $request->getSession()->get('user_role');
         
         // Strict role validation
-        if (!$userId || strtoupper($userRole) !== 'EVALUATOR') {
+        if (!$userId) {
             return $this->redirectToRoute('app_login');
+        }
+
+        if (strtoupper($userRole) !== 'EVALUATOR') {
+            $this->addFlash('error', 'You do not have the right access to access this page.');
+            return $this->redirectToRoute('app_home');
         }
 
         // Fetch all funding applications (potentially order by pending first)
@@ -45,13 +51,18 @@ class FundingEvaluationController extends AbstractController
     }
 
     #[Route('/evaluator/funding/{id}/evaluate', name: 'app_evaluator_funding_evaluate')]
-    public function evaluate(Request $request, EntityManagerInterface $em, int $id): Response
+    public function evaluate(Request $request, EntityManagerInterface $em, int $id, ValidatorInterface $validator): Response
     {
         $userId = $request->getSession()->get('user_id');
         $userRole = $request->getSession()->get('user_role');
         
-        if (!$userId || strtoupper($userRole) !== 'EVALUATOR') {
+        if (!$userId) {
             return $this->redirectToRoute('app_login');
+        }
+
+        if (strtoupper($userRole) !== 'EVALUATOR') {
+            $this->addFlash('error', 'You do not have the right access to access this page.');
+            return $this->redirectToRoute('app_home');
         }
 
         $application = $em->getRepository(Fundingapplication::class)->find($id);
@@ -88,6 +99,14 @@ class FundingEvaluationController extends AbstractController
             
             // Critical feature: automatically morph the actual application status implicitly!
             $application->setStatus($decision);
+
+            $errors = $validator->validate($evaluation);
+            if (count($errors) > 0) {
+                foreach ($errors as $error) {
+                    $this->addFlash('error', ucfirst($error->getPropertyPath()) . ': ' . $error->getMessage());
+                }
+                return $this->redirectToRoute('app_evaluator_funding_evaluate', ['id' => $id]);
+            }
 
             $em->persist($evaluation);
             $em->flush(); // Flushes both the evaluation AND the updated Application status symmetrically

@@ -20,15 +20,18 @@ class Startup
     #[ORM\Column(type: Types::STRING, length: 255, nullable: true)]
     #[Assert\Length(max: 255)]
     #[Assert\Type('string')]
+    #[Assert\NotBlank(message: 'Startup name cannot be blank.')]
     private ?string $name = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     #[Assert\Type('string')]
+    #[Assert\NotBlank(message: 'Description cannot be blank.')]
     private ?string $description = null;
 
     #[ORM\Column(type: Types::STRING, length: 100, nullable: true)]
     #[Assert\Length(max: 100)]
     #[Assert\Type('string')]
+    #[Assert\NotBlank(message: 'Sector cannot be blank.')]
     private ?string $sector = null;
 
     #[ORM\Column(name: 'imageURL', type: Types::STRING, length: 255, nullable: true)]

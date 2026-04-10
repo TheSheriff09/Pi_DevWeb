@@ -9,6 +9,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 #[Route('/admin/evaluation')]
 class AdminEvaluationController extends AbstractController
@@ -76,7 +77,7 @@ class AdminEvaluationController extends AbstractController
     }
 
     #[Route('/applications/{id}/edit', name: 'app_admin_evaluation_application_edit', methods: ['GET', 'POST'])]
-    public function editApplication(int $id, Request $request, EntityManagerInterface $em): Response
+    public function editApplication(int $id, Request $request, EntityManagerInterface $em, ValidatorInterface $validator): Response
     {
         if ($redirect = $this->ensureAdmin($request)) return $redirect;
 
@@ -90,6 +91,14 @@ class AdminEvaluationController extends AbstractController
             $application->setApplicationReason($request->request->get('applicationReason'));
             $application->setPaymentSchedule($request->request->get('paymentSchedule'));
             $application->setStatus($request->request->get('status'));
+            
+            $errors = $validator->validate($application);
+            if (count($errors) > 0) {
+                foreach ($errors as $error) {
+                    $this->addFlash('error', ucfirst($error->getPropertyPath()) . ': ' . $error->getMessage());
+                }
+                return $this->redirectToRoute('app_admin_evaluation_application_edit', ['id' => $id]);
+            }
             
             $em->flush();
             return $this->redirectToRoute('app_admin_evaluation_applications');
@@ -153,7 +162,7 @@ class AdminEvaluationController extends AbstractController
     }
 
     #[Route('/evaluations/{id}/edit', name: 'app_admin_evaluation_evaluation_edit', methods: ['GET', 'POST'])]
-    public function editEvaluation(int $id, Request $request, EntityManagerInterface $em): Response
+    public function editEvaluation(int $id, Request $request, EntityManagerInterface $em, ValidatorInterface $validator): Response
     {
         if ($redirect = $this->ensureAdmin($request)) return $redirect;
 
@@ -168,6 +177,14 @@ class AdminEvaluationController extends AbstractController
             $evaluation->setRiskLevel($request->request->get('riskLevel'));
             $evaluation->setFundingCategory($request->request->get('fundingCategory'));
             $evaluation->setEvaluationComments($request->request->get('evaluationComments'));
+            
+            $errors = $validator->validate($evaluation);
+            if (count($errors) > 0) {
+                foreach ($errors as $error) {
+                    $this->addFlash('error', ucfirst($error->getPropertyPath()) . ': ' . $error->getMessage());
+                }
+                return $this->redirectToRoute('app_admin_evaluation_evaluation_edit', ['id' => $id]);
+            }
             
             $em->flush();
             return $this->redirectToRoute('app_admin_evaluation_evaluations');

@@ -76,6 +76,14 @@ class MentorController extends AbstractController
             }
         }
 
+        if ($request->isXmlHttpRequest()) {
+            return $this->render('FrontOffice/mentorship/_mentors_list_cards.html.twig', [
+                'mentors' => $mentors,
+                'favoriteIds' => $favoriteIds,
+                'mentorRatings' => $mentorRatings
+            ]);
+        }
+
         return $this->render('FrontOffice/mentorship/mentors_list.html.twig', [
             'mentors' => $mentors,
             'favoriteIds' => $favoriteIds,

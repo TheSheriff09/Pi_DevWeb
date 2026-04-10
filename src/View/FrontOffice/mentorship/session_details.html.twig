@@ -64,7 +64,7 @@
 
                 {% if role == 'MENTOR' %}
                     <form method="post" style="margin-top: 20px; display: flex; gap: 10px;">
-                        <input type="text" name="todo_content" required placeholder="Add a new task for the entrepreneur..." style="flex: 1; padding: 10px; border-radius: 8px; border: 1px solid rgba(122,92,255,0.3); background: transparent; color: var(--text-main);">
+                        <input type="text" name="todo_content" placeholder="Add a new task for the entrepreneur..." style="flex: 1; padding: 10px; border-radius: 8px; border: 1px solid rgba(122,92,255,0.3); background: transparent; color: var(--text-main);">
                         <button type="submit" class="btn-pill" style="background: var(--primary); color: white; border: none; padding: 10px 20px;">Add Todo</button>
                     </form>
                 {% endif %}
@@ -87,7 +87,7 @@
 
                 {% if role == 'MENTOR' %}
                     <form method="post" style="margin-top: 20px;">
-                        <textarea name="note_content" required rows="3" placeholder="Write session notes (visible to entrepreneur)..." style="width: 100%; border-radius: 8px; border: 1px solid rgba(122,92,255,0.3); background: transparent; color: var(--text-main); padding: 10px; margin-bottom: 10px; box-sizing: border-box;"></textarea>
+                        <textarea name="note_content" rows="3" placeholder="Write session notes (visible to entrepreneur)..." style="width: 100%; border-radius: 8px; border: 1px solid rgba(122,92,255,0.3); background: transparent; color: var(--text-main); padding: 10px; margin-bottom: 10px; box-sizing: border-box;"></textarea>
                         <button type="submit" class="btn-pill" style="background: var(--primary); color: white; border: none; padding: 10px 20px;">Save Note</button>
                     </form>
                 {% endif %}
@@ -100,7 +100,7 @@
                 <form method="post" action="{{ path('app_session_feedback', {'id': sessionObj.sessionID}) }}">
                     <div style="margin-bottom: 15px;">
                         <label style="color: var(--primary-light); display: inline-block; margin-bottom: 5px;">Rating (1-5)</label>
-                        <select name="rating" required style="width: 100%; border-radius: 8px; border: 1px solid rgba(122,92,255,0.3); background: transparent; color: var(--text-main); padding: 10px;">
+                        <select name="rating" style="width: 100%; border-radius: 8px; border: 1px solid rgba(122,92,255,0.3); background: transparent; color: var(--text-main); padding: 10px;">
                             <option value="5" style="background: var(--bg-light); color: var(--text-main);">5 - Excellent</option>
                             <option value="4" style="background: var(--bg-light); color: var(--text-main);">4 - Very Good</option>
                             <option value="3" style="background: var(--bg-light); color: var(--text-main);">3 - Good</option>
@@ -110,7 +110,7 @@
                     </div>
                     <div style="margin-bottom: 15px;">
                         <label style="color: var(--primary-light); display: inline-block; margin-bottom: 5px;">Comment</label>
-                        <textarea name="comment" rows="3" required placeholder="How was the session?" style="width: 100%; border-radius: 8px; border: 1px solid rgba(122,92,255,0.3); background: transparent; color: var(--text-main); padding: 10px; box-sizing: border-box;"></textarea>
+                        <textarea name="comment" rows="3" placeholder="How was the session?" style="width: 100%; border-radius: 8px; border: 1px solid rgba(122,92,255,0.3); background: transparent; color: var(--text-main); padding: 10px; box-sizing: border-box;"></textarea>
                     </div>
                     <button type="submit" class="btn-pill" style="background: #2ecc71; color: white; border: none; padding: 10px 20px;">Submit Feedback</button>
                 </form>

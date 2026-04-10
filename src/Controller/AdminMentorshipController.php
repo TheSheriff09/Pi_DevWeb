@@ -69,7 +69,19 @@ class AdminMentorshipController extends AbstractController
             return $this->redirectToRoute('app_login');
         }
 
-        $mentorsRaw = $em->getRepository(Users::class)->findBy(['role' => 'MENTOR'], ['id' => 'DESC']);
+        $search = $request->query->get('search', '');
+        
+        $qb = $em->getRepository(Users::class)->createQueryBuilder('u')
+                 ->where('u.role = :role')
+                 ->setParameter('role', 'MENTOR')
+                 ->orderBy('u.id', 'DESC');
+
+        if ($search) {
+            $qb->andWhere('u.fullName LIKE :search OR u.email LIKE :search')
+               ->setParameter('search', '%' . $search . '%');
+        }
+
+        $mentorsRaw = $qb->getQuery()->getResult();
         $mentors = [];
 
         foreach ($mentorsRaw as $m) {
@@ -87,6 +99,12 @@ class AdminMentorshipController extends AbstractController
                 'sessionsCount' => $sessionsCount,
                 'rating' => $avgRating
             ];
+        }
+
+        if ($request->isXmlHttpRequest()) {
+            return $this->render('BackOffice/mentorship/_mentors_tbody.html.twig', [
+                'mentors' => $mentors
+            ]);
         }
 
         return $this->render('BackOffice/mentorship/mentors.html.twig', [

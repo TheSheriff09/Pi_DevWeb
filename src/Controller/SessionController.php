@@ -12,6 +12,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 #[Route('/mentorship')]
 class SessionController extends AbstractController
@@ -49,7 +50,7 @@ class SessionController extends AbstractController
     }
 
     #[Route('/session/{id}', name: 'app_session_details')]
-    public function sessionDetails(int $id, Request $request, EntityManagerInterface $em): Response
+    public function sessionDetails(int $id, Request $request, EntityManagerInterface $em, ValidatorInterface $validator): Response
     {
         $userId = $request->getSession()->get('user_id');
         $role = $request->getSession()->get('user_role');
@@ -77,6 +78,13 @@ class SessionController extends AbstractController
                 $note->setEntrepreneurID($session->getEntrepreneurID());
                 $note->setNotes($request->request->get('note_content'));
                 $note->setNoteDate(new \DateTime());
+                
+                $errors = $validator->validate($note);
+                if (count($errors) > 0) {
+                    $this->addFlash('error', 'Note validation failed: ' . $errors[0]->getMessage());
+                    return $this->redirectToRoute('app_session_details', ['id' => $id]);
+                }
+                
                 $em->persist($note);
                 $em->flush();
             }
@@ -98,6 +106,13 @@ class SessionController extends AbstractController
                 $todo->setTaskDescription($request->request->get('todo_content'));
                 $todo->setIsDone(false);
                 $todo->setCreatedAt(new \DateTime());
+                
+                $errors = $validator->validate($todo);
+                if (count($errors) > 0) {
+                    $this->addFlash('error', 'Todo validation failed: ' . $errors[0]->getMessage());
+                    return $this->redirectToRoute('app_session_details', ['id' => $id]);
+                }
+                
                 $em->persist($todo);
                 $em->flush();
             }
@@ -189,7 +204,7 @@ class SessionController extends AbstractController
     }
 
     #[Route('/session/{id}/feedback', name: 'app_session_feedback', methods: ['POST'])]
-    public function submitFeedback(int $id, Request $request, EntityManagerInterface $em): Response
+    public function submitFeedback(int $id, Request $request, EntityManagerInterface $em, ValidatorInterface $validator): Response
     {
         $userId = $request->getSession()->get('user_id');
         $role = $request->getSession()->get('user_role');
@@ -221,6 +236,12 @@ class SessionController extends AbstractController
             $evaluation->setRating($rating);
             $evaluation->setComment($comment);
             $evaluation->setCreatedAt(new \DateTime());
+            
+            $errors = $validator->validate($evaluation);
+            if (count($errors) > 0) {
+                $this->addFlash('error', 'Feedback validation failed: ' . $errors[0]->getMessage());
+                return $this->redirectToRoute('app_session_details', ['id' => $id]);
+            }
             
             $em->persist($evaluation);
             $em->flush();
