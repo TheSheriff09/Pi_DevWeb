@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Evaluation Admin - Edit Application</title>
+    <link rel="stylesheet" href="{{ asset('Back/css/styles.css') }}?v=2">
+    <style>
+        .edit-form-container {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 25px;
+            margin-top: 20px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #b0a8d6;
+            font-weight: 500;
+        }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(0, 0, 0, 0.2);
+            color: white;
+            font-size: 1rem;
+        }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            outline: none;
+            border-color: var(--primary-light);
+            box-shadow: 0 0 5px rgba(181, 139, 255, 0.3);
+        }
+        .btn-submit {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+        .btn-submit:hover {
+            background: var(--primary-light);
+            box-shadow: 0 0 15px var(--primary-light);
+        }
+    </style>
+</head>
+<body>
+    <script>
+        if (localStorage.getItem('admin_theme') === 'dark') {
+            document.body.classList.add('dark-mode');
+        }
+    </script>
+
+    <!-- SIDEBAR FOR EVALUATION MODULE -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <h2>Evaluation Admin</h2>
+        </div>
+        <ul class="sidebar-menu">
+            <li><a href="{{ path('app_admin_panel') }}" style="color: #ff9d9d;">&larr; Main Admin</a></li>
+            <li><a href="{{ path('app_admin_evaluation_dashboard') }}">Dashboard</a></li>
+            <li><a href="{{ path('app_admin_evaluation_applications') }}" class="active">Manage Applications</a></li>
+            <li><a href="{{ path('app_admin_evaluation_evaluations') }}">Manage Evaluations</a></li>
+        </ul>
+    </aside>
+
+    <div class="main-content">
+        <header class="topbar">
+            <div class="topbar-left">
+                <h2>Edit Application #{{ application.id }}</h2>
+            </div>
+        </header>
+
+        <main class="dashboard-content" style="position: relative; z-index: 2;">
+            <div class="card" style="width: 100%; max-width: 800px; margin: 0 auto;">
+                <h3 style="color: var(--primary-lighter);">Modify Application Details</h3>
+                
+                <div class="edit-form-container">
+                    <form method="post">
+                        <div class="form-group">
+                            <label for="amount">Requested Amount ($)</label>
+                            <input type="number" step="0.01" id="amount" name="amount" value="{{ application.amount }}">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="applicationReason">Application Reason</label>
+                            <input type="text" id="applicationReason" name="applicationReason" value="{{ application.applicationReason }}">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="paymentSchedule">Payment Schedule</label>
+                            <input type="text" id="paymentSchedule" name="paymentSchedule" value="{{ application.paymentSchedule }}">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="status">Application Status</label>
+                            <select id="status" name="status">
+                                <option value="Pending" {% if application.status == 'Pending' %}selected{% endif %}>Pending</option>
+                                <option value="Under Review" {% if application.status == 'Under Review' %}selected{% endif %}>Under Review</option>
+                                <option value="Approved" {% if application.status == 'Approved' %}selected{% endif %}>Approved</option>
+                                <option value="Rejected" {% if application.status == 'Rejected' %}selected{% endif %}>Rejected</option>
+                            </select>
+                        </div>
+                        
+                        <div style="margin-top: 30px; text-align: right;">
+                            <a href="{{ path('app_admin_evaluation_applications') }}" style="color: #b0a8d6; text-decoration: none; margin-right: 20px;">Cancel</a>
+                            <button type="submit" class="btn-submit">Save Changes</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </main>
+    </div>
+</body>
+</html>
+

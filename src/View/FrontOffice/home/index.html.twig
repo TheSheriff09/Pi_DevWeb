@@ -2,45 +2,10 @@
 
 {% block title %}StartupFlow Tunisia - Home{% endblock %}
 
-{% set isLoggedIn = app.request.session.get('user_id') is not empty %}
-
 {% block body %}
-    <!-- Top Navbar -->
-    <nav class="navbar futuristic-nav">
-        <!-- Brand -->
-        <a href="{{ path('app_home') }}" class="brand">
-            <h1 class="brand-title glow-text">StartupFlow</h1>
-            <p class="brand-sub">Tunisia</p>
-        </a>
-
-        <!-- Menu -->
-        <div class="nav-links">
-            <a href="{{ path('app_home') }}" class="nav-link selected">Home</a>
-            {% if isLoggedIn %}
-                <a href="#startup" class="nav-link">Startup</a>
-                <a href="#mentorship" class="nav-link">Mentorship</a>
-                <a href="#forum" class="nav-link">Forum</a>
-                <a href="#evaluation" class="nav-link">Evaluation</a>
-            {% else %}
-                <a href="{{ path('app_login') }}" class="nav-link">Startup</a>
-                <a href="{{ path('app_login') }}" class="nav-link">Mentorship</a>
-                <a href="{{ path('app_login') }}" class="nav-link">Forum</a>
-                <a href="{{ path('app_login') }}" class="nav-link">Evaluation</a>
-            {% endif %}
-        </div>
-
-        <!-- Auth buttons & Theme Toggle -->
-        <div class="auth-buttons">
-            <button id="themeToggleBtn" class="btn-pill" style="padding: 8px 15px; background: transparent; border: 2px solid var(--primary-light); color: var(--primary-light);">🌓</button>
-            {% if isLoggedIn %}
-                <a href="{{ path('app_profile') }}" class="btn-pill glow-btn" style="background: linear-gradient(to right, #d2a7ff, #7a5cff);">My Profile</a>
-                <a href="{{ path('app_logout') }}" class="signup-link">Sign out</a>
-            {% else %}
-                <a href="{{ path('app_login') }}" class="btn-pill glow-btn">log in</a>
-                <a href="{{ path('app_register') }}" class="signup-link">sign up</a>
-            {% endif %}
-        </div>
-    </nav>
+    <style>
+        /* Optional: add some top margin to hero if navbar overlaps, but sticky top:0 usually pushes it down implicitly */
+    </style>
 
     <!-- Hero Content -->
     <main class="hero-container">
@@ -61,31 +26,12 @@
         </div>
     </main>
 
-    <!-- Footer -->
-    <footer class="footer futuristic-footer">
-        <p>&copy; {{ 'now'|date('Y') }} StartupFlow Tunisia. All rights reserved.</p>
-    </footer>
 {% endblock %}
 
 {% block javascripts %}
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script>
         document.addEventListener("DOMContentLoaded", function() {
-            // Theme Toggle Logic
-            const toggleBtn = document.getElementById('themeToggleBtn');
-            if (toggleBtn) {
-                toggleBtn.addEventListener('click', () => {
-                    const isDark = document.body.classList.contains('dark-mode');
-                    if (isDark) {
-                        document.body.classList.remove('dark-mode');
-                        localStorage.setItem('theme', 'light');
-                    } else {
-                        document.body.classList.add('dark-mode');
-                        localStorage.setItem('theme', 'dark');
-                    }
-                });
-            }
-
             const container = document.getElementById('threed-cube-container');
             
             if (!container) return;

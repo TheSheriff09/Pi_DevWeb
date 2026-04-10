@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Forum Admin - Posts</title>
+    <link rel="stylesheet" href="{{ asset('Back/css/styles.css') }}?v=2">
+</head>
+<body>
+    <script>
+        if (localStorage.getItem('admin_theme') === 'dark') {
+            document.body.classList.add('dark-mode');
+        }
+    </script>
+
+    <!-- SIDEBAR FOR FORUM MODULE -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <h2>Forum Admin</h2>
+        </div>
+        <ul class="sidebar-menu">
+            <li><a href="{{ path('app_admin_panel') }}" style="color: #ff9d9d;">&larr; Main Admin</a></li>
+            <li><a href="{{ path('app_admin_forum_dashboard') }}" class="{{ current_menu == 'dashboard' ? 'active' : '' }}">Dashboard</a></li>
+            <li><a href="{{ path('app_admin_forum_posts') }}" class="{{ current_menu == 'posts' ? 'active' : '' }}">Manage Posts</a></li>
+            <li><a href="{{ path('app_admin_forum_comments') }}" class="{{ current_menu == 'comments' ? 'active' : '' }}">Manage Comments</a></li>
+            <li><a href="{{ path('app_admin_forum_interactions') }}" class="{{ current_menu == 'interactions' ? 'active' : '' }}">Manage Interactions</a></li>
+                    <li style="margin-top:20px; border-top:1px solid rgba(255,255,255,0.1); padding-top:10px;"><a href="{{ path('app_admin_panel') }}" style="color:var(--primary-light);">Global Modules</a></li>
+            <li><a href="{{ path('app_admin_forum_dashboard') }}">Forum</a></li>
+            <li><a href="{{ path('app_admin_startup_dashboard') }}">Startup</a></li>
+            <li><a href="{{ path('app_admin_evaluation_dashboard') }}">Evaluation</a></li>
+            <li><a href="{{ path('app_admin_users') }}">Users</a></li>
+            <li><a href="{{ path('app_admin_mentorship') }}">Mentorship</a></li>
+            <li><a href="{{ path('app_admin_reclamations') }}">Reclamation & Response</a></li>
+        </ul>
+        <div class="sidebar-footer">
+            <a href="{{ path('app_logout') }}" class="logout-btn glow-btn">Sign Out</a>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <div class="main-content">
+        <!-- TOPBAR -->
+        <header class="topbar">
+            <div class="topbar-left">
+                <h2>Manage Posts</h2>
+            </div>
+            <div class="topbar-right">
+                <button id="themeToggleBtn" class="btn-pill" style="border: 2px solid var(--primary-light); background: transparent; color: var(--primary-light);">🌓</button>
+            </div>
+        </header>
+
+        <main class="dashboard-content" style="position: relative; z-index: 2;">
+            
+            <div class="card" style="width: 100%; margin-bottom: 20px;">
+                <form id="searchForm" style="display: flex; gap: 10px;" onsubmit="event.preventDefault();">
+                    <input type="text" id="searchInput" name="q" class="form-control" style="flex: 1; padding: 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.1); color: var(--text-main);" placeholder="Search posts by title or content..." value="{{ searchQuery }}">
+                </form>
+            </div>
+
+            <div class="card" style="width: 100%;">
+                <div style="overflow-x: auto;">
+                    <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                        <thead>
+                            <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
+                                <th style="padding: 15px; color: #b0a8d6;">ID</th>
+                                <th style="padding: 15px; color: #b0a8d6;">Title</th>
+                                <th style="padding: 15px; color: #b0a8d6;">Content Snippet</th>
+                                <th style="padding: 15px; color: #b0a8d6;">Author</th>
+                                <th style="padding: 15px; color: #b0a8d6;">Date</th>
+                                <th style="padding: 15px; color: #b0a8d6; text-align: right;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="postsTableBody">
+                            {% include 'BackOffice/forum/_posts_tbody.html.twig' %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+        </main>
+        
+        <footer class="futuristic-footer" style="padding: 20px; text-align: center; border-top: 1px solid rgba(255, 255, 255, 0.1);">
+            <p style="color: #b0a8d6;">&copy; {{ 'now'|date('Y') }} StartupFlow Admin.</p>
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const toggleBtn = document.getElementById('themeToggleBtn');
+            if (toggleBtn) {
+                toggleBtn.addEventListener('click', () => {
+                    const isDark = document.body.classList.contains('dark-mode');
+                    if (isDark) {
+                        document.body.classList.remove('dark-mode');
+                        localStorage.setItem('admin_theme', 'light');
+                    } else {
+                        document.body.classList.add('dark-mode');
+                        localStorage.setItem('admin_theme', 'dark');
+                    }
+                });
+            }
+
+            const searchInput = document.getElementById('searchInput');
+            const tableBody = document.getElementById('postsTableBody');
+
+            searchInput.addEventListener('keyup', function() {
+                const query = searchInput.value;
+                fetch(`{{ path('app_admin_forum_posts') }}?q=${encodeURIComponent(query)}`, {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                })
+                .then(response => response.text())
+                .then(html => {
+                    tableBody.innerHTML = html;
+                });
+            });
+        });
+    </script>
+</body>
+</html>
+

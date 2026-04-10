@@ -12,12 +12,12 @@ use Symfony\Component\Validator\Constraints as Assert;
 class Fundingevaluation
 {
     #[ORM\Id]
-    #[ORM\Column(type: Types::INTEGER)]
+    #[ORM\Column(name: 'id', type: Types::INTEGER)]
     #[Assert\NotBlank]
     #[Assert\Type('integer')]
     private ?int $id = null;
 
-    #[ORM\Column(type: Types::INTEGER)]
+    #[ORM\Column(name: 'fundingApplicationId', type: Types::INTEGER)]
     #[Assert\NotBlank]
     #[Assert\Type('integer')]
     private ?int $fundingApplicationId = null;
@@ -33,26 +33,26 @@ class Fundingevaluation
     #[Assert\Type('string')]
     private ?string $decision = null;
 
-    #[ORM\Column(type: Types::TEXT, nullable: true)]
+    #[ORM\Column(name: 'evaluationComments', type: Types::TEXT, nullable: true)]
     #[Assert\Type('string')]
     private ?string $evaluationComments = null;
 
-    #[ORM\Column(type: Types::INTEGER)]
+    #[ORM\Column(name: 'evaluatorId', type: Types::INTEGER)]
     #[Assert\NotBlank]
     #[Assert\Type('integer')]
     private ?int $evaluatorId = null;
 
-    #[ORM\Column(type: Types::STRING, length: 50, nullable: true)]
+    #[ORM\Column(name: 'riskLevel', type: Types::STRING, length: 50, nullable: true)]
     #[Assert\Length(max: 50)]
     #[Assert\Type('string')]
     private ?string $riskLevel = null;
 
-    #[ORM\Column(type: Types::STRING, length: 50, nullable: true)]
+    #[ORM\Column(name: 'fundingCategory', type: Types::STRING, length: 50, nullable: true)]
     #[Assert\Length(max: 50)]
     #[Assert\Type('string')]
     private ?string $fundingCategory = null;
 
-    #[ORM\Column(type: Types::DATETIME_MUTABLE)]
+    #[ORM\Column(name: 'created_at', type: Types::DATETIME_MUTABLE)]
     private ?\DateTimeInterface $createdAt = null;
 
     public function getId(): ?int

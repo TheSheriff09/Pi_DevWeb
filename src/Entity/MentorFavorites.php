@@ -12,27 +12,32 @@ use Symfony\Component\Validator\Constraints as Assert;
 class MentorFavorites
 {
     #[ORM\Id]
-    #[ORM\GeneratedValue]
-    #[ORM\Column(type: Types::INTEGER)]
+    #[ORM\Column(name: '`id`', type: Types::INTEGER)]
     #[Assert\Type('integer')]
     private ?int $id = null;
 
-    #[ORM\Column(type: Types::INTEGER)]
+    #[ORM\Column(name: '`entrepreneurID`', type: Types::INTEGER)]
     #[Assert\NotBlank]
     #[Assert\Type('integer')]
     private ?int $entrepreneurID = null;
 
-    #[ORM\Column(type: Types::INTEGER)]
+    #[ORM\Column(name: '`mentorID`', type: Types::INTEGER)]
     #[Assert\NotBlank]
     #[Assert\Type('integer')]
     private ?int $mentorID = null;
 
-    #[ORM\Column(type: Types::DATETIME_MUTABLE)]
+    #[ORM\Column(name: '`createdAt`', type: Types::DATETIME_MUTABLE)]
     private ?\DateTimeInterface $createdAt = null;
 
     public function getId(): ?int
     {
         return $this->id;
+    }
+
+    public function setId(?int $id): static
+    {
+        $this->id = $id;
+        return $this;
     }
 
     public function getEntrepreneurID(): ?int

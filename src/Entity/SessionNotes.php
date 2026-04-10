@@ -12,31 +12,31 @@ use Symfony\Component\Validator\Constraints as Assert;
 class SessionNotes
 {
     #[ORM\Id]
-    #[ORM\Column(type: Types::INTEGER)]
+    #[ORM\Column(name: '`noteID`', type: Types::INTEGER)]
     #[Assert\NotBlank]
     #[Assert\Type('integer')]
     private ?int $noteID = null;
 
-    #[ORM\Column(type: Types::INTEGER)]
+    #[ORM\Column(name: '`sessionID`', type: Types::INTEGER)]
     #[Assert\NotBlank]
     #[Assert\Type('integer')]
     private ?int $sessionID = null;
 
-    #[ORM\Column(type: Types::INTEGER)]
+    #[ORM\Column(name: '`entrepreneurID`', type: Types::INTEGER)]
     #[Assert\NotBlank]
     #[Assert\Type('integer')]
     private ?int $entrepreneurID = null;
 
-    #[ORM\Column(type: Types::INTEGER, nullable: true)]
+    #[ORM\Column(name: '`satisfactionScore`', type: Types::INTEGER, nullable: true)]
     #[Assert\Type('integer')]
     private ?int $satisfactionScore = null;
 
-    #[ORM\Column(type: Types::TEXT)]
+    #[ORM\Column(name: '`notes`', type: Types::TEXT)]
     #[Assert\NotBlank]
     #[Assert\Type('string')]
     private ?string $notes = null;
 
-    #[ORM\Column(type: Types::DATE_MUTABLE)]
+    #[ORM\Column(name: '`noteDate`', type: Types::DATE_MUTABLE)]
     private ?\DateTimeInterface $noteDate = null;
 
     public function getNoteID(): ?int

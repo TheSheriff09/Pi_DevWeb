@@ -12,31 +12,36 @@ use Symfony\Component\Validator\Constraints as Assert;
 class SessionTodos
 {
     #[ORM\Id]
-    #[ORM\GeneratedValue]
-    #[ORM\Column(type: Types::INTEGER)]
+    #[ORM\Column(name: '`id`', type: Types::INTEGER)]
     #[Assert\Type('integer')]
     private ?int $id = null;
 
-    #[ORM\Column(type: Types::INTEGER)]
+    #[ORM\Column(name: '`sessionID`', type: Types::INTEGER)]
     #[Assert\NotBlank]
     #[Assert\Type('integer')]
     private ?int $sessionID = null;
 
-    #[ORM\Column(type: Types::STRING, length: 255)]
+    #[ORM\Column(name: '`taskDescription`', type: Types::STRING, length: 255)]
     #[Assert\NotBlank]
     #[Assert\Length(max: 255)]
     #[Assert\Type('string')]
     private ?string $taskDescription = null;
 
-    #[ORM\Column(type: Types::BOOLEAN, nullable: true)]
+    #[ORM\Column(name: '`isDone`', type: Types::BOOLEAN, nullable: true)]
     private ?bool $isDone = null;
 
-    #[ORM\Column(type: Types::DATETIME_MUTABLE)]
+    #[ORM\Column(name: '`createdAt`', type: Types::DATETIME_MUTABLE)]
     private ?\DateTimeInterface $createdAt = null;
 
     public function getId(): ?int
     {
         return $this->id;
+    }
+
+    public function setId(int $id): static
+    {
+        $this->id = $id;
+        return $this;
     }
 
     public function getSessionID(): ?int

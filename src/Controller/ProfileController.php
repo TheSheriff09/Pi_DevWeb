@@ -8,11 +8,12 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 class ProfileController extends AbstractController
 {
     #[Route('/profile', name: 'app_profile')]
-    public function profile(Request $request, EntityManagerInterface $em): Response
+    public function profile(Request $request, EntityManagerInterface $em, ValidatorInterface $validator): Response
     {
         $userId = $request->getSession()->get('user_id');
         if (!$userId) {
@@ -37,15 +38,20 @@ class ProfileController extends AbstractController
             
             if ($password) {
                 // Assuming legacy plain text wasn't fixed for them, we hash new passwords properly.
-                // Or if we want to be consistent with the system, maybe we don't hash, but let's hash.
                 $user->setPasswordHash(password_hash($password, PASSWORD_BCRYPT));
             }
 
-            try {
-                $em->flush();
-                $message = 'Profile updated successfully!';
-            } catch (\Exception $e) {
-                $message = 'Error updating profile: ' . $e->getMessage();
+            $errors = $validator->validate($user);
+            if (count($errors) > 0) {
+                $message = 'Validation Error: ' . $errors[0]->getPropertyPath() . ' - ' . $errors[0]->getMessage();
+                $this->addFlash('error', $message);
+            } else {
+                try {
+                    $em->flush();
+                    $message = 'Profile updated successfully!';
+                } catch (\Exception $e) {
+                    $message = 'Error updating profile: ' . $e->getMessage();
+                }
             }
         }
 

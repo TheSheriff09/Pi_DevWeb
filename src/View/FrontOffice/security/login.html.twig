@@ -5,22 +5,6 @@
 {% block body %}
     <div class="split-layout">
         <div class="split-left">
-            
-            <!-- Brand top-left (absolute positioned if needed, or flex item) -->
-            <div style="position: absolute; top: 30px; left: 40px;">
-                <a href="{{ path('app_home') }}" class="brand">
-                    <h1 class="brand-title">StartupFlow</h1>
-                    <p class="brand-sub">Tunisia</p>
-                </a>
-            </div>
-
-            <!-- Home top-right (absolute) -->
-            <div style="position: absolute; top: 30px; right: 40px;">
-                <a href="{{ path('app_home') }}" style="display: flex; align-items: center; gap: 8px; text-decoration: none; color: #8d79ff; font-weight: 600;">
-                    Home <span style="font-size: 20px;">⌂</span>
-                </a>
-            </div>
-
             <!-- Left login card -->
             <div class="auth-card">
                 <h2 class="welcome-title">Welcome Back!</h2>
@@ -31,11 +15,11 @@
                     {% endif %}
 
                     <label class="field-label" for="login-email">Email</label>
-                    <input type="email" id="login-email" name="email" class="pillField" placeholder="Entrepreneur@startupflow.in" required autofocus>
+                    <input type="email" id="login-email" name="email" class="pillField" placeholder="Entrepreneur@startupflow.in" autofocus>
 
                     <label class="field-label" for="login-password">Password</label>
                     <div class="password-wrap">
-                        <input type="password" id="login-password" name="password" class="pillField" placeholder="**************" required>
+                        <input type="password" id="login-password" name="password" class="pillField" placeholder="**************">
                         <button type="button" class="eyeBtn" onclick="togglePass('login-password')">👁</button>
                     </div>
 

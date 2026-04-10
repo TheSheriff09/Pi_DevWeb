@@ -12,47 +12,47 @@ use Symfony\Component\Validator\Constraints as Assert;
 class Session
 {
     #[ORM\Id]
-    #[ORM\Column(type: Types::INTEGER)]
+    #[ORM\Column(name: '`sessionID`', type: Types::INTEGER)]
     #[Assert\NotBlank]
     #[Assert\Type('integer')]
     private ?int $sessionID = null;
 
-    #[ORM\Column(type: Types::INTEGER)]
+    #[ORM\Column(name: '`mentorID`', type: Types::INTEGER)]
     #[Assert\NotBlank]
     #[Assert\Type('integer')]
     private ?int $mentorID = null;
 
-    #[ORM\Column(type: Types::INTEGER)]
+    #[ORM\Column(name: '`entrepreneurID`', type: Types::INTEGER)]
     #[Assert\NotBlank]
     #[Assert\Type('integer')]
     private ?int $entrepreneurID = null;
 
-    #[ORM\Column(type: Types::INTEGER)]
+    #[ORM\Column(name: '`startupID`', type: Types::INTEGER)]
     #[Assert\Type('integer')]
     private ?int $startupID = null;
 
-    #[ORM\Column(type: Types::INTEGER, nullable: true)]
+    #[ORM\Column(name: '`scheduleID`', type: Types::INTEGER, nullable: true)]
     #[Assert\Type('integer')]
     private ?int $scheduleID = null;
 
-    #[ORM\Column(type: Types::DATE_MUTABLE)]
+    #[ORM\Column(name: '`sessionDate`', type: Types::DATE_MUTABLE)]
     private ?\DateTimeInterface $sessionDate = null;
 
-    #[ORM\Column(type: Types::STRING)]
+    #[ORM\Column(name: '`sessionType`', type: Types::STRING)]
     #[Assert\Length(max: 255)]
     #[Assert\Type('string')]
     private ?string $sessionType = null;
 
-    #[ORM\Column(type: Types::STRING)]
+    #[ORM\Column(name: '`status`', type: Types::STRING)]
     #[Assert\Length(max: 255)]
     #[Assert\Type('string')]
     private ?string $status = null;
 
-    #[ORM\Column(type: Types::TEXT, nullable: true)]
+    #[ORM\Column(name: '`notes`', type: Types::TEXT, nullable: true)]
     #[Assert\Type('string')]
     private ?string $notes = null;
 
-    #[ORM\Column(type: Types::FLOAT, nullable: true)]
+    #[ORM\Column(name: '`successProbability`', type: Types::FLOAT, nullable: true)]
     #[Assert\Type('float')]
     private ?float $successProbability = null;
 
