@@ -1,0 +1,375 @@
+{% extends 'FrontOffice/base.html.twig' %}
+
+{% block title %}StartupFlow Tunisia - Forum{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .forum-header {
+            text-align: center;
+            padding: 100px 20px 20px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .forum-feed {
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+            padding: 20px 20px 80px;
+            max-width: 900px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 2;
+        }
+
+        .forum-card {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid rgba(200, 200, 200, 0.5);
+            border-radius: 12px;
+            overflow: hidden;
+            color: #111;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        body.dark-mode .forum-card {
+            background: rgba(30, 30, 45, 0.6);
+            border-color: rgba(255, 255, 255, 0.1);
+            color: var(--text-main);
+        }
+
+        .create-post-btn-wrap {
+            text-align: center;
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+
+        /* Post Header (Avatar + Meta) */
+        .post-top {
+            display: flex;
+            align-items: center;
+            padding: 15px 20px;
+            gap: 12px;
+        }
+        
+        .post-avatar {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.2rem;
+            color: white;
+        }
+
+        .post-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .post-author {
+            font-weight: 600;
+            font-size: 1.05rem;
+            color: var(--primary);
+        }
+        body.dark-mode .post-author {
+            color: var(--primary-lighter);
+        }
+
+        .post-date {
+            font-size: 0.8rem;
+            color: #666;
+        }
+        body.dark-mode .post-date {
+            color: #b0a8d6;
+        }
+
+        .post-text {
+            padding: 0 20px 15px;
+            font-size: 1rem;
+            line-height: 1.5;
+            color: #111;
+        }
+        body.dark-mode .post-text {
+            color: #e2dcff;
+        }
+        
+        .post-title-inline {
+            font-weight: bold;
+            display: block;
+            margin-bottom: 5px;
+            font-size: 1.1rem;
+            color: #000;
+        }
+        body.dark-mode .post-title-inline {
+            color: #fff;
+        }
+
+        .post-image-container {
+            width: 100%;
+            max-height: 500px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0,0,0,0.05);
+            border-top: 1px solid rgba(0,0,0,0.05);
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+        }
+        body.dark-mode .post-image-container {
+            background: rgba(0,0,0,0.2);
+            border-color: rgba(255,255,255,0.05);
+        }
+
+        .post-image-container img {
+            width: 100%;
+            height: auto;
+            max-height: 500px;
+            object-fit: cover;
+        }
+
+        .post-actions-bar {
+            display: flex;
+            padding: 10px 20px;
+            gap: 5px;
+            position: relative;
+        }
+
+        .action-btn {
+            flex: 1;
+            padding: 10px;
+            background: transparent;
+            border: none;
+            color: #555;
+            font-size: 0.95rem;
+            font-weight: 500;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            text-decoration: none;
+        }
+        body.dark-mode .action-btn {
+            color: #b0a8d6;
+        }
+
+        .action-btn:hover {
+            background: rgba(0, 0, 0, 0.05);
+        }
+        body.dark-mode .action-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .action-btn.liked-status {
+            color: #ff4757;
+        }
+
+        /* REACTION SYSTEM */
+        .reaction-container {
+            position: relative;
+            flex: 1;
+        }
+        .reactions-box {
+            position: absolute;
+            bottom: 45px;
+            left: 50%;
+            transform: translateX(-50%) scale(0);
+            background: white;
+            border-radius: 30px;
+            padding: 8px 12px;
+            display: flex;
+            gap: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            transition: transform 0.2s ease-out;
+            z-index: 10;
+        }
+        body.dark-mode .reactions-box {
+            background: #2a2a3c;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+        }
+        .reaction-container:hover .reactions-box {
+            transform: translateX(-50%) scale(1);
+        }
+        .reaction-emoji {
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .reaction-emoji:hover {
+            transform: scale(1.3) translateY(-5px);
+        }
+
+        /* Modal for Create Post */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(5px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal.active {
+            display: flex;
+        }
+        .modal-content {
+            background: #fff;
+            border: 1px solid var(--primary);
+            padding: 30px;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 500px;
+            position: relative;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        body.dark-mode .modal-content {
+            background: #1e1e2d;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+
+    <div class="forum-header">
+        <h1 class="glow-text" style="font-size: 2.5rem; margin-bottom: 5px;">Community Feed</h1>
+        {% if isLoggedIn %}
+            <div class="create-post-btn-wrap">
+                <button onclick="document.getElementById('createPostModal').classList.add('active')" class="btn-pill glow-btn" style="font-size: 1.1rem; padding: 12px 30px;">+ Create New Post</button>
+            </div>
+        {% else %}
+            <div class="create-post-btn-wrap">
+                <a href="{{ path('app_login') }}" class="btn-pill" style="border: 1px solid var(--primary); padding: 12px 30px;">Log in to post</a>
+            </div>
+        {% endif %}
+    </div>
+
+    <div class="forum-feed">
+        <!-- Posts Feed -->
+        {% for pd in postsData %}
+            <div class="forum-card">
+                
+                <div class="post-top">
+                    <div class="post-avatar">
+                        {{ pd.post.authorName|first|upper ?: 'U' }}
+                    </div>
+                    <div class="post-info">
+                        <span class="post-author">{{ pd.post.authorName ?: 'Anonymous' }}</span>
+                        <span class="post-date">{{ pd.post.createdAt|date('F j, Y \\a\\t g:i a') }}</span>
+                    </div>
+                </div>
+
+                <div class="post-text">
+                    <span class="post-title-inline">{{ pd.post.title }}</span>
+                    {{ pd.post.content|length > 250 ? pd.post.content|slice(0, 250) ~ '...' : pd.post.content }}
+                </div>
+
+                {% if pd.post.imageUrl and pd.post.imageUrl != 'default_post.png' %}
+                    <div class="post-image-container">
+                        <img src="{{ asset('uploads/forum/' ~ pd.post.imageUrl) }}" alt="Post Attachment">
+                    </div>
+                {% endif %}
+                
+                <div style="padding: 10px 20px; border-bottom: 1px solid rgba(150,150,150,0.2); font-size: 0.85rem; color: #888; display: flex; justify-content: space-between;">
+                    <span id="likeCountDisplay_{{ pd.post.id }}">{{ pd.likeCount }} Interactions</span>
+                    <span>{{ pd.commentCount }} Comments</span>
+                </div>
+
+                <div class="post-actions-bar">
+                    <div class="reaction-container">
+                        <div class="reactions-box">
+                            <span class="reaction-emoji" onclick="toggleFeedLike({{ pd.post.id }}, 'LIKE', '👍')">👍</span>
+                            <span class="reaction-emoji" onclick="toggleFeedLike({{ pd.post.id }}, 'LOVE', '❤️')">❤️</span>
+                            <span class="reaction-emoji" onclick="toggleFeedLike({{ pd.post.id }}, 'HAHA', '😆')">😆</span>
+                            <span class="reaction-emoji" onclick="toggleFeedLike({{ pd.post.id }}, 'WOW', '😲')">😲</span>
+                            <span class="reaction-emoji" onclick="toggleFeedLike({{ pd.post.id }}, 'SAD', '😢')">😢</span>
+                            <span class="reaction-emoji" onclick="toggleFeedLike({{ pd.post.id }}, 'ANGRY', '😡')">😡</span>
+                        </div>
+                        <button id="likeBtn_{{ pd.post.id }}" class="action-btn {% if pd.userLiked %}liked-status{% endif %}" onclick="toggleFeedLike({{ pd.post.id }}, 'LIKE', '👍')">
+                            <span id="likeIcon_{{ pd.post.id }}">{{ pd.userLiked ? '❤️' : '🤍' }}</span> <span id="likeText_{{ pd.post.id }}">React</span>
+                        </button>
+                    </div>
+                    
+                    <a href="{{ path('app_forum_show', {'id': pd.post.id}) }}" class="action-btn">
+                        💬 Comment
+                    </a>
+                </div>
+            </div>
+        {% else %}
+            <p style="text-align: center; color: #b0a8d6;">No posts right now.</p>
+        {% endfor %}
+    </div>
+
+    <!-- Create Post Modal -->
+    {% if isLoggedIn %}
+    <div id="createPostModal" class="modal">
+        <div class="modal-content auth-card">
+            <span style="position: absolute; top: 15px; right: 20px; font-size: 24px; cursor: pointer; color: var(--text-main);" onclick="document.getElementById('createPostModal').classList.remove('active')">&times;</span>
+            <h2 class="welcome-title" style="margin-bottom: 20px; font-size: 1.8rem; color: var(--text-main);">Create Post</h2>
+            
+            <form method="post" action="{{ path('app_forum_create') }}" enctype="multipart/form-data">
+                <label class="field-label" style="color: var(--text-main);" for="title">Title</label>
+                <input type="text" id="title" name="title" class="pillField" style="color: #000;" required>
+                
+                <label class="field-label" style="color: var(--text-main);" for="content">Content</label>
+                <textarea id="content" name="content" class="pillField" rows="5" style="border-radius: 12px; resize: vertical; color: #000;" required></textarea>
+                
+                <label class="field-label" style="color: var(--text-main);" for="image">Upload Image (Optional)</label>
+                <input type="file" id="image" name="image" class="pillField" style="padding: 10px; color: var(--text-main);" accept="image/*">
+                
+                <button type="submit" class="signBtn" style="margin-top: 15px;">Publish Post</button>
+            </form>
+        </div>
+    </div>
+    {% endif %}
+
+
+
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+
+
+        async function toggleFeedLike(postId, typeStr, emojiChar) {
+            const button = document.getElementById('likeBtn_' + postId);
+            const icon = document.getElementById('likeIcon_' + postId);
+            const text = document.getElementById('likeText_' + postId);
+            const countDisplay = document.getElementById('likeCountDisplay_' + postId);
+            
+            try {
+                const response = await fetch(`{{ path('app_forum_react', {'id': 'POST_ID_PLACEHOLDER'}) }}`.replace('POST_ID_PLACEHOLDER', postId) + `?type=${typeStr}`, {
+                    method: 'POST',
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.reacted) {
+                        button.classList.add('liked-status');
+                        icon.innerText = emojiChar;
+                        text.innerText = data.type.charAt(0) + data.type.slice(1).toLowerCase(); // capitalized
+                    } else {
+                        button.classList.remove('liked-status');
+                        icon.innerText = '🤍';
+                        text.innerText = 'React';
+                    }
+                    if(countDisplay) {
+                        countDisplay.innerText = data.count + " Interactions";
+                    }
+                } else if (response.status === 401) {
+                    window.location.href = "{{ path('app_login') }}";
+                }
+            } catch (e) {}
+        }
+    </script>
+{% endblock %}

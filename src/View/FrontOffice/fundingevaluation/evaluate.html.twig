@@ -1,0 +1,158 @@
+{% extends "FrontOffice/base.html.twig" %}
+
+{% block title %}Evaluate Application - StartupFlow{% endblock %}
+
+{% block body %}
+<div class="auth-container" style="min-height: 100vh; padding: 40px 20px;">
+    <div class="auth-card" style="max-width: 900px; margin: 0 auto; border-radius: 20px;">
+        
+        <div style="margin-bottom: 30px; border-bottom: 1px solid rgba(111,86,255,0.2); padding-bottom: 20px;">
+            <a href="{{ path('app_evaluator_funding_list') }}" style="color: var(--primary-light, #9d88ff); text-decoration: none; font-size: 0.9em; display: inline-block; margin-bottom: 15px;">&larr; Back to Evaluation Dashboard</a>
+            <h1 style="color: var(--primary, #6f56ff); margin: 0; font-size: 2.2em;">Application Evaluation</h1>
+            <p style="margin: 10px 0 0 0; opacity: 0.8;">Assess capital request for <strong>{{ startup.name }}</strong></p>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
+            
+            <!-- Application Abstract Details -->
+            <div style="background: rgba(111,86,255,0.05); padding: 25px; border-radius: 15px; border: 1px solid rgba(111,86,255,0.1);">
+                <h3 style="margin-top: 0; color: var(--primary); border-bottom: 1px solid rgba(111,86,255,0.2); padding-bottom: 10px; margin-bottom: 20px;">Application Payload Summary</h3>
+                
+                <div style="margin-bottom: 15px;">
+                    <strong style="opacity: 0.7; font-size: 0.85em; display: block; text-transform: uppercase;">Requested Amount</strong>
+                    <div style="font-size: 1.5em; font-weight: bold; color: #34d399;">${{ application.amount|number_format(0, '.', ',') }}</div>
+                </div>
+
+                <div style="margin-bottom: 15px;">
+                    <strong style="opacity: 0.7; font-size: 0.85em; display: block; text-transform: uppercase;">Application Reason</strong>
+                    <div style="line-height: 1.5; margin-top: 5px;">{{ application.applicationReason }}</div>
+                </div>
+
+                <div style="margin-bottom: 15px;">
+                    <strong style="opacity: 0.7; font-size: 0.85em; display: block; text-transform: uppercase;">Payment Schedule</strong>
+                    <div style="margin-top: 5px;">{{ application.paymentSchedule }}</div>
+                </div>
+                
+                <div style="margin-bottom: 15px;">
+                    <strong style="opacity: 0.7; font-size: 0.85em; display: block; text-transform: uppercase;">Attachment Link</strong>
+                    <div style="margin-top: 5px;">
+                        {% if application.attachment and application.attachment != 'No Attachment' %}
+                            <a href="{{ application.attachment }}" target="_blank" style="color: #64b5f6;">View Supplement Material</a>
+                        {% else %}
+                            <span style="opacity: 0.5;">No materials attached</span>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div style="margin-bottom: 5px;">
+                    <strong style="opacity: 0.7; font-size: 0.85em; display: block; text-transform: uppercase;">Date Issued</strong>
+                    <div style="margin-top: 5px;">{{ application.submissionDate|date('Y-m-d H:i') }}</div>
+                </div>
+            </div>
+
+            <!-- Evaluator Judgment Form -->
+            <div>
+                <form id="evaluationForm" method="post" action="{{ path('app_evaluator_funding_evaluate', {'id': application.id}) }}" style="display: flex; flex-direction: column; gap: 20px;">
+                    
+                    <div>
+                        <label class="field-label" style="font-weight: 500; font-size: 0.95em; display: block; margin-bottom: 8px;">Final Decision <span style="color: #e57373;">*</span></label>
+                        <select name="decision" required class="pillField" style="width: 100%; border-radius: 12px; font-weight: bold;">
+                            <option value="" disabled selected>-- Select an outcome --</option>
+                            <option value="Accepted" style="color: #34d399;">Accept Application</option>
+                            <option value="Rejected" style="color: #e57373;">Reject Application</option>
+                        </select>
+                        <small style="opacity: 0.7; display: block; margin-top: 5px;">Choosing this status will natively sync to the active Startup funding state instantly.</small>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <div>
+                            <label class="field-label" style="font-weight: 500; font-size: 0.95em; display: block; margin-bottom: 8px;">Assessed Risk Level</label>
+                            <select name="riskLevel" class="pillField" style="width: 100%; border-radius: 12px;">
+                                <option value="Low">Low Risk</option>
+                                <option value="Moderate" selected>Moderate Risk</option>
+                                <option value="High">High Risk</option>
+                                <option value="Extreme">Extreme Risk</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="field-label" style="font-weight: 500; font-size: 0.95em; display: block; margin-bottom: 8px;">Funding Category</label>
+                            <select name="fundingCategory" class="pillField" style="width: 100%; border-radius: 12px;">
+                                <option value="Seed Capital">Seed Capital</option>
+                                <option value="Venture Capital">Venture Capital</option>
+                                <option value="Angel Investment" selected>Angel Investment</option>
+                                <option value="Debt Financing">Debt Financing</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="field-label" style="font-weight: 500; font-size: 0.95em; display: block; margin-bottom: 8px;">Evaluation Score / 100 <span style="color: #e57373;">*</span></label>
+                        <input type="number" step="1" name="score" min="0" max="100" required class="pillField" placeholder="e.g. 85" style="width: 100%; border-radius: 12px;">
+                    </div>
+
+                    <div>
+                        <label class="field-label" style="font-weight: 500; font-size: 0.95em; display: block; margin-bottom: 8px;">Remarks & Feedback</label>
+                        <textarea name="evaluationComments" rows="5" class="pillField" placeholder="Provide justification..." style="width: 100%; border-radius: 12px; resize: vertical;"></textarea>
+                    </div>
+
+                    <div style="text-align: right; margin-top: 10px;">
+                        <button type="button" id="triggerEvaluationConfirm" class="pill-btn glow-btn" style="background: linear-gradient(135deg, var(--primary, #6f56ff), #b58bff); padding: 15px 40px; font-size: 1.1em; border: none; cursor: pointer;">
+                            Submit Evaluation
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- Custom Confirmation Modal -->
+<div id="evaluationConfirmModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 10000; align-items: center; justify-content: center; backdrop-filter: blur(5px);">
+    <div class="auth-card" style="width: 450px; max-width: 90%; padding: 30px; text-align: center; border-radius: 20px; border: 1px solid rgba(111,86,255,0.3); background: var(--bg-light); box-shadow: 0 15px 35px rgba(0,0,0,0.3);">
+        <div style="font-size: 3em; margin-bottom: 15px;">⚠️</div>
+        <h2 style="color: var(--primary); margin: 0 0 15px 0;">Finalize Decision</h2>
+        <p style="margin-bottom: 25px; line-height: 1.6; opacity: 0.8;">
+            Are you sure you want to finalize this decision? The application status will be unalterably updated to reflect your response.
+        </p>
+        <div style="display: flex; justify-content: center; gap: 15px;">
+            <button type="button" id="cancelEvaluationBtn" style="padding: 10px 25px; border-radius: 999px; background: transparent; border: 1px solid var(--primary-light); color: var(--text-main); cursor: pointer; font-weight: bold; transition: background 0.2s;">
+                Cancel
+            </button>
+            <button type="button" id="confirmEvaluationBtn" class="pill-btn glow-btn" style="background: linear-gradient(135deg, #10b981, #34d399); padding: 10px 25px; font-weight: bold; border: none; cursor: pointer; color: white;">
+                Yes, Finalize
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const triggerBtn = document.getElementById('triggerEvaluationConfirm');
+        const modal = document.getElementById('evaluationConfirmModal');
+        const cancelBtn = document.getElementById('cancelEvaluationBtn');
+        const confirmBtn = document.getElementById('confirmEvaluationBtn');
+        const form = document.getElementById('evaluationForm');
+
+        if (triggerBtn && modal && form) {
+            triggerBtn.addEventListener('click', () => {
+                // Check form validity before showing modal
+                if (!form.checkValidity()) {
+                    form.reportValidity();
+                    return;
+                }
+                modal.style.display = 'flex';
+            });
+
+            cancelBtn.addEventListener('click', () => {
+                modal.style.display = 'none';
+            });
+
+            confirmBtn.addEventListener('click', () => {
+                modal.style.display = 'none';
+                form.submit();
+            });
+        }
+    });
+</script>
+{% endblock %}

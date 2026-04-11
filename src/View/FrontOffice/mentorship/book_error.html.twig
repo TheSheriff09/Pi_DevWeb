@@ -1,0 +1,17 @@
+{% extends 'FrontOffice/base.html.twig' %}
+
+{% block title %}Booking Error - StartupFlow{% endblock %}
+
+{% block body %}
+<div class="container" style="padding: 40px 20px; max-width: 600px; margin: auto; text-align: center;">
+    <div class="mentorship-card" style="padding: 40px; border: 1px solid #e74c3c;">
+        <div style="font-size: 4em; margin-bottom: 20px;">⚠️</div>
+        <h2 style="color: #e74c3c; margin-top: 0; font-size: 2em;">Booking Blocked</h2>
+        <p style="font-size: 1.2em; color: var(--text-main);">{{ error }}</p>
+        <div style="margin-top: 30px;">
+            <a href="javascript:history.back()" class="btn-pill" style="display: inline-block; margin-right: 15px; padding: 10px 20px; background: transparent; border: 1px solid var(--primary-light); color: var(--primary-light); text-decoration: none;">&larr; Go Back</a>
+            <a href="{{ path('app_my_bookings') }}" class="btn-pill" style="display: inline-block; padding: 10px 20px; background: var(--primary); color: white; text-decoration: none;">View My Bookings</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

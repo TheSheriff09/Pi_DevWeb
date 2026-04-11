@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <title>{% block title %}StartupFlow Tunisia{% endblock %}</title>
+        <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 128 128%22><text y=%221.2em%22 font-size=%2296%22>🚀</text></svg>">
+        {% block stylesheets %}
+            <link rel="stylesheet" href="{{ asset('Front/css/styles.css') }}?v=2">
+            <style>
+                .rec-tab { cursor: pointer; padding: 10px; text-align: center; font-weight: bold; width: 50%; border-bottom: 2px solid transparent; color: var(--text, #fff); opacity: 0.6; }
+                .rec-tab.active { border-bottom-color: var(--primary, #6f56ff); opacity: 1; }
+                .rec-response { background: rgba(255,255,255,0.05); padding: 10px; border-radius: 6px; margin-top: 10px; border-left: 3px solid var(--primary); }
+                .rec-status { font-size: 0.8em; padding: 3px 8px; border-radius: 10px; background: rgba(111,86,255,0.2); }
+                
+                /* Navbar Dropdown CSS */
+                .dropdown { position: relative; display: inline-block; }
+                .dropdown-content {
+                    display: none; position: absolute; background-color: var(--bg-light, #ffffff);
+                    min-width: 180px; box-shadow: var(--shadow-main); z-index: 1000; border-radius: 8px;
+                    border: 1px solid rgba(122, 92, 255, 0.1); overflow: hidden;
+                }
+                .dropdown-content a {
+                    color: var(--text-main, #333); padding: 12px 16px; text-decoration: none; display: block;
+                    font-size: 0.95em; transition: background 0.2s;
+                }
+                .dropdown-content a:hover { background-color: rgba(111,86,255,0.1); }
+                .dropdown:hover .dropdown-content { display: block; }
+            </style>
+        {% endblock %}
+
+        {% block javascripts %}
+        {% endblock %}
+        
+    </head>
+    <body>
+        <script>
+            // Set theme immediately to avoid flash
+            if (localStorage.getItem('theme') === 'dark') {
+                document.body.classList.add('dark-mode');
+            }
+        </script>
+        
+        {% set isLoggedIn = app.request.session.get('user_id') is not empty %}
+        
+        <!-- Top Navbar -->
+        <nav class="navbar futuristic-nav" style="position: sticky; top: 0; z-index: 1000; width: 100%; box-sizing: border-box;">
+            <!-- Brand -->
+            <a href="{{ path('app_home') }}" class="brand" style="text-decoration: none;">
+                <h1 class="brand-title glow-text" style="margin: 0;">StartupFlow</h1>
+                <p class="brand-sub" style="margin: 0;">Tunisia</p>
+            </a>
+
+            <!-- Menu -->
+            <div class="nav-links">
+                <a href="{{ path('app_home') }}" class="nav-link">Home</a>
+                {% if isLoggedIn %}
+                    <a href="{{ path('app_entrepreneur_startups') }}" class="nav-link">Startup</a>
+                    
+                    <div class="dropdown">
+                        <a href="{{ path('app_mentorship_index') }}" class="nav-link" style="display:inline-block;">Mentorship ▼</a>
+                        <div class="dropdown-content">
+                            {% set userRole = app.request.session.get('user_role') %}
+                            {% if userRole == 'ENTREPRENEUR' %}
+                                <a href="{{ path('app_mentors_list') }}">Find Mentors</a>
+                                <a href="{{ path('app_my_bookings') }}">My Bookings</a>
+                                <a href="{{ path('app_my_sessions') }}">My Sessions</a>
+                                <a href="{{ path('app_my_favorites') }}">Favorites</a>
+                            {% elseif userRole == 'MENTOR' %}
+                                <a href="{{ path('app_mentor_schedule') }}" style="color: #6f56ff;">My Schedule</a>
+                                <a href="{{ path('app_my_bookings') }}" style="color: #6f56ff;">Booking Requests</a>
+                                <a href="{{ path('app_my_sessions') }}" style="color: #6f56ff;">My Sessions</a>
+                            {% elseif userRole == 'ADMIN' %}
+                                <div style="border-top: 1px solid rgba(255,255,255,0.1); margin: 5px 0;"></div>
+                                <a href="{{ path('app_admin_mentorship') }}" style="color: #ff5656;">Dashboard</a>
+                                <a href="{{ path('app_admin_mentorship_analytics') }}" style="color: #ff5656;">Analytics</a>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <a href="{{ path('app_forum_index') }}" class="nav-link">Forum</a>
+                    <a href="{{ path('app_evaluator_funding_list') }}" class="nav-link">Evaluation</a>
+                {% else %}
+                    <a href="{{ path('app_login') }}" class="nav-link">Startup</a>
+                    <a href="{{ path('app_login') }}" class="nav-link">Mentorship</a>
+                    <a href="{{ path('app_login') }}" class="nav-link">Forum</a>
+                    <a href="{{ path('app_login') }}" class="nav-link">Evaluation</a>
+                {% endif %}
+            </div>
+
+            <!-- Auth buttons & Theme Toggle -->
+            <div class="auth-buttons">
+                <button id="themeToggleBtn" class="btn-pill" style="padding: 8px 15px; background: transparent; border: 2px solid var(--primary-light); color: var(--primary-light);">🌓</button>
+                {% if isLoggedIn %}
+                    <a href="{{ path('app_profile') }}" class="btn-pill glow-btn" style="background: linear-gradient(to right, #d2a7ff, #7a5cff); text-decoration: none;">My Profile</a>
+                    <a href="{{ path('app_logout') }}" class="btn-pill" style="background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); text-decoration: none; padding: 10px 20px;">Sign out</a>
+                {% else %}
+                    <a href="{{ path('app_login') }}" class="btn-pill glow-btn" style="text-decoration: none;">log in</a>
+                    <a href="{{ path('app_register') }}" class="signup-link" style="text-decoration: none;">sign up</a>
+                {% endif %}
+            </div>
+        </nav>
+
+        {% block body %}{% endblock %}
+
+        <!-- Global Toast Notification System -->
+        <div id="sf-toast-container" style="position: fixed; bottom: 30px; left: 30px; z-index: 10000; display: flex; flex-direction: column; gap: 15px;">
+            {% for label, messages in app.flashes %}
+                {% for message in messages %}
+                    <div class="sf-toast mentorship-card" data-type="{{ label }}" style="display: flex; align-items: center; gap: 15px; border-left: 4px solid {% if label == 'success' %}#2ecc71{% elseif label == 'error' %}#e74c3c{% else %}#3498db{% endif %}; padding: 15px 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); transform: translateX(-150%); transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.4s; opacity: 0; margin-bottom: 0;">
+                        <span style="font-size: 1.5em;">
+                            {% if label == 'success' %}✅{% elseif label == 'error' %}❌{% else %}ℹ️{% endif %}
+                        </span>
+                        <div style="font-weight: bold; font-family: 'Inter', sans-serif;">{{ message }}</div>
+                        <button class="close-toast" style="background: transparent; border: none; color: var(--text-main); opacity: 0.5; cursor: pointer; font-size: 1.5em; margin-left: 20px;">×</button>
+                    </div>
+                {% endfor %}
+            {% endfor %}
+        </div>
+
+        <script>
+            window.showCustomToast = function(label, message) {
+                const container = document.getElementById('sf-toast-container');
+                const toast = document.createElement('div');
+                toast.className = 'sf-toast mentorship-card';
+                let color = '#3498db'; let icon = 'ℹ️';
+                if(label === 'success') { color = '#2ecc71'; icon = '✅'; }
+                if(label === 'error') { color = '#e74c3c'; icon = '❌'; }
+                toast.dataset.type = label;
+                toast.style.cssText = `display: flex; align-items: center; gap: 15px; border-left: 4px solid ${color}; padding: 15px 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); transform: translateX(-150%); transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.4s; opacity: 0; margin-bottom: 0;`;
+                toast.innerHTML = `<span style="font-size: 1.5em;">${icon}</span><div style="font-weight: bold; font-family: 'Inter', sans-serif;">${message}</div><button class="close-toast" style="background: transparent; border: none; color: var(--text-main); opacity: 0.5; cursor: pointer; font-size: 1.5em; margin-left: 20px;">×</button>`;
+                container.appendChild(toast);
+                try {
+                    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                    const osc = ctx.createOscillator(); const gain = ctx.createGain();
+                    osc.type = 'sine'; osc.frequency.setValueAtTime(800, ctx.currentTime); osc.frequency.exponentialRampToValueAtTime(1200, ctx.currentTime + 0.1);
+                    gain.gain.setValueAtTime(0.1, ctx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.1);
+                    osc.connect(gain); gain.connect(ctx.destination);
+                    osc.start(); osc.stop(ctx.currentTime + 0.1);
+                } catch(e) {}
+                setTimeout(() => { toast.style.transform = 'translateX(0)'; toast.style.opacity = '1'; }, 50);
+                toast.querySelector('.close-toast').addEventListener('click', () => { toast.style.transform = 'translateX(-150%)'; toast.style.opacity = '0'; setTimeout(() => toast.remove(), 400); });
+                setTimeout(() => { if(document.body.contains(toast)) { toast.style.transform = 'translateX(-150%)'; toast.style.opacity = '0'; setTimeout(() => toast.remove(), 400); } }, 5000);
+            };
+
+            document.addEventListener('DOMContentLoaded', () => {
+                const toasts = document.querySelectorAll('.sf-toast');
+                if(toasts.length > 0) {
+                    try {
+                        const AudioContext = window.AudioContext || window.webkitAudioContext;
+                        if (AudioContext) {
+                            const ctx = new AudioContext();
+                            const osc = ctx.createOscillator();
+                            const gain = ctx.createGain();
+                            osc.type = 'sine';
+                            osc.frequency.setValueAtTime(800, ctx.currentTime);
+                            osc.frequency.exponentialRampToValueAtTime(1200, ctx.currentTime + 0.1);
+                            gain.gain.setValueAtTime(0.1, ctx.currentTime);
+                            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.1);
+                            osc.connect(gain);
+                            gain.connect(ctx.destination);
+                            osc.start();
+                            osc.stop(ctx.currentTime + 0.1);
+                        }
+                    } catch(e) {}
+                }
+
+                let delay = 100;
+                toasts.forEach(toast => {
+                    setTimeout(() => {
+                        toast.style.transform = 'translateX(0)';
+                        toast.style.opacity = '1';
+                    }, delay);
+                    
+                    const closeBtn = toast.querySelector('.close-toast');
+                    closeBtn.addEventListener('click', () => {
+                        toast.style.transform = 'translateX(-150%)';
+                        toast.style.opacity = '0';
+                        setTimeout(() => toast.remove(), 400);
+                    });
+
+                    setTimeout(() => {
+                        if(document.body.contains(toast)) {
+                            toast.style.transform = 'translateX(-150%)';
+                            toast.style.opacity = '0';
+                            setTimeout(() => toast.remove(), 400);
+                        }
+                    }, delay + 5000);
+                    
+                    delay += 300;
+                });
+            });
+
+            {% if app.request.session.get('user_role') == 'ENTREPRENEUR' %}
+            const pollNotifs = () => {
+                fetch('/mentorship/api/poll', { cache: "no-store" })
+                .then(r => r.json())
+                .then(data => {
+                    if(data && data.length > 0) {
+                        data.forEach(n => {
+                            if(typeof window.showCustomToast === 'function') {
+                                window.showCustomToast(n.type, n.msg);
+                            }
+                        });
+                    }
+                }).catch(e => {});
+            };
+            pollNotifs(); 
+            setInterval(pollNotifs, 2500); 
+            {% endif %}
+        </script>
+
+        <!-- Footer -->
+        <footer class="footer futuristic-footer">
+            <p>&copy; {{ 'now'|date('Y') }} StartupFlow Tunisia. All rights reserved.</p>
+        </footer>
+
+        {% if app.request.session.get('user_id') %}
+            <!-- Reclamation Floating Button inside semantic footer layer visually -->
+            <button id="reclamationBtn" style="position: fixed; bottom: 20px; right: 20px; z-index: 1000; padding: 12px 20px; background: linear-gradient(135deg, var(--primary, #6f56ff), #b58bff); color: white; border: none; border-radius: 50px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 15px rgba(111, 86, 255, 0.4); font-family: 'Inter', sans-serif; transition: transform 0.2s;">
+                ⚠️ Report Issue
+            </button>
+
+            <!-- Reclamation Modal -->
+            <div id="reclamationModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1001; align-items: center; justify-content: center; backdrop-filter: blur(5px);">
+                <div class="auth-card" style="width: 450px; max-width: 95%; max-height: 90vh; overflow-y: auto; padding: 25px; box-sizing: border-box;">
+                    
+                    <div style="display: flex; margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.2);">
+                        <div class="rec-tab active" id="tabSubmit">Submit New</div>
+                        <div class="rec-tab" id="tabMine">My Reclamations</div>
+                    </div>
+                    
+                    <!-- Submit Form -->
+                    <form id="reclamationForm">
+                        <div style="margin-bottom: 15px;">
+                            <label style="display: block; margin-bottom: 5px; font-weight: bold; color: var(--primary-light);">Title (Issue Type)</label>
+                            <select id="recTitle" required class="pillField" style="width: 100%; margin-bottom: 0;">
+                                <option value="">Select a category...</option>
+                                <option value="User problem">User problem</option>
+                                <option value="System Problem">System Problem</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+
+                        <div id="targetUserDiv" style="display: none; margin-bottom: 15px;">
+                            <label style="display: block; margin-bottom: 5px; font-weight: bold; color: var(--primary-light);">Target User</label>
+                            <select id="recTargetUser" class="pillField" style="width: 100%; margin-bottom: 0;">
+                                <option value="">Loading users...</option>
+                            </select>
+                        </div>
+
+                        <div style="margin-bottom: 15px;">
+                            <label style="display: block; margin-bottom: 5px; font-weight: bold; color: var(--primary-light);">Description</label>
+                            <textarea id="recDescription" required rows="4" class="pillField" style="width: 100%; margin-bottom: 0; resize: vertical;"></textarea>
+                        </div>
+
+                        <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                            <button type="button" class="closeReclamationBtn" style="padding: 10px 15px; background: transparent; border: 1px solid var(--primary-light); color: var(--text-main); border-radius: 999px; cursor: pointer; font-weight: bold;">Cancel</button>
+                            <button type="submit" class="signBtn" style="width: auto; margin-top: 0; padding: 10px 20px;">Submit</button>
+                        </div>
+                    </form>
+
+                    <!-- My Reclamations List -->
+                    <div id="myReclamationsList" style="display: none;">
+                        <div id="mineLoader" style="text-align: center; padding: 20px;">Loading...</div>
+                        <div id="mineContent"></div>
+                        <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+                            <button type="button" class="closeReclamationBtn" style="padding: 10px 15px; background: transparent; border: 1px solid var(--border, #3a3b58); color: var(--text, #ffffff); border-radius: 6px; cursor: pointer;">Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <script>
+                document.addEventListener('DOMContentLoaded', () => {
+                    const btn = document.getElementById('reclamationBtn');
+                    const modal = document.getElementById('reclamationModal');
+                    const closeBtns = document.querySelectorAll('.closeReclamationBtn');
+                    const titleSelect = document.getElementById('recTitle');
+                    const targetUserDiv = document.getElementById('targetUserDiv');
+                    const form = document.getElementById('reclamationForm');
+                    const userSelect = document.getElementById('recTargetUser');
+
+                    const tabSubmit = document.getElementById('tabSubmit');
+                    const tabMine = document.getElementById('tabMine');
+                    const myReclamationsList = document.getElementById('myReclamationsList');
+
+                    if (btn) {
+                        // Open modal
+                        btn.addEventListener('click', () => {
+                            modal.style.display = 'flex';
+                            if (tabMine.classList.contains('active')) {
+                                loadMyReclamations();
+                            }
+                        });
+                    }
+
+                    // Close modal
+                    closeBtns.forEach(c => {
+                        c.addEventListener('click', () => {
+                            modal.style.display = 'none';
+                            form.reset();
+                            targetUserDiv.style.display = 'none';
+                        });
+                    });
+
+                    // Tab switching
+                    tabSubmit.addEventListener('click', () => {
+                        tabSubmit.classList.add('active');
+                        tabMine.classList.remove('active');
+                        form.style.display = 'block';
+                        myReclamationsList.style.display = 'none';
+                    });
+
+                    tabMine.addEventListener('click', () => {
+                        tabMine.classList.add('active');
+                        tabSubmit.classList.remove('active');
+                        form.style.display = 'none';
+                        myReclamationsList.style.display = 'block';
+                        loadMyReclamations();
+                    });
+
+                    function loadMyReclamations() {
+                        const content = document.getElementById('mineContent');
+                        const loader = document.getElementById('mineLoader');
+                        loader.style.display = 'block';
+                        content.innerHTML = '';
+
+                        fetch('/reclamation/mine')
+                            .then(res => res.json())
+                            .then(data => {
+                                loader.style.display = 'none';
+                                if (data.status === 'success') {
+                                    if (data.reclamations.length === 0) {
+                                        content.innerHTML = '<p style="text-align:center; color:#999;">No reclamations submitted yet.</p>';
+                                        return;
+                                    }
+                                    let html = '';
+                                    data.reclamations.forEach(r => {
+                                        html += `
+                                        <div style="background: rgba(122, 92, 255, 0.05); padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 1px solid rgba(122, 92, 255, 0.2); color: var(--text-main);">
+                                            <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+                                                <strong style="color:var(--primary);">${r.title}</strong>
+                                                <span class="rec-status">${r.status}</span>
+                                            </div>
+                                            <p style="margin:0 0 10px 0; font-size:0.9em;">${r.description}</p>
+                                            <small style="color:var(--primary-light);">${r.date}</small>
+                                        `;
+                                        
+                                        if (r.responses && r.responses.length > 0) {
+                                            r.responses.forEach(res => {
+                                                html += `
+                                                <div class="rec-response" style="background: rgba(122, 92, 255, 0.1); border-left: 3px solid var(--primary); padding: 10px; border-radius: 6px; margin-top: 10px;">
+                                                    <strong style="color: var(--primary-hover);">Support (${res.admin_name}):</strong>
+                                                    <p style="margin: 5px 0 0 0; font-size: 0.9em; overflow-wrap: break-word;">${res.content}</p>
+                                                    <small style="color: var(--primary-light); font-size: 0.8em;">${res.date}</small>
+                                                </div>
+                                                `;
+                                            });
+                                        }
+
+                                        html += `</div>`;
+                                    });
+                                    content.innerHTML = html;
+                                }
+                            });
+                    }
+
+                    // Check title changes
+                    titleSelect.addEventListener('change', (e) => {
+                        if (e.target.value === 'User problem') {
+                            targetUserDiv.style.display = 'block';
+                            userSelect.required = true;
+                            
+                            // Fetch users
+                            userSelect.innerHTML = '<option value="">Loading users...</option>';
+                            fetch('/reclamation/users')
+                                .then(res => res.json())
+                                .then(data => {
+                                    userSelect.innerHTML = '<option value="">Select a user...</option>';
+                                    data.users.forEach(u => {
+                                        const opt = document.createElement('option');
+                                        opt.value = u.id;
+                                        opt.textContent = u.name;
+                                        userSelect.appendChild(opt);
+                                    });
+                                })
+                                .catch(err => {
+                                    userSelect.innerHTML = '<option value="">Error loading users</option>';
+                                });
+                        } else {
+                            targetUserDiv.style.display = 'none';
+                            userSelect.required = false;
+                            userSelect.value = '';
+                        }
+                    });
+
+                    // Handle Form submit
+                    form.addEventListener('submit', (e) => {
+                        e.preventDefault();
+                        
+                        const data = {
+                            title: titleSelect.value,
+                            description: document.getElementById('recDescription').value,
+                            targetId: userSelect.value || null
+                        };
+
+                        fetch('/reclamation/submit', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify(data)
+                        })
+                        .then(res => res.json())
+                        .then(result => {
+                            if (result.status === 'success') {
+                                // Switch to my reclamations immediately
+                                tabMine.click();
+                            } else if (result.status === 'unauthorized') {
+                                window.location.href = '/login';
+                            } else {
+                                alert('Error: ' + result.message);
+                            }
+                        })
+                        .catch(err => {
+                            alert('Something went wrong!');
+                        });
+                    });
+                });
+            </script>
+        {% endif %}
+        
+        <script>
+            document.addEventListener("DOMContentLoaded", function() {
+                // Theme Toggle Logic
+                const toggleBtn = document.getElementById('themeToggleBtn');
+                if (toggleBtn) {
+                    toggleBtn.addEventListener('click', () => {
+                        const isDark = document.body.classList.contains('dark-mode');
+                        if (isDark) {
+                            document.body.classList.remove('dark-mode');
+                            localStorage.setItem('theme', 'light');
+                        } else {
+                            document.body.classList.add('dark-mode');
+                            localStorage.setItem('theme', 'dark');
+                        }
+                    });
+                }
+            });
+        </script>
+    </body>
+</html>
