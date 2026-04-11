@@ -21,8 +21,9 @@ class MentorshipChatController extends AbstractController
         if (!$userId) return $this->json(['error' => 'Unauthorized'], 401);
 
         $bookings = $em->getRepository(Booking::class)->createQueryBuilder('b')
-            ->where('b.entrepreneurID = :uid OR b.mentorID = :uid')
+            ->where('(b.entrepreneurID = :uid OR b.mentorID = :uid) AND b.status = :status')
             ->setParameter('uid', $userId)
+            ->setParameter('status', 'approved')
             ->getQuery()
             ->getResult();
 
