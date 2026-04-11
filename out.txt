@@ -1,0 +1,64 @@
+--- mentor_favorites ---
+id
+entrepreneurID
+mentorID
+createdAt
+--- booking ---
+bookingID
+entrepreneurID
+mentorID
+startupID
+requestedDate
+requestedTime
+topic
+status
+creationDate
+--- schedule ---
+scheduleID
+mentorID
+availableDate
+startTime
+endTime
+isBooked
+--- session ---
+sessionID
+mentorID
+entrepreneurID
+startupID
+scheduleID
+sessionDate
+sessionType
+status
+notes
+successProbability
+--- mentor_evaluations ---
+id
+entrepreneurID
+mentorID
+sessionID
+rating
+comment
+createdAt
+--- session_notes ---
+noteID
+sessionID
+entrepreneurID
+satisfactionScore
+notes
+noteDate
+--- session_todos ---
+id
+sessionID
+taskDescription
+isDone
+createdAt
+--- users ---
+id
+full_name
+email
+password_hash
+role
+status
+mentor_expertise
+evaluator_level
+created_at
