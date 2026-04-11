@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Evaluation Admin - Manage Evaluations</title>
+    <link rel="stylesheet" href="{{ asset('Back/css/styles.css') }}?v=2">
+    <style>
+        .action-btns {
+            display: flex;
+            gap: 10px;
+        }
+        .btn-edit {
+            background: rgba(181, 139, 255, 0.2);
+            color: #b58bff;
+            border: 1px solid #b58bff;
+            padding: 5px 12px;
+            border-radius: 20px;
+            text-decoration: none;
+            font-size: 0.85rem;
+            transition: all 0.3s;
+        }
+        .btn-edit:hover {
+            background: #b58bff;
+            color: white;
+            box-shadow: 0 0 10px #b58bff;
+        }
+        .btn-delete {
+            background: rgba(255, 107, 107, 0.2);
+            color: #ff6b6b;
+            border: 1px solid #ff6b6b;
+            padding: 5px 12px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.3s;
+        }
+        .btn-delete:hover {
+            background: #ff6b6b;
+            color: white;
+            box-shadow: 0 0 10px #ff6b6b;
+        }
+        .search-container {
+            position: relative;
+            width: 300px;
+        }
+        .search-container input {
+            width: 100%;
+            padding: 10px 20px 10px 40px;
+            border-radius: 25px;
+            border: 1px solid var(--primary-light, #b58bff);
+            background: transparent;
+            color: inherit;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+        }
+        .search-container input:focus {
+            outline: none;
+            box-shadow: 0 0 8px rgba(181, 139, 255, 0.5);
+        }
+        .search-icon {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--primary-light, #b58bff);
+        }
+    </style>
+</head>
+<body>
+    <script>
+        if (localStorage.getItem('admin_theme') === 'dark') {
+            document.body.classList.add('dark-mode');
+        }
+    </script>
+
+    <!-- SIDEBAR FOR EVALUATION MODULE -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <h2>Evaluation Admin</h2>
+        </div>
+        <ul class="sidebar-menu">
+            <li><a href="{{ path('app_admin_panel') }}" style="color: #ff9d9d;">&larr; Main Admin</a></li>
+            <li><a href="{{ path('app_admin_evaluation_dashboard') }}" class="{{ current_menu == 'dashboard' ? 'active' : '' }}">Dashboard</a></li>
+            <li><a href="{{ path('app_admin_evaluation_applications') }}" class="{{ current_menu == 'applications' ? 'active' : '' }}">Manage Applications</a></li>
+            <li><a href="{{ path('app_admin_evaluation_evaluations') }}" class="{{ current_menu == 'evaluations' ? 'active' : '' }}">Manage Evaluations</a></li>
+                    <li style="margin-top:20px; border-top:1px solid rgba(255,255,255,0.1); padding-top:10px;"><a href="{{ path('app_admin_panel') }}" style="color:var(--primary-light);">Global Modules</a></li>
+            <li><a href="{{ path('app_admin_forum_dashboard') }}">Forum</a></li>
+            <li><a href="{{ path('app_admin_startup_dashboard') }}">Startup</a></li>
+            <li><a href="{{ path('app_admin_evaluation_dashboard') }}">Evaluation</a></li>
+            <li><a href="{{ path('app_admin_users') }}">Users</a></li>
+            <li><a href="{{ path('app_admin_mentorship') }}">Mentorship</a></li>
+            <li><a href="{{ path('app_admin_reclamations') }}">Reclamation & Response</a></li>
+        </ul>
+        <div class="sidebar-footer">
+            <a href="{{ path('app_logout') }}" class="logout-btn glow-btn">Sign Out</a>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <div class="main-content">
+        <header class="topbar">
+            <div class="topbar-left">
+                <h2>Manage Evaluations</h2>
+            </div>
+            <div class="topbar-right">
+                <button id="themeToggleBtn" class="btn-pill" style="border: 2px solid var(--primary-light); background: transparent; color: var(--primary-light);">🌓</button>
+            </div>
+        </header>
+
+        <main class="dashboard-content" style="position: relative; z-index: 2;">
+            <div class="card" style="width: 100%;">
+                <div style="display: flex; align-items: center; gap: 20px; margin-bottom: 20px;">
+                    <h3 style="color: var(--primary-lighter); margin: 0;">All Funding Evaluations</h3>
+                    <div class="search-container">
+                        <span class="search-icon">🔍</span>
+                        <input type="text" id="searchInput" placeholder="Search by exact ID...">
+                    </div>
+                </div>
+                <div style="overflow-x: auto;">
+                    <table style="width: 100%; border-collapse: collapse; text-align: left;" id="dataTable">
+                        <thead>
+                            <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
+                                <th style="padding: 15px; color: #b0a8d6; cursor: pointer;" class="sort-col" data-sort="id">ID <span class="sort-icon"></span></th>
+                                <th style="padding: 15px; color: #b0a8d6; cursor: pointer;" class="sort-col" data-sort="fundingApplicationId">App ID <span class="sort-icon"></span></th>
+                                <th style="padding: 15px; color: #b0a8d6; cursor: pointer;" class="sort-col" data-sort="score">Score <span class="sort-icon"></span></th>
+                                <th style="padding: 15px; color: #b0a8d6; cursor: pointer;" class="sort-col" data-sort="decision">Decision <span class="sort-icon"></span></th>
+                                <th style="padding: 15px; color: #b0a8d6; cursor: pointer;" class="sort-col" data-sort="riskLevel">Risk Level <span class="sort-icon"></span></th>
+                                <th style="padding: 15px; color: #b0a8d6;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody">
+                            {% include 'BackOffice/evaluation/_evaluations_tbody.html.twig' %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const toggleBtn = document.getElementById('themeToggleBtn');
+            if (toggleBtn) {
+                toggleBtn.addEventListener('click', () => {
+                    const isDark = document.body.classList.contains('dark-mode');
+                    if (isDark) {
+                        document.body.classList.remove('dark-mode');
+                        localStorage.setItem('admin_theme', 'light');
+                    } else {
+                        document.body.classList.add('dark-mode');
+                        localStorage.setItem('admin_theme', 'dark');
+                    }
+                });
+            }
+
+            // AJAX Search and Sort
+            const searchInput = document.getElementById('searchInput');
+            const tableBody = document.getElementById('tableBody');
+            const sortCols = document.querySelectorAll('.sort-col');
+            let currentSort = 'createdAt';
+            let currentDir = 'DESC';
+
+            function updateTable() {
+                const query = searchInput.value;
+                const url = new URL(window.location.href);
+                url.searchParams.set('search', query);
+                url.searchParams.set('sortBy', currentSort);
+                url.searchParams.set('sortDir', currentDir);
+
+                fetch(url.toString(), {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                })
+                .then(response => response.text())
+                .then(html => {
+                    tableBody.innerHTML = html;
+                });
+            }
+
+            if (searchInput) {
+                searchInput.addEventListener('keyup', () => {
+                    updateTable();
+                });
+            }
+
+            sortCols.forEach(col => {
+                col.addEventListener('click', () => {
+                    const sortField = col.getAttribute('data-sort');
+                    if (currentSort === sortField) {
+                        currentDir = currentDir === 'ASC' ? 'DESC' : 'ASC';
+                    } else {
+                        currentSort = sortField;
+                        currentDir = 'ASC';
+                    }
+                    
+                    // Update icons
+                    sortCols.forEach(c => c.querySelector('.sort-icon').innerHTML = '');
+                    col.querySelector('.sort-icon').innerHTML = currentDir === 'ASC' ? '&#9650;' : '&#9660;';
+
+                    updateTable();
+                });
+            });
+        });
+    </script>
+</body>
+</html>
+

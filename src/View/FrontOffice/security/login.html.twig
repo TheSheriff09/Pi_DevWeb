@@ -1,0 +1,142 @@
+{% extends 'FrontOffice/base.html.twig' %}
+
+{% block title %}StartupFlow Tunisia - Login{% endblock %}
+
+{% block body %}
+    <div class="split-layout">
+        <div class="split-left">
+            <!-- Left login card -->
+            <div class="auth-card">
+                <h2 class="welcome-title">Welcome Back!</h2>
+
+                <form method="post" action="{{ path('app_login') }}">
+                    {% if error is defined and error %}
+                        <div style="color: #ff5c5c; margin-bottom: 15px; font-weight: 500; text-align: center;">{{ error }}</div>
+                    {% endif %}
+
+                    <label class="field-label" for="login-email">Email</label>
+                    <input type="email" id="login-email" name="email" class="pillField" placeholder="Entrepreneur@startupflow.in" autofocus>
+
+                    <label class="field-label" for="login-password">Password</label>
+                    <div class="password-wrap">
+                        <input type="password" id="login-password" name="password" class="pillField" placeholder="**************">
+                        <button type="button" class="eyeBtn" onclick="togglePass('login-password')">👁</button>
+                    </div>
+
+                    <button type="submit" class="signBtn">sign in</button>
+                </form>
+
+                <button class="socialBtn">
+                    <img src="{{ asset('Front/images/google-lens-icon-logo-symbol-free-png.png') }}" alt="Google Login">
+                </button>
+
+                <div class="auth-bottom">
+                    <span>don't have an account ?</span>
+                    <a href="{{ path('app_register') }}" class="link-alt">sign up</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="split-right">
+            <!-- 3D Cube Container replacing static image -->
+            <div id="threed-cube-container" style="width: 100%; height: 100%; position: absolute; top: 0; left: 0; z-index: 1;"></div>
+            <div class="right-overlay" style="z-index: 2;">
+                <h2 class="rightTitle">Turn Ideas Into Impact</h2>
+                <p class="rightSub">From bold ideas to funded startups, manage mentoring,<br>performance, and growth with clarity and confidence.</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        function togglePass(id) {
+            const el = document.getElementById(id);
+            if (el.type === "password") {
+                el.type = "text";
+            } else {
+                el.type = "password";
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", function() {
+            const container = document.getElementById('threed-cube-container');
+            if (!container) return;
+
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
+            const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+            
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            container.appendChild(renderer.domElement);
+
+            const geometry = new THREE.BoxGeometry(3, 3, 3);
+            const material = new THREE.MeshStandardMaterial({  
+                color: 0x7a5cff,
+                wireframe: true,
+                emissive: 0x6f56ff,
+                emissiveIntensity: 0.8,
+                transparent: true,
+                opacity: 0.9
+            });
+            const cube = new THREE.Mesh(geometry, material);
+            scene.add(cube);
+
+            const coreGeometry = new THREE.BoxGeometry(2.1, 2.1, 2.1);
+            const coreMaterial = new THREE.MeshPhongMaterial({
+                color: 0xcdb5ff,
+                shininess: 150,
+                transparent: true,
+                opacity: 0.8
+            });
+            const core = new THREE.Mesh(coreGeometry, coreMaterial);
+            scene.add(core);
+
+            const particleGeo = new THREE.BufferGeometry();
+            const particleCount = 200;
+            const posArray = new Float32Array(particleCount * 3);
+            for(let i=0; i<particleCount*3; i++) {
+                posArray[i] = (Math.random() - 0.5) * 15;
+            }
+            particleGeo.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+            const particleMat = new THREE.PointsMaterial({
+                size: 0.05,
+                color: 0xcdb5ff,
+                transparent: true,
+                opacity: 0.6
+            });
+            const particles = new THREE.Points(particleGeo, particleMat);
+            scene.add(particles);
+
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            scene.add(ambientLight);
+
+            const pointLight = new THREE.PointLight(0xffffff, 2);
+            pointLight.position.set(5, 5, 5);
+            scene.add(pointLight);
+
+            camera.position.z = 6;
+
+            function animate() {
+                requestAnimationFrame(animate);
+                
+                cube.rotation.x += 0.005;
+                cube.rotation.y += 0.01;
+                core.rotation.x -= 0.008;
+                core.rotation.y -= 0.008;
+                particles.rotation.y += 0.002;
+
+                renderer.render(scene, camera);
+            }
+            animate();
+
+            window.addEventListener('resize', () => {
+                if (container) {
+                    camera.aspect = container.clientWidth / container.clientHeight;
+                    camera.updateProjectionMatrix();
+                    renderer.setSize(container.clientWidth, container.clientHeight);
+                }
+            });
+        });
+    </script>
+{% endblock %}

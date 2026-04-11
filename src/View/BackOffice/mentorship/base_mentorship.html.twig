@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Mentorship Admin Panel{% endblock %}</title>
+    <!-- Core styles mapping to the global Backoffice themes -->
+    <link rel="stylesheet" href="{{ asset('Back/css/styles.css') }}?v=2">
+</head>
+<body>
+    <script>
+        if (localStorage.getItem('admin_theme') === 'dark') {
+            document.body.classList.add('dark-mode');
+        }
+    </script>
+
+    <!-- SIDEBAR FOR MENTORSHIP MODULE -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <h2>Mentorship Admin</h2>
+        </div>
+        <ul class="sidebar-menu">
+            <li><a href="{{ path('app_admin_panel') }}" style="color: #a18bff;">&larr; Main Admin</a></li>
+            <li><a href="{{ path('app_admin_mentorship') }}" class="{{ current_menu|default('') == 'dashboard' ? 'active' : '' }}">Dashboard</a></li>
+            <li><a href="{{ path('app_admin_mentorship_mentors')|default('#') }}" class="{{ current_menu|default('') == 'mentors' ? 'active' : '' }}">Manage Mentors</a></li>
+            <li><a href="{{ path('app_admin_mentorship_bookings')|default('#') }}" class="{{ current_menu|default('') == 'bookings' ? 'active' : '' }}">Manage Bookings</a></li>
+            <li><a href="{{ path('app_admin_mentorship_sessions')|default('#') }}" class="{{ current_menu|default('') == 'sessions' ? 'active' : '' }}">Manage Sessions</a></li>
+            <li><a href="{{ path('app_admin_mentorship_feedback')|default('#') }}" class="{{ current_menu|default('') == 'feedback' ? 'active' : '' }}">Manage Feedback</a></li>
+                    <li style="margin-top:20px; border-top:1px solid rgba(255,255,255,0.1); padding-top:10px;"><a href="{{ path('app_admin_panel') }}" style="color:var(--primary-light);">Global Modules</a></li>
+            <li><a href="{{ path('app_admin_forum_dashboard') }}">Forum</a></li>
+            <li><a href="{{ path('app_admin_startup_dashboard') }}">Startup</a></li>
+            <li><a href="{{ path('app_admin_evaluation_dashboard') }}">Evaluation</a></li>
+            <li><a href="{{ path('app_admin_users') }}">Users</a></li>
+            <li><a href="{{ path('app_admin_mentorship') }}">Mentorship</a></li>
+            <li><a href="{{ path('app_admin_reclamations') }}">Reclamation & Response</a></li>
+        </ul>
+        <div class="sidebar-footer">
+            <a href="{{ path('app_logout') }}" class="logout-btn glow-btn">Sign Out</a>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <div class="main-content">
+        <!-- TOPBAR -->
+        <header class="topbar">
+            <div class="topbar-left">
+                <h2 style="margin: 0; color: var(--text-main);">{% block header_title %}Overview{% endblock %}</h2>
+            </div>
+            <div class="topbar-right" style="display: flex; align-items: center; gap: 20px;">
+                <button id="themeToggleBtn" class="btn-pill" style="border: 2px solid var(--primary-light); background: transparent; color: var(--primary-light); padding: 5px 15px; cursor: pointer; font-size: 1em;">🌓</button>
+                <div class="user-profile" style="display: flex; align-items: center; gap: 10px;">
+                    <div class="avatar" style="background-color: var(--primary); width: 35px; height: 35px; border-radius: 50%; display: flex; justify-content: center; align-items: center;">
+                        <span style="color: white; font-weight: bold;">A</span>
+                    </div>
+                    <span style="font-weight: bold;">Admin</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- MODULE SPECIFIC CONTENT -->
+        <main class="dashboard-content" style="position: relative; z-index: 2; padding: 30px; flex-grow: 1;">
+            {% block body %}{% endblock %}
+        </main>
+        
+        <!-- FOOTER -->
+        <footer class="futuristic-footer" style="padding: 20px; text-align: center; border-top: 1px solid rgba(255, 255, 255, 0.1);">
+            <p style="color: var(--primary-light); margin: 0;">&copy; {{ 'now'|date('Y') }} StartupFlow Admin.</p>
+        </footer>
+    </div>
+
+    <!-- NATIVE JS INFRASTRUCTURE -->
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const toggleBtn = document.getElementById('themeToggleBtn');
+            if (toggleBtn) {
+                toggleBtn.addEventListener('click', () => {
+                    const isDark = document.body.classList.contains('dark-mode');
+                    if (isDark) {
+                        document.body.classList.remove('dark-mode');
+                        localStorage.setItem('admin_theme', 'light');
+                    } else {
+                        document.body.classList.add('dark-mode');
+                        localStorage.setItem('admin_theme', 'dark');
+                    }
+                });
+            }
+        });
+    </script>
+    {% block javascripts %}{% endblock %}
+</body>
+</html>
+

@@ -1,0 +1,22 @@
+{% for app in applications %}
+    <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+        <td style="padding: 15px;">{{ app.id }}</td>
+        <td style="padding: 15px;">{{ app.submissionDate|date('Y-m-d') }}</td>
+        <td style="padding: 15px;">${{ app.amount|number_format(2) }}</td>
+        <td style="padding: 15px;">
+            <span style="padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; background: rgba(255,255,255,0.1); color: #fff;">{{ app.status }}</span>
+        </td>
+        <td style="padding: 15px;">
+            <div class="action-btns">
+                <a href="{{ path('app_admin_evaluation_application_edit', {'id': app.id}) }}" class="btn-edit">Edit</a>
+                <form method="post" action="{{ path('app_admin_evaluation_application_delete', {'id': app.id}) }}" onsubmit="return confirm('Are you sure you want to delete this application?');" style="display:inline-block; margin:0;">
+                    <button class="btn-delete" type="submit">Delete</button>
+                </form>
+            </div>
+        </td>
+    </tr>
+{% else %}
+    <tr>
+        <td colspan="5" style="padding: 15px; text-align: center; color: #b0a8d6;">No applications found.</td>
+    </tr>
+{% endfor %}

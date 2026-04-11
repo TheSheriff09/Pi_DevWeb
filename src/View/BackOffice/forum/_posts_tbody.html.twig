@@ -1,0 +1,18 @@
+{% for post in posts %}
+    <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+        <td style="padding: 15px;">{{ post.id }}</td>
+        <td style="padding: 15px; font-weight: 500;">{{ post.title }}</td>
+        <td style="padding: 15px;">{{ post.content|length > 40 ? post.content|slice(0, 40) ~ '...' : post.content }}</td>
+        <td style="padding: 15px;">{{ post.authorName }}</td>
+        <td style="padding: 15px; color: #b0a8d6;">{{ post.createdAt|date('Y-m-d H:i') }}</td>
+        <td style="padding: 15px; text-align: right;">
+            <form action="{{ path('app_admin_forum_post_delete', {'id': post.id}) }}" method="post" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this post?');">
+                <button type="submit" style="background: rgba(255, 71, 87, 0.1); border: 1px solid #ff4757; color: #ff4757; padding: 5px 10px; border-radius: 8px; cursor: pointer; transition: 0.3s;">Delete</button>
+            </form>
+        </td>
+    </tr>
+{% else %}
+    <tr>
+        <td colspan="6" style="padding: 15px; text-align: center; color: #b0a8d6;">No posts found.</td>
+    </tr>
+{% endfor %}
