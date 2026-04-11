@@ -17,13 +17,14 @@
                         <th style="padding: 15px; color: #b0a8d6;">Scheduled Date</th>
                         <th style="padding: 15px; color: #b0a8d6;">Status</th>
                         <th style="padding: 15px; color: #b0a8d6; text-align: center;">Follow-up Nodes</th>
+                        <th style="padding: 15px; color: #b0a8d6; text-align: right;">Action</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for item in sessions %}
                         {% set s = item.session %}
-                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
-                            <td style="padding: 15px;">#{{ s.sessionID }}</td>
+                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.05); transition: background 0.3s;" onmouseover="this.style.background='rgba(111,86,255,0.05)'" onmouseout="this.style.background='transparent'">
+                            <td style="padding: 15px; font-weight: bold; color: var(--text-main);">#{{ s.sessionID }}</td>
                             <td style="padding: 15px;">
                                 <strong style="color: var(--primary-lighter);">E:</strong> {{ item.entrepreneurName }}<br>
                                 <strong style="color: var(--primary-lighter);">M:</strong> {{ item.mentorName }}
@@ -36,8 +37,14 @@
                                 </span>
                             </td>
                             <td style="padding: 15px; text-align: center;">
-                                <span style="color: #f1c40f; font-weight: bold; margin-right: 15px;">📝 Notes: {{ item.notes }}</span>
-                                <span style="color: #e74c3c; font-weight: bold;">✅ Todos: {{ item.todos }}</span>
+                                <span style="color: #f1c40f; font-weight: bold; margin-right: 15px;">📝 {{ item.notes }} Notes</span>
+                                <span style="color: #e74c3c; font-weight: bold;">✅ {{ item.todos }} Todos</span>
+                            </td>
+                            <td style="padding: 15px; text-align: right;">
+                                <form method="post" style="margin: 0; display: inline-block;">
+                                    <input type="hidden" name="session_id" value="{{ s.sessionID }}">
+                                    <button type="submit" class="btn-pill" style="background: rgba(231, 76, 60, 0.1); color: #ff5656; border: 1px solid rgba(231, 76, 60, 0.3); padding: 5px 12px; font-size: 0.8rem; cursor: pointer; transition: all 0.3s;" onmouseover="this.style.background='rgba(231, 76, 60, 0.2)'" onmouseout="this.style.background='rgba(231, 76, 60, 0.1)'" onclick="return confirm('Drop this session from the database?');">Delete Session</button>
+                                </form>
                             </td>
                         </tr>
                     {% else %}

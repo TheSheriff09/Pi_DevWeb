@@ -39,6 +39,7 @@ class AdminMentorshipController extends AbstractController
         $latestBookings = $qb->getQuery()->getResult();
 
         return $this->render('BackOffice/mentorship/dashboard.html.twig', [
+            'current_module' => 'mentorship',
             'current_menu' => 'dashboard',
             'totalMentors' => $totalMentors,
             'totalBookings' => $totalBookings,
@@ -67,6 +68,21 @@ class AdminMentorshipController extends AbstractController
         $role = $request->getSession()->get('user_role');
         if ($role !== 'ADMIN') {
             return $this->redirectToRoute('app_login');
+        }
+
+        if ($request->isMethod('POST')) {
+            $mentorId = $request->request->get('mentor_id');
+            if ($mentorId) {
+                $user = $em->getRepository(Users::class)->find($mentorId);
+                if ($user && $user->getRole() === 'MENTOR') {
+                    $user->setRole('ENTREPRENEUR');
+                    $em->flush();
+                    $this->addFlash('success', 'Mentor status revoked for ' . $user->getFullName());
+                } else {
+                    $this->addFlash('error', 'User not found or not a mentor.');
+                }
+            }
+            return $this->redirectToRoute('app_admin_mentorship_mentors');
         }
 
         $search = $request->query->get('search', '');
@@ -108,6 +124,7 @@ class AdminMentorshipController extends AbstractController
         }
 
         return $this->render('BackOffice/mentorship/mentors.html.twig', [
+            'current_module' => 'mentorship',
             'current_menu' => 'mentors',
             'mentors' => $mentors
         ]);
@@ -127,11 +144,18 @@ class AdminMentorshipController extends AbstractController
 
             if ($bookingId && $action) {
                 $booking = $em->getRepository(Booking::class)->find($bookingId);
-                if ($booking && strtoupper($booking->getStatus()) === 'PENDING') {
-                    if ($action === 'accept') {
-                        $booking->setStatus('approved');
-                    } elseif ($action === 'reject') {
-                        $booking->setStatus('rejected');
+                if ($booking) {
+                    if (strtoupper($booking->getStatus()) === 'PENDING') {
+                        if ($action === 'accept') {
+                            $booking->setStatus('approved');
+                            $this->addFlash('success', 'Booking #' . $bookingId . ' approved.');
+                        } elseif ($action === 'reject') {
+                            $booking->setStatus('rejected');
+                            $this->addFlash('error', 'Booking #' . $bookingId . ' rejected.');
+                        }
+                    } elseif ($action === 'cancel') {
+                        $booking->setStatus('cancelled');
+                        $this->addFlash('error', 'Booking #' . $bookingId . ' cancelled by admin.');
                     }
                     $em->flush();
                 }
@@ -154,6 +178,7 @@ class AdminMentorshipController extends AbstractController
         }
 
         return $this->render('BackOffice/mentorship/bookings.html.twig', [
+            'current_module' => 'mentorship',
             'current_menu' => 'bookings',
             'bookings' => $bookings
         ]);
@@ -165,6 +190,19 @@ class AdminMentorshipController extends AbstractController
         $role = $request->getSession()->get('user_role');
         if ($role !== 'ADMIN') {
             return $this->redirectToRoute('app_login');
+        }
+
+        if ($request->isMethod('POST')) {
+            $sessionId = $request->request->get('session_id');
+            if ($sessionId) {
+                $session = $em->getRepository(Session::class)->find($sessionId);
+                if ($session) {
+                    $em->remove($session);
+                    $em->flush();
+                    $this->addFlash('success', 'Session #' . $sessionId . ' successfully dropped.');
+                }
+            }
+            return $this->redirectToRoute('app_admin_mentorship_sessions');
         }
 
         $sessionsRaw = $em->getRepository(Session::class)->findBy([], ['sessionDate' => 'DESC']);
@@ -186,6 +224,7 @@ class AdminMentorshipController extends AbstractController
         }
 
         return $this->render('BackOffice/mentorship/sessions.html.twig', [
+            'current_module' => 'mentorship',
             'current_menu' => 'sessions',
             'sessions' => $sessionsData
         ]);
@@ -206,6 +245,7 @@ class AdminMentorshipController extends AbstractController
                 if ($eval) {
                     $em->remove($eval);
                     $em->flush();
+                    $this->addFlash('success', 'Feedback record scrubbed successfully.');
                 }
             }
             return $this->redirectToRoute('app_admin_mentorship_feedback');
@@ -228,6 +268,7 @@ class AdminMentorshipController extends AbstractController
         }
 
         return $this->render('BackOffice/mentorship/feedback.html.twig', [
+            'current_module' => 'mentorship',
             'current_menu' => 'feedback',
             'feedbacks' => $feedbacks
         ]);

@@ -39,9 +39,9 @@
                                 "{{ e.comment }}"
                             </td>
                             <td style="padding: 15px; text-align: right;">
-                                <form method="post" style="margin: 0;">
-                                    <input type="hidden" name="evaluation_id" value="{{ e.evaluationID }}">
-                                    <button type="submit" class="btn-pill" style="background: rgba(231, 76, 60, 0.2); color: #e74c3c; border: none; padding: 5px 12px; font-size: 0.8rem; cursor: pointer;" onclick="return confirm('WARNING: Permanently delete this evaluation?');">Scrub Record</button>
+                                <form method="post" style="margin: 0; display: inline-block;">
+                                    <input type="hidden" name="evaluation_id" value="{{ e.id }}">
+                                    <button type="submit" class="btn-pill" style="background: rgba(231, 76, 60, 0.1); color: #ff5656; border: 1px solid rgba(231, 76, 60, 0.3); padding: 5px 12px; font-size: 0.8rem; cursor: pointer; transition: all 0.3s;" onmouseover="this.style.background='rgba(231, 76, 60, 0.2)'" onmouseout="this.style.background='rgba(231, 76, 60, 0.1)'" onclick="return confirm('WARNING: Permanently delete this evaluation?');">Scrub Record</button>
                                 </form>
                             </td>
                         </tr>

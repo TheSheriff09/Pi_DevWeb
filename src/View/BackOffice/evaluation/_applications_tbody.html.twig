@@ -6,11 +6,11 @@
         <td style="padding: 15px;">
             <span style="padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; background: rgba(255,255,255,0.1); color: #fff;">{{ app.status }}</span>
         </td>
-        <td style="padding: 15px;">
-            <div class="action-btns">
-                <a href="{{ path('app_admin_evaluation_application_edit', {'id': app.id}) }}" class="btn-edit">Edit</a>
-                <form method="post" action="{{ path('app_admin_evaluation_application_delete', {'id': app.id}) }}" onsubmit="return confirm('Are you sure you want to delete this application?');" style="display:inline-block; margin:0;">
-                    <button class="btn-delete" type="submit">Delete</button>
+        <td style="padding: 15px; text-align: right;">
+            <div style="display: flex; gap: 8px; justify-content: flex-end;">
+                <a href="{{ path('app_admin_evaluation_application_edit', {'id': app.id}) }}" class="btn-pill" style="background: rgba(161, 139, 255, 0.1); color: #a18bff; border: 1px solid rgba(161, 139, 255, 0.3); padding: 5px 12px; text-decoration: none; font-size: 0.8rem;">Edit</a>
+                <form method="post" action="{{ path('app_admin_evaluation_application_delete', {'id': app.id}) }}" onsubmit="return confirm('Are you sure you want to delete this application?');" style="margin: 0;">
+                    <button class="btn-pill" type="submit" style="background: rgba(231, 76, 60, 0.1); color: #ff5656; border: 1px solid rgba(231, 76, 60, 0.3); padding: 5px 12px; font-size: 0.8rem; cursor: pointer;">Delete</button>
                 </form>
             </div>
         </td>

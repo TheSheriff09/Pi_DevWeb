@@ -37,6 +37,7 @@ class AdminEvaluationController extends AbstractController
             'applicationsCount' => $applicationsCount,
             'evaluationsCount' => $evaluationsCount,
             'latestApplications' => $latestApplications,
+            'current_module' => 'evaluation',
             'current_menu' => 'dashboard'
         ]);
     }
@@ -72,6 +73,7 @@ class AdminEvaluationController extends AbstractController
 
         return $this->render('BackOffice/evaluation/applications.html.twig', [
             'applications' => $applications,
+            'current_module' => 'evaluation',
             'current_menu' => 'applications'
         ]);
     }
@@ -157,6 +159,7 @@ class AdminEvaluationController extends AbstractController
 
         return $this->render('BackOffice/evaluation/evaluations.html.twig', [
             'evaluations' => $evaluations,
+            'current_module' => 'evaluation',
             'current_menu' => 'evaluations'
         ]);
     }
