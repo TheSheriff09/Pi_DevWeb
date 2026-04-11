@@ -451,331 +451,215 @@
         </script>
 
         {% if app.request.session.get('user_id') %}
-        <!-- GLOBAL FLOATING CHAT SYSTEM -->
-        <style>
-            #global-chat-btn {
-                position: fixed;
-                bottom: 85px;
-                right: 25px;
-                width: 60px;
-                height: 60px;
-                border-radius: 50%;
-                background: linear-gradient(135deg, var(--primary), var(--primary-light));
-                color: white;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-size: 24px;
-                cursor: pointer;
-                box-shadow: 0 5px 20px rgba(111, 86, 255, 0.4);
-                z-index: 9999;
-                transition: transform 0.3s;
-            }
-            #global-chat-btn:hover {
-                transform: scale(1.1);
-            }
-            #global-chat-window {
-                position: fixed;
-                bottom: 155px;
-                right: 25px;
-                width: 350px;
-                height: 480px;
-                background: var(--bg-light, #fff);
-                border-radius: 12px;
-                box-shadow: 0 10px 40px rgba(0,0,0,0.3);
-                border: 1px solid rgba(111,86,255,0.2);
-                z-index: 9998;
-                display: none;
-                flex-direction: column;
-                overflow: hidden;
-                transition: all 0.3s ease;
-            }
-            body.dark-mode #global-chat-window {
-                background: var(--bg-dark, #1a1a2e);
-            }
-            .chat-header {
-                background: linear-gradient(135deg, var(--primary), var(--primary-light));
-                color: white;
-                padding: 15px;
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                font-weight: bold;
-            }
-            .chat-list, .chat-conversation {
-                flex: 1;
-                overflow-y: auto;
-                background: transparent;
-                display: none;
-                flex-direction: column;
-            }
-            .chat-list.active, .chat-conversation.active {
-                display: flex;
-            }
-            .chat-contact {
-                padding: 15px;
-                border-bottom: 1px solid rgba(122,92,255,0.1);
-                color: var(--text-main);
-                cursor: pointer;
-                display: flex;
-                align-items: center;
-                gap: 10px;
-                transition: background 0.2s;
-            }
-            .chat-contact:hover {
-                background: rgba(111, 86, 255, 0.05);
-            }
-            .chat-avatar {
-                width: 35px; height: 35px; border-radius: 50%;
-                background: var(--primary);
-                display: flex; align-items: center; justify-content: center;
-                color: white; font-weight: bold;
-            }
-            .chat-bubbles {
-                flex: 1;
-                padding: 15px;
-                overflow-y: auto;
-                display: flex;
-                flex-direction: column;
-                gap: 10px;
-            }
-            .bubble {
-                max-width: 80%;
-                padding: 10px 14px;
-                border-radius: 15px;
-                font-size: 0.9rem;
-            }
-            .bubble.me {
-                align-self: flex-end;
-                background: var(--primary);
-                color: white;
-                border-bottom-right-radius: 3px;
-            }
-            .bubble.them {
-                align-self: flex-start;
-                background: rgba(122,92,255,0.1);
-                color: var(--text-main);
-                border-bottom-left-radius: 3px;
-            }
-            .chat-input-area {
-                padding: 15px;
-                border-top: 1px solid rgba(122,92,255,0.1);
-                display: flex;
-                gap: 10px;
-            }
-            .chat-input-area input {
-                flex: 1;
-                padding: 10px 15px;
-                border-radius: 20px;
-                border: 1px solid rgba(122,92,255,0.3);
-                background: transparent;
-                color: var(--text-main);
-            }
-            .chat-input-area button {
-                background: var(--primary);
-                color: white;
-                border: none;
-                border-radius: 50%;
-                width: 40px; height: 40px;
-                cursor: pointer;
-                display: flex; align-items: center; justify-content: center;
-            }
-            #global-chat-badge {
-                position: absolute;
-                top: -5px;
-                right: -5px;
-                background: #ff4757;
-                color: white;
-                font-size: 0.7rem;
-                font-weight: bold;
-                padding: 4px 8px;
-                border-radius: 10px;
-                display: none;
-                border: 2px solid var(--bg-light, #fff);
-                box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-            }
-            body.dark-mode #global-chat-badge {
-                border-color: #1a1a2e;
-            }
-            .unread-pill {
-                background: var(--primary);
-                color: white;
-                font-size: 0.7rem;
-                padding: 2px 6px;
-                border-radius: 10px;
-                margin-left: auto;
-            }
-        </style>
+            <!-- Chat Widget Style -->
+            <style>
+            .chat-widget-btn { width: 55px; height: 55px; border-radius: 50%; background: linear-gradient(135deg, #a18bff, #6f56ff); box-shadow: 0 4px 15px rgba(111,86,255,0.4); display: flex; align-items: center; justify-content: center; cursor: pointer; position: relative; z-index: 1002; transition: transform 0.2s; }
+            .chat-widget-btn:hover { transform: scale(1.05); }
+            .chat-unread-badge { position: absolute; top: 0; right: 0; background: #ff5656; color: white; width: 22px; height: 22px; border-radius: 50%; font-size: 0.75rem; font-weight: bold; display: flex; align-items: center; justify-content: center; border: 2px solid white; transition: border 0.3s; }
 
-        <div id="global-chat-btn" onclick="toggleChatWindow()">
-            💬
-            <div id="global-chat-badge">0</div>
-        </div>
+            /* Light Mode Default */
+            .chat-panel { width: 340px; height: 480px; background: #ffffff; border: 1px solid rgba(0,0,0,0.1); box-shadow: 0 10px 40px rgba(0,0,0,0.15); border-radius: 12px; position: absolute; bottom: 70px; right: 0; z-index: 1001; display: none; flex-direction: column; overflow: hidden; transform-origin: bottom right; animation: popUp 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+            @keyframes popUp { from { opacity:0; transform: scale(0.8); } to { opacity:1; transform: scale(1); } }
+            .chat-header { background: linear-gradient(135deg, #6f56ff, #d2a7ff); color: white; padding: 15px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
+            .chat-close { background: transparent; border: none; color: white; font-size: 1.2rem; cursor: pointer; }
+            .chat-body-contacts { flex: 1; overflow-y: auto; background: #f4f6fa; }
+            .chat-contact-item { padding: 15px; border-bottom: 1px solid rgba(0,0,0,0.05); display: flex; align-items: center; gap: 12px; cursor: pointer; transition: background 0.2s; color: #333; }
+            .chat-contact-item:hover { background: rgba(111,86,255,0.05); }
+            .chat-contact-avatar { width: 40px; height: 40px; border-radius: 50%; background: #6f56ff; display: flex; align-items: center; justify-content: center; font-weight: bold; color: white; }
 
-        <div id="global-chat-window">
-            <div class="chat-header">
-                <div id="chat-header-title">Messaging</div>
-                <div>
-                    <span id="chat-back-btn" style="display:none; cursor:pointer; margin-right:10px;" onclick="closeConversation()">🔙</span>
-                    <span style="cursor:pointer;" onclick="toggleChatWindow()">✕</span>
+            .chat-pane { display: none; flex-direction: column; height: 100%; width: 100%; position: absolute; top:0; left:0; background: #f4f6fa; z-index: 10; }
+            .chat-pane-header { background: linear-gradient(135deg, #6f56ff, #d2a7ff); color: white; padding: 15px; display: flex; align-items: center; gap: 10px; font-weight: bold; }
+            .chat-pane-back { background: transparent; border: none; color: white; font-size: 1.2rem; cursor: pointer; }
+            .chat-feed { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; scroll-behavior: smooth; }
+            .chat-bubble { max-width: 75%; padding: 10px 14px; border-radius: 12px; font-size: 0.9rem; line-height: 1.4; word-wrap: break-word; color: white; }
+            .chat-bubble.you { background: linear-gradient(135deg, #a18bff, #6f56ff); align-self: flex-end; border-bottom-right-radius: 2px; }
+            .chat-bubble.them { background: #ffffff; color: #333; align-self: flex-start; border-bottom-left-radius: 2px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border: 1px solid rgba(0,0,0,0.05); }
+            .chat-time { display: block; font-size: 0.7rem; opacity: 0.6; text-align: right; margin-top: 5px; color: inherit; }
+            .chat-input-area { padding: 12px; background: #ffffff; border-top: 1px solid rgba(0,0,0,0.1); display: flex; gap: 10px; align-items: center; }
+            .chat-input { flex: 1; border: 1px solid rgba(0,0,0,0.1); background: transparent; color: #333; border-radius: 20px; padding: 10px 15px; font-size: 0.9rem; outline: none; transition: border 0.3s; }
+            .chat-input:focus { border-color: #6f56ff; }
+            .chat-send-btn { background: #6f56ff; color: white; border: none; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+            
+            /* Dark Mode Overrides */
+            body.dark-mode .chat-unread-badge { border-color: #0f0f1a; }
+            body.dark-mode .chat-panel { background: #1a1a2e; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
+            body.dark-mode .chat-body-contacts { background: #0f0f1a; }
+            body.dark-mode .chat-contact-item { border-bottom: 1px solid rgba(255,255,255,0.05); color: #fff; }
+            body.dark-mode .chat-contact-item:hover { background: rgba(111,86,255,0.1); }
+            body.dark-mode .chat-pane { background: #0f0f1a; }
+            body.dark-mode .chat-bubble.them { background: rgba(255,255,255,0.1); color: #fff; border: none; box-shadow: none; }
+            body.dark-mode .chat-input-area { background: #1a1a2e; border-top: 1px solid rgba(255,255,255,0.1); }
+            body.dark-mode .chat-input { border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.2); color: #fff; }
+            </style>
+
+            <!-- Global Chat UI -->
+            <div id="mentorshipChatWidget" style="position: fixed; bottom: 85px; right: 20px; z-index: 1000; font-family: 'Inter', sans-serif;">
+                <div class="chat-widget-btn" id="chatWidgetBtn" onclick="toggleChatPanel()">
+                    <span style="font-size:1.5rem;">💬</span>
+                    <span class="chat-unread-badge" id="globalChatUnread" style="display:none;">0</span>
+                </div>
+
+                <div class="chat-panel" id="chatPanel">
+                    <div id="chatContactsView" style="display: flex; flex-direction: column; height: 100%;">
+                        <div class="chat-header">
+                            Messages
+                            <button class="chat-close" onclick="toggleChatPanel()">×</button>
+                        </div>
+                        <div class="chat-body-contacts" id="chatContactsList">
+                            <div style="padding: 20px; text-align: center; color: #888;">Loading contacts...</div>
+                        </div>
+                    </div>
+
+                    <div class="chat-pane" id="chatActivePane">
+                        <div class="chat-pane-header">
+                            <button class="chat-pane-back" onclick="closeActiveChat()">←</button>
+                            <div style="flex: 1; font-size: 1.1rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" id="activeChatName">Loading...</div>
+                        </div>
+                        <div class="chat-feed" id="chatFeed"></div>
+                        <form class="chat-input-area" id="chatForm" onsubmit="sendChatMessage(event)">
+                            <input type="text" id="chatInputField" class="chat-input" placeholder="Type a message..." autocomplete="off" required>
+                            <button type="submit" class="chat-send-btn">➤</button>
+                        </form>
+                    </div>
                 </div>
             </div>
 
-            <!-- Contacts View -->
-            <div id="chat-contacts-view" class="chat-list active">
-                <div style="padding: 20px; text-align: center; color: var(--primary-light);" id="chat-loading">Loading contacts...</div>
-            </div>
+            <!-- Chat DOM Engine -->
+            <script>
+                let chatActiveContactId = null;
+                let chatUserId = {{ app.request.session.get('user_id') }};
 
-            <!-- Conversation View -->
-            <div id="chat-conversation-view" class="chat-conversation">
-                <div id="chat-bubbles" class="chat-bubbles">
-                    <!-- Messages go here -->
-                </div>
-                <div class="chat-input-area">
-                    <input type="text" id="chat-input-msg" placeholder="Type a message..." onkeypress="handleChatEnter(event)">
-                    <button onclick="sendChatMessage()">➤</button>
-                </div>
-            </div>
-        </div>
-
-        <script>
-            let isChatOpen = false;
-            let currentChatUserId = null;
-            let chatPollInterval = null;
-            const currentUserId = {{ app.request.session.get('user_id') }};
-
-            function toggleChatWindow() {
-                const w = document.getElementById('global-chat-window');
-                isChatOpen = !isChatOpen;
-                if(isChatOpen) {
-                    w.style.display = 'flex';
-                    if(!currentChatUserId) loadContacts();
-                } else {
-                    w.style.display = 'none';
-                }
-            }
-
-            function loadContacts() {
-                fetch('{{ path('app_chat_contacts') }}')
-                .then(r => r.json())
-                .then(data => {
-                    const box = document.getElementById('chat-contacts-view');
-                    box.innerHTML = '';
-                    if(!data || data.length === 0) {
-                        box.innerHTML = '<div style="padding:20px;text-align:center;color:#888;">No contacts available.</div>';
+                function toggleChatPanel() {
+                    const panel = document.getElementById('chatPanel');
+                    if (panel.style.display === 'flex') {
+                        panel.style.display = 'none';
                     } else {
-                        data.forEach(c => {
-                            const unreadHtml = c.unread > 0 ? `<span class="unread-pill">${c.unread}</span>` : '';
-                            box.innerHTML += `
-                                <div class="chat-contact" onclick="openConversation(${c.id}, '${c.name.replace(/'/g, "\\'")}')">
-                                    <div class="chat-avatar">${c.name.charAt(0)}</div>
-                                    <div style="flex:1;">
-                                        <div style="font-weight:bold;">${c.name}</div>
-                                        <div style="font-size:0.8rem;opacity:0.7;">${c.role.charAt(0) + c.role.slice(1).toLowerCase()}</div>
-                                    </div>
-                                    ${unreadHtml}
-                                </div>
-                            `;
-                        });
-                    }
-                });
-            }
-
-            function openConversation(id, name) {
-                currentChatUserId = id;
-                document.getElementById('chat-header-title').innerText = name;
-                document.getElementById('chat-contacts-view').classList.remove('active');
-                document.getElementById('chat-conversation-view').classList.add('active');
-                document.getElementById('chat-back-btn').style.display = 'inline';
-                
-                loadHistory();
-                if(chatPollInterval) clearInterval(chatPollInterval);
-                chatPollInterval = setInterval(loadHistory, 3000); // poll every 3s
-            }
-
-            function closeConversation() {
-                currentChatUserId = null;
-                document.getElementById('chat-header-title').innerText = 'Messaging';
-                document.getElementById('chat-conversation-view').classList.remove('active');
-                document.getElementById('chat-contacts-view').classList.add('active');
-                document.getElementById('chat-back-btn').style.display = 'none';
-                if(chatPollInterval) clearInterval(chatPollInterval);
-            }
-
-            function loadHistory() {
-                if(!currentChatUserId) return;
-                fetch(`/chat/history/${currentChatUserId}`, { cache: "no-store" })
-                .then(r => r.json())
-                .then(data => {
-                    const bubblesBox = document.getElementById('chat-bubbles');
-                    const wasAtBottom = (bubblesBox.scrollHeight - bubblesBox.scrollTop) <= (bubblesBox.clientHeight + 50);
-                    
-                    bubblesBox.innerHTML = '';
-                    if(data.length === 0) {
-                        bubblesBox.innerHTML = '<div style="text-align:center; opacity:0.5; margin-top:20px; font-size:0.9rem;">Start of conversation</div>';
-                    } else {
-                        data.forEach(m => {
-                            const isMe = (m.senderId === currentUserId);
-                            bubblesBox.innerHTML += `
-                                <div class="bubble ${isMe ? 'me' : 'them'}">
-                                    ${m.content}
-                                    <div style="font-size:0.6rem; text-align:right; margin-top:4px; opacity:0.7;">${m.createdAt}</div>
-                                </div>
-                            `;
-                        });
-                    }
-                    if(wasAtBottom) bubblesBox.scrollTop = bubblesBox.scrollHeight;
-                });
-            }
-
-            function handleChatEnter(e) {
-                if(e.key === 'Enter') sendChatMessage();
-            }
-
-            function sendChatMessage() {
-                const input = document.getElementById('chat-input-msg');
-                const txt = input.value.trim();
-                if(!txt || !currentChatUserId) return;
-                
-                input.value = ''; // clear immediately
-                fetch('{{ path('app_chat_send') }}', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({receiverId: currentChatUserId, content: txt})
-                })
-                .then(r => r.json())
-                .then(res => {
-                    if(res.status === 'success') {
-                        loadHistory(); // refresh UI
-                        updateGlobalUnread(); // Update immediately locally
-                    }
-                });
-            }
-
-            // GLOBAL SYNC ENGINE (Polling)
-            function updateGlobalUnread() {
-                fetch('{{ path('app_chat_poll') }}', { cache: "no-store" })
-                .then(r => r.json())
-                .then(data => {
-                    const badge = document.getElementById('global-chat-badge');
-                    if (data.unreadCount > 0) {
-                        badge.innerText = data.unreadCount;
-                        badge.style.display = 'block';
-                    } else {
-                        badge.style.display = 'none';
-                    }
-                    
-                    // Also refresh contacts if list is open
-                    if (isChatOpen && !currentChatUserId) {
+                        panel.style.display = 'flex';
                         loadContacts();
                     }
-                });
-            }
+                }
 
-            // Start global engine immediately on load
-            updateGlobalUnread();
-            setInterval(updateGlobalUnread, 3000); // 3-second global sync
-        </script>
+                function loadContacts() {
+                    fetch('/mentorship/chat/api/contacts')
+                        .then(r => r.json())
+                        .then(data => {
+                            const list = document.getElementById('chatContactsList');
+                            if (!data || data.length === 0) {
+                                list.innerHTML = '<div style="padding: 20px; text-align: center; color: #888; opacity:0.6;"><br>No connections yet.<br>Book a session first!</div>';
+                                return;
+                            }
+                            list.innerHTML = '';
+                            data.forEach(c => {
+                                const unreadBadge = c.unread > 0 ? `<div style="background:#ff5656; color:white; border-radius:50%; width:20px; height:20px; font-size:0.75rem; display:flex; align-items:center; justify-content:center;">${c.unread}</div>` : '';
+                                const preview = c.latestPreview || '<i style="opacity:0.5;">No messages yet</i>';
+                                list.innerHTML += `
+                                    <div class="chat-contact-item" onclick="openChatWith(${c.id}, '${c.name.replace(/'/g, "\\'")}')">
+                                        <div class="chat-contact-avatar">${c.name.charAt(0).toUpperCase()}</div>
+                                        <div style="flex:1; overflow:hidden;">
+                                            <div style="font-weight:bold; font-size:0.95rem;">${c.name}</div>
+                                            <div style="font-size:0.8rem; opacity:0.7; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${preview}</div>
+                                        </div>
+                                        ${unreadBadge}
+                                    </div>
+                                `;
+                            });
+                        });
+                }
+
+                function openChatWith(id, name) {
+                    chatActiveContactId = id;
+                    document.getElementById('activeChatName').textContent = name;
+                    document.getElementById('chatContactsView').style.display = 'none';
+                    document.getElementById('chatActivePane').style.display = 'flex';
+                    
+                    const feed = document.getElementById('chatFeed');
+                    feed.innerHTML = '<div style="text-align:center; padding:10px; color:#888;">Loading history...</div>';
+
+                    fetch('/mentorship/chat/api/messages/' + id)
+                        .then(r => r.json())
+                        .then(data => {
+                            feed.innerHTML = '';
+                            if(data.length === 0) {
+                                feed.innerHTML = '<div style="text-align:center; padding:10px; color:#888; font-size:0.85em;">Start of conversation</div>';
+                            } else {
+                                data.forEach(m => appendMessage(m, m.senderId == chatUserId));
+                            }
+                            scrollToBottom();
+                            loadContacts(); // reset unread
+                        });
+                }
+
+                function closeActiveChat() {
+                    chatActiveContactId = null;
+                    document.getElementById('chatActivePane').style.display = 'none';
+                    document.getElementById('chatContactsView').style.display = 'flex';
+                    loadContacts();
+                }
+
+                function appendMessage(m, isYou) {
+                    const feed = document.getElementById('chatFeed');
+                    const cls = isYou ? 'you' : 'them';
+                    feed.innerHTML += `<div class="chat-bubble ${cls}">${m.content}<span class="chat-time">${m.time}</span></div>`;
+                }
+
+                function scrollToBottom() {
+                    const feed = document.getElementById('chatFeed');
+                    feed.scrollTop = feed.scrollHeight;
+                }
+
+                function sendChatMessage(e) {
+                    e.preventDefault();
+                    if(!chatActiveContactId) return;
+                    
+                    const input = document.getElementById('chatInputField');
+                    const content = input.value;
+                    if(!content.trim()) return;
+
+                    const formData = new FormData();
+                    formData.append('message', content);
+                    
+                    const tempObj = { content: content, time: '...', senderId: chatUserId };
+                    appendMessage(tempObj, true);
+                    scrollToBottom();
+                    input.value = '';
+
+                    fetch('/mentorship/chat/api/send/' + chatActiveContactId, { method: 'POST', body: formData })
+                    .then(r => r.json())
+                    .then(data => {
+                        const bubbles = document.getElementById('chatFeed').children;
+                        const lastBubble = bubbles[bubbles.length - 1];
+                        if(lastBubble) {
+                            lastBubble.innerHTML = `${data.content} <span class="chat-time">${data.time}</span>`;
+                        }
+                        loadContacts();
+                    });
+                }
+
+                function pollChatSystem() {
+                    fetch('/mentorship/chat/api/poll?activeContact=' + (chatActiveContactId || ''))
+                        .then(r => r.json())
+                        .then(data => {
+                            const badge = document.getElementById('globalChatUnread');
+                            if (data.totalUnread > 0) {
+                                badge.style.display = 'flex';
+                                badge.textContent = data.totalUnread;
+                            } else {
+                                badge.style.display = 'none';
+                            }
+
+                            if (chatActiveContactId && data.newActiveMessages && data.newActiveMessages.length > 0) {
+                                data.newActiveMessages.forEach(m => appendMessage(m, false));
+                                scrollToBottom();
+                            }
+
+                            // Refresh contacts view if pane is open but we are not in chat AND unreads arrived
+                            if (document.getElementById('chatPanel').style.display === 'flex' && !chatActiveContactId && data.totalUnread > 0) {
+                                // optional loadContacts() throttle could go here
+                            }
+                        });
+                }
+                setInterval(pollChatSystem, 3000);
+            </script>
         {% endif %}
     </body>
 </html>

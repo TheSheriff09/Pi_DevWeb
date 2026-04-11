@@ -4,41 +4,59 @@ namespace App\Controller;
 
 use App\Entity\MentorshipMessage;
 use App\Entity\Users;
+use App\Entity\Booking;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 
-#[Route('/chat')]
+#[Route('/mentorship/chat/api')]
 class MentorshipChatController extends AbstractController
 {
-    #[Route('/contacts', name: 'app_chat_contacts', methods: ['GET'])]
-    public function contacts(Request $request, EntityManagerInterface $em): JsonResponse
+    #[Route('/contacts', name: 'app_mentorship_chat_contacts', methods: ['GET'])]
+    public function getContacts(Request $request, EntityManagerInterface $em): Response
     {
         $userId = $request->getSession()->get('user_id');
+        if (!$userId) return $this->json(['error' => 'Unauthorized'], 401);
 
-        if (!$userId) {
-            return $this->json(['error' => 'Unauthorized'], 401);
+        $bookings = $em->getRepository(Booking::class)->createQueryBuilder('b')
+            ->where('b.entrepreneurID = :uid OR b.mentorID = :uid')
+            ->setParameter('uid', $userId)
+            ->getQuery()
+            ->getResult();
+
+        $contactIds = [];
+        foreach ($bookings as $b) {
+            $otherId = ($b->getEntrepreneurID() == $userId) ? $b->getMentorID() : $b->getEntrepreneurID();
+            if (!in_array($otherId, $contactIds)) {
+                $contactIds[] = $otherId;
+            }
         }
 
-        $users = $em->getRepository(Users::class)->findAll();
-        
         $contacts = [];
-        foreach ($users as $u) {
-            if ($u->getId() !== $userId) {
-                // Count unread messages from this specific user
+        foreach ($contactIds as $cid) {
+            $user = $em->getRepository(Users::class)->find($cid);
+            if ($user) {
+                // Get unread count specifically for this contact
                 $unreadCount = $em->getRepository(MentorshipMessage::class)->count([
-                    'senderId' => $u->getId(),
+                    'senderId' => $cid,
                     'receiverId' => $userId,
                     'isRead' => false
                 ]);
 
+                // Get last message text
+                $lastMsg = $em->getRepository(MentorshipMessage::class)->findOneBy(
+                    ['senderId' => [$cid, $userId], 'receiverId' => [$cid, $userId]],
+                    ['timestamp' => 'DESC']
+                );
+
                 $contacts[] = [
-                    'id' => $u->getId(),
-                    'name' => $u->getFullName(),
-                    'role' => $u->getRole(),
-                    'unread' => $unreadCount
+                    'id' => $user->getId(),
+                    'name' => $user->getFullName(),
+                    'role' => $user->getRole(),
+                    'unread' => $unreadCount,
+                    'latestPreview' => $lastMsg ? substr($lastMsg->getContent(), 0, 30) . (strlen($lastMsg->getContent()) > 30 ? '...' : '') : ''
                 ];
             }
         }
@@ -46,93 +64,119 @@ class MentorshipChatController extends AbstractController
         return $this->json($contacts);
     }
 
-    #[Route('/history/{contactId}', name: 'app_chat_history', methods: ['GET'])]
-    public function history(int $contactId, Request $request, EntityManagerInterface $em): JsonResponse
+    #[Route('/messages/{contactId}', name: 'app_mentorship_chat_history', methods: ['GET'])]
+    public function getMessages(int $contactId, Request $request, EntityManagerInterface $em): Response
     {
         $userId = $request->getSession()->get('user_id');
+        if (!$userId) return $this->json(['error' => 'Unauthorized'], 401);
 
-        if (!$userId) {
-            return $this->json(['error' => 'Unauthorized'], 401);
-        }
+        // Mark all incoming from this contact as read
+        $em->createQueryBuilder()
+            ->update(MentorshipMessage::class, 'm')
+            ->set('m.isRead', '1')
+            ->where('m.senderId = :cid')
+            ->andWhere('m.receiverId = :uid')
+            ->andWhere('m.isRead = 0')
+            ->setParameter('cid', $contactId)
+            ->setParameter('uid', $userId)
+            ->getQuery()
+            ->execute();
 
-        $qb = $em->createQueryBuilder()
-            ->select('m')
-            ->from(MentorshipMessage::class, 'm')
-            ->where('(m.senderId = :userId AND m.receiverId = :contactId) OR (m.senderId = :contactId AND m.receiverId = :userId)')
-            ->setParameter('userId', $userId)
-            ->setParameter('contactId', $contactId)
-            ->orderBy('m.createdAt', 'ASC');
+        // Fetch history
+        $rawMessages = $em->getRepository(MentorshipMessage::class)->createQueryBuilder('m')
+            ->where('(m.senderId = :uid AND m.receiverId = :cid) OR (m.senderId = :cid AND m.receiverId = :uid)')
+            ->setParameter('uid', $userId)
+            ->setParameter('cid', $contactId)
+            ->orderBy('m.timestamp', 'ASC')
+            ->getQuery()
+            ->getResult();
 
-        $messages = $qb->getQuery()->getResult();
-        
-        $history = [];
-        foreach ($messages as $msg) {
-            $history[] = [
-                'id' => $msg->getId(),
-                'senderId' => $msg->getSenderId(),
-                'content' => $msg->getContent(),
-                'createdAt' => $msg->getCreatedAt()->format('H:i')
+        $messages = [];
+        foreach ($rawMessages as $m) {
+            $messages[] = [
+                'id' => $m->getId(),
+                'senderId' => $m->getSenderId(),
+                'content' => $m->getContent(),
+                'time' => $m->getTimestamp()->format('H:i'),
+                'date' => $m->getTimestamp()->format('M j')
             ];
-
-            if ($msg->getReceiverId() === $userId && !$msg->isRead()) {
-                $msg->setRead(true);
-            }
         }
-        
-        $em->flush();
 
-        return $this->json($history);
+        return $this->json($messages);
     }
 
-    #[Route('/send', name: 'app_chat_send', methods: ['POST'])]
-    public function send(Request $request, EntityManagerInterface $em): JsonResponse
+    #[Route('/send/{receiverId}', name: 'app_mentorship_chat_send', methods: ['POST'])]
+    public function sendMessage(int $receiverId, Request $request, EntityManagerInterface $em): Response
     {
         $userId = $request->getSession()->get('user_id');
+        if (!$userId) return $this->json(['error' => 'Unauthorized'], 401);
 
-        if (!$userId) {
-            return $this->json(['error' => 'Unauthorized'], 401);
-        }
-
-        $data = json_decode($request->getContent(), true);
-        $receiverId = $data['receiverId'] ?? null;
-        $content = $data['content'] ?? null;
-
-        if (!$receiverId || !$content) {
-            return $this->json(['error' => 'Invalid data payload'], 400);
-        }
+        $content = trim($request->request->get('message', ''));
+        if (empty($content)) return $this->json(['error' => 'Empty message'], 400);
 
         $msg = new MentorshipMessage();
         $msg->setSenderId($userId);
         $msg->setReceiverId($receiverId);
         $msg->setContent($content);
+        $msg->setTimestamp(new \DateTime());
+        $msg->setIsRead(false);
 
         $em->persist($msg);
         $em->flush();
 
         return $this->json([
-            'status' => 'success',
-            'message' => [
-                'id' => $msg->getId(),
-                'senderId' => $msg->getSenderId(),
-                'content' => $msg->getContent(),
-                'createdAt' => $msg->getCreatedAt()->format('H:i')
-            ]
+            'id' => $msg->getId(),
+            'senderId' => $msg->getSenderId(),
+            'content' => $msg->getContent(),
+            'time' => $msg->getTimestamp()->format('H:i'),
+            'date' => $msg->getTimestamp()->format('M j')
         ]);
     }
 
-    #[Route('/poll', name: 'app_chat_poll', methods: ['GET'])]
-    public function poll(Request $request, EntityManagerInterface $em): JsonResponse
+    #[Route('/poll', name: 'app_mentorship_chat_poll', methods: ['GET'])]
+    public function poll(Request $request, EntityManagerInterface $em): Response
     {
         $userId = $request->getSession()->get('user_id');
-        if (!$userId) {
-            return $this->json(['unreadCount' => 0]);
+        if (!$userId) return $this->json(['error' => 'Unauthorized'], 401);
+
+        $activeContactId = $request->query->get('activeContact'); // ID of currently open chat
+
+        $qb = $em->getRepository(MentorshipMessage::class)->createQueryBuilder('m')
+            ->where('m.receiverId = :uid')
+            ->andWhere('m.isRead = 0')
+            ->setParameter('uid', $userId);
+            
+        $unreadMessages = $qb->getQuery()->getResult();
+        
+        $payload = [
+            'totalUnread' => count($unreadMessages),
+            'contactsUnread' => [],
+            'newActiveMessages' => []
+        ];
+
+        foreach ($unreadMessages as $m) {
+            $sid = $m->getSenderId();
+            if (!isset($payload['contactsUnread'][$sid])) {
+                $payload['contactsUnread'][$sid] = 0;
+            }
+            $payload['contactsUnread'][$sid]++;
+
+            // If this message belongs to the currently active window, forward it directly!
+            if ($activeContactId && $sid == $activeContactId) {
+                $payload['newActiveMessages'][] = [
+                    'id' => $m->getId(),
+                    'senderId' => $sid,
+                    'content' => $m->getContent(),
+                    'time' => $m->getTimestamp()->format('H:i')
+                ];
+                $m->setIsRead(true);
+            }
+        }
+        
+        if (count($payload['newActiveMessages']) > 0) {
+            $em->flush();
         }
 
-        $unreadCount = $em->getRepository(MentorshipMessage::class)->count([
-            'receiverId' => $userId,
-            'isRead' => false
-        ]);
-
-        return $this->json(['unreadCount' => $unreadCount]);
+        return $this->json($payload);
     }
 }

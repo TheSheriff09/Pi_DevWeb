@@ -2,7 +2,6 @@
 
 namespace App\Entity;
 
-use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity]
@@ -10,29 +9,23 @@ class MentorshipMessage
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
-    #[ORM\Column]
-    private ?int $id = null;
+    #[ORM\Column(type: 'integer')]
+    private $id;
 
-    #[ORM\Column]
-    private ?int $senderId = null;
+    #[ORM\Column(type: 'integer')]
+    private $senderId;
 
-    #[ORM\Column]
-    private ?int $receiverId = null;
+    #[ORM\Column(type: 'integer')]
+    private $receiverId;
 
-    #[ORM\Column(type: Types::TEXT)]
-    private ?string $content = null;
+    #[ORM\Column(type: 'text')]
+    private $content;
 
-    #[ORM\Column]
-    private ?\DateTimeImmutable $createdAt = null;
+    #[ORM\Column(type: 'datetime')]
+    private $timestamp;
 
-    #[ORM\Column]
-    private ?bool $isRead = null;
-
-    public function __construct()
-    {
-        $this->createdAt = new \DateTimeImmutable();
-        $this->isRead = false;
-    }
+    #[ORM\Column(type: 'boolean')]
+    private $isRead = false;
 
     public function getId(): ?int
     {
@@ -44,7 +37,7 @@ class MentorshipMessage
         return $this->senderId;
     }
 
-    public function setSenderId(int $senderId): static
+    public function setSenderId(int $senderId): self
     {
         $this->senderId = $senderId;
         return $this;
@@ -55,7 +48,7 @@ class MentorshipMessage
         return $this->receiverId;
     }
 
-    public function setReceiverId(int $receiverId): static
+    public function setReceiverId(int $receiverId): self
     {
         $this->receiverId = $receiverId;
         return $this;
@@ -66,29 +59,29 @@ class MentorshipMessage
         return $this->content;
     }
 
-    public function setContent(string $content): static
+    public function setContent(string $content): self
     {
         $this->content = $content;
         return $this;
     }
 
-    public function getCreatedAt(): ?\DateTimeImmutable
+    public function getTimestamp(): ?\DateTimeInterface
     {
-        return $this->createdAt;
+        return $this->timestamp;
     }
 
-    public function setCreatedAt(\DateTimeImmutable $createdAt): static
+    public function setTimestamp(\DateTimeInterface $timestamp): self
     {
-        $this->createdAt = $createdAt;
+        $this->timestamp = $timestamp;
         return $this;
     }
 
-    public function isRead(): ?bool
+    public function isIsRead(): ?bool
     {
         return $this->isRead;
     }
 
-    public function setRead(bool $isRead): static
+    public function setIsRead(bool $isRead): self
     {
         $this->isRead = $isRead;
         return $this;
