@@ -158,6 +158,137 @@
             {% endif %}
         </div>
 
+        <!-- SWOT Analysis Section -->
+        <div style="margin-top: 50px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2 style="margin: 0; font-size: 1.8em; border-left: 4px solid #b58bff; padding-left: 15px;">AI SWOT Analysis</h2>
+                <button id="generateSwotBtn" class="pill-btn glow-btn" style="background: linear-gradient(135deg, #6f56ff, #b58bff); padding: 10px 20px; border: none; cursor: pointer; color: white; display: inline-flex; align-items: center; gap: 8px;">
+                    <span id="swotBtnIcon">✨</span> <span id="swotBtnText">Generate SWOT with AI</span>
+                </button>
+            </div>
+            
+            <div id="swotError" style="display: none; padding: 15px; margin-bottom: 20px; background: rgba(244,67,54,0.1); border: 1px solid rgba(244,67,54,0.3); border-radius: 10px; color: #ff8a80;">
+            </div>
+
+            <div id="swotLoading" style="display: none; text-align: center; padding: 40px; background: rgba(111,86,255,0.05); border-radius: 15px; border: 1px dashed rgba(111,86,255,0.3);">
+                <div style="display: inline-block; width: 30px; height: 30px; border: 3px solid rgba(111,86,255,0.3); border-radius: 50%; border-top-color: #6f56ff; animation: spin 1s ease-in-out infinite;"></div>
+                <p style="margin-top: 15px; font-weight: bold; color: var(--primary-light, #9d88ff);">Analyzing startup data... This may take a minute or two.</p>
+                <style>@keyframes spin { to { transform: rotate(360deg); } }</style>
+            </div>
+
+            <div id="swotResults" style="display: none; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <!-- Strengths -->
+                <div style="padding: 20px; border-radius: 15px; background: rgba(76,175,80,0.05); border: 1px solid rgba(76,175,80,0.2);">
+                    <h3 style="color: #81c784; margin-top: 0; font-size: 1.3em; display: flex; align-items: center; gap: 10px;"><span style="font-size: 1.5em; opacity: 0.8;">💪</span> Strengths</h3>
+                    <ul id="swotStrengthsList" style="padding-left: 20px; color: rgba(255,255,255,0.85); line-height: 1.6; margin-bottom: 0;"></ul>
+                </div>
+                
+                <!-- Weaknesses -->
+                <div style="padding: 20px; border-radius: 15px; background: rgba(255,152,0,0.05); border: 1px solid rgba(255,152,0,0.2);">
+                    <h3 style="color: #ffb74d; margin-top: 0; font-size: 1.3em; display: flex; align-items: center; gap: 10px;"><span style="font-size: 1.5em; opacity: 0.8;">📉</span> Weaknesses</h3>
+                    <ul id="swotWeaknessesList" style="padding-left: 20px; color: rgba(255,255,255,0.85); line-height: 1.6; margin-bottom: 0;"></ul>
+                </div>
+
+                <!-- Opportunities -->
+                <div style="padding: 20px; border-radius: 15px; background: rgba(33,150,243,0.05); border: 1px solid rgba(33,150,243,0.2);">
+                    <h3 style="color: #64b5f6; margin-top: 0; font-size: 1.3em; display: flex; align-items: center; gap: 10px;"><span style="font-size: 1.5em; opacity: 0.8;">🚀</span> Opportunities</h3>
+                    <ul id="swotOpportunitiesList" style="padding-left: 20px; color: rgba(255,255,255,0.85); line-height: 1.6; margin-bottom: 0;"></ul>
+                </div>
+
+                <!-- Threats -->
+                <div style="padding: 20px; border-radius: 15px; background: rgba(244,67,54,0.05); border: 1px solid rgba(244,67,54,0.2);">
+                    <h3 style="color: #e57373; margin-top: 0; font-size: 1.3em; display: flex; align-items: center; gap: 10px;"><span style="font-size: 1.5em; opacity: 0.8;">⚠️</span> Threats</h3>
+                    <ul id="swotThreatsList" style="padding-left: 20px; color: rgba(255,255,255,0.85); line-height: 1.6; margin-bottom: 0;"></ul>
+                </div>
+            </div>
+        </div>
+
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const btn = document.getElementById('generateSwotBtn');
+    const loading = document.getElementById('swotLoading');
+    const results = document.getElementById('swotResults');
+    const errorDiv = document.getElementById('swotError');
+    
+    // Lists
+    const sList = document.getElementById('swotStrengthsList');
+    const wList = document.getElementById('swotWeaknessesList');
+    const oList = document.getElementById('swotOpportunitiesList');
+    const tList = document.getElementById('swotThreatsList');
+
+    if (!btn) return;
+
+    btn.addEventListener('click', function() {
+        // Reset states
+        errorDiv.style.display = 'none';
+        results.style.display = 'none';
+        loading.style.display = 'block';
+        btn.disabled = true;
+        btn.style.opacity = '0.5';
+        document.getElementById('swotBtnText').innerText = 'Generating...';
+        
+        fetch('{{ path("app_entrepreneur_startup_swot", {id: startup.startupID}) }}', {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json().then(data => ({ status: response.status, body: data })))
+        .then(res => {
+            if (res.status >= 400 || res.body.error) {
+                let errStr = res.body.error || 'Unknown error occurred.';
+                if (res.body.raw) {
+                    errStr += '<br><small>' + res.body.raw + '</small>';
+                }
+                throw new Error(errStr);
+            }
+            
+            // Success! Populate lists
+            populateList(sList, res.body.strengths);
+            populateList(wList, res.body.weaknesses);
+            populateList(oList, res.body.opportunities);
+            populateList(tList, res.body.threats);
+            
+            // Show results
+            loading.style.display = 'none';
+            results.style.display = 'grid';
+            
+            // Update button
+            btn.disabled = false;
+            btn.style.opacity = '1';
+            document.getElementById('swotBtnText').innerText = 'Regenerate SWOT';
+            
+            // Scroll down a bit
+            results.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        })
+        .catch(error => {
+            // Error handling
+            loading.style.display = 'none';
+            errorDiv.innerHTML = '<strong>Error:</strong> ' + error.message;
+            errorDiv.style.display = 'block';
+            
+            btn.disabled = false;
+            btn.style.opacity = '1';
+            document.getElementById('swotBtnText').innerText = 'Try Again';
+        });
+    });
+    
+    function populateList(listEl, items) {
+        listEl.innerHTML = '';
+        if (!items || items.length === 0) {
+            listEl.innerHTML = '<li><em style="opacity:0.5;">No items generated</em></li>';
+            return;
+        }
+        items.forEach(item => {
+            const li = document.createElement('li');
+            li.style.marginBottom = '8px';
+            li.innerText = item;
+            listEl.appendChild(li);
+        });
+    }
+});
+</script>
 {% endblock %}

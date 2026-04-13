@@ -22,3 +22,6 @@
 /*.txt
 /users_dump.json
 /desc.json
+.venv/
+__pycache__/
+*.pyc

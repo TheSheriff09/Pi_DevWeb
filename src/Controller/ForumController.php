@@ -299,4 +299,31 @@ class ForumController extends AbstractController
 
         return $this->redirectToRoute('app_forum_index');
     }
+
+    #[Route('/api/recommended-post', name: 'api_recommended_post', methods: ['GET'])]
+    public function getRecommendedPost(Request $request): JsonResponse
+    {
+        $jsonPath = $this->getParameter('kernel.project_dir') . '/var/recommended_post.json';
+        if (!file_exists($jsonPath)) {
+            return $this->json(['error' => 'No recommendations yet.'], 404);
+        }
+        
+        $data = json_decode(file_get_contents($jsonPath), true);
+        
+        $notifiedPosts = $request->getSession()->get('notified_posts', []);
+        
+        if (in_array($data['post_id'], $notifiedPosts)) {
+            return $this->json(['post_id' => $data['post_id'], 'show_toast' => false]);
+        }
+        
+        $notifiedPosts[] = $data['post_id'];
+        $request->getSession()->set('notified_posts', $notifiedPosts);
+        
+        return $this->json([
+            'post_id' => $data['post_id'],
+            'title' => $data['title'],
+            'score' => $data['trending_probability'],
+            'show_toast' => true
+        ]);
+    }
 }

@@ -54,6 +54,10 @@ class Users
     #[Assert\Type('string')]
     private ?string $evaluatorLevel = null;
 
+    #[ORM\Column(type: Types::TEXT, nullable: true)]
+    #[Assert\Type('string')]
+    private ?string $faceEncoding = null;
+
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     private ?\DateTimeInterface $createdAt = null;
 
@@ -150,4 +154,14 @@ class Users
         return $this;
     }
 
+    public function getFaceEncoding(): ?string
+    {
+        return $this->faceEncoding;
+    }
+
+    public function setFaceEncoding(?string $faceEncoding): static
+    {
+        $this->faceEncoding = $faceEncoding;
+        return $this;
+    }
 }

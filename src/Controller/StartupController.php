@@ -12,6 +12,9 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
+use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\Process\Process;
+use Symfony\Component\Process\Exception\ProcessFailedException;
 
 class StartupController extends AbstractController
 {
@@ -261,5 +264,57 @@ class StartupController extends AbstractController
         }
         
         return $this->redirectToRoute('app_entrepreneur_startups');
+    }
+
+    #[Route('/entrepreneur/startups/{id}/swot', name: 'app_entrepreneur_startup_swot', methods: ['POST'])]
+    public function swotGenerate(Request $request, EntityManagerInterface $em, int $id): JsonResponse
+    {
+        set_time_limit(300); // Allow up to 5 minutes for generation
+        
+        $userId = $request->getSession()->get('user_id');
+        $userRole = $request->getSession()->get('user_role');
+        
+        if (!$userId || strtoupper($userRole) !== 'ENTREPRENEUR') {
+            return new JsonResponse(['error' => 'Unauthorized'], Response::HTTP_UNAUTHORIZED);
+        }
+        
+        $startup = $em->getRepository(Startup::class)->find($id);
+        
+        if (!$startup || $startup->getUserId() !== $userId) {
+            return new JsonResponse(['error' => 'Startup not found or unauthorized'], Response::HTTP_NOT_FOUND);
+        }
+
+        $projectDir = $this->getParameter('kernel.project_dir');
+        $pythonScript = $projectDir . '/bin/swot_generator.py';
+
+        $name = $startup->getName() ?: '';
+        $description = $startup->getDescription() ?: '';
+        $sector = $startup->getSector() ?: '';
+
+        // Determine python executable (try 'python' or 'python3')
+        $pythonExe = DIRECTORY_SEPARATOR === '\\' ? 'python' : 'python3';
+        $process = new Process([$pythonExe, $pythonScript, $name, $description, $sector]);
+        $process->setTimeout(300); // Allow up to 5 minutes for generation
+
+        // Inherit $_ENV for HF_TOKEN
+        $process->setEnv($_ENV);
+
+        try {
+            $process->mustRun();
+            $output = $process->getOutput();
+            $data = json_decode(trim($output), true);
+            
+            if (!$data && trim($output) !== '') {
+                return new JsonResponse(['error' => 'Invalid JSON from AI script.', 'raw' => $output], Response::HTTP_INTERNAL_SERVER_ERROR);
+            }
+            if (isset($data['error'])) {
+                return new JsonResponse($data, Response::HTTP_INTERNAL_SERVER_ERROR);
+            }
+
+            return new JsonResponse($data);
+        } catch (ProcessFailedException $exception) {
+            $errorOutput = $exception->getProcess()->getErrorOutput();
+            return new JsonResponse(['error' => 'Error running AI script.', 'raw' => $errorOutput], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
     }
 }

@@ -119,7 +119,7 @@
         </div>
 
         <script>
-            window.showCustomToast = function(label, message) {
+            window.showCustomToast = function(label, message, autoDismiss = true) {
                 const container = document.getElementById('sf-toast-container');
                 const toast = document.createElement('div');
                 toast.className = 'sf-toast mentorship-card';
@@ -140,7 +140,10 @@
                 } catch(e) {}
                 setTimeout(() => { toast.style.transform = 'translateX(0)'; toast.style.opacity = '1'; }, 50);
                 toast.querySelector('.close-toast').addEventListener('click', () => { toast.style.transform = 'translateX(-150%)'; toast.style.opacity = '0'; setTimeout(() => toast.remove(), 400); });
-                setTimeout(() => { if(document.body.contains(toast)) { toast.style.transform = 'translateX(-150%)'; toast.style.opacity = '0'; setTimeout(() => toast.remove(), 400); } }, 5000);
+                
+                if (autoDismiss) {
+                    setTimeout(() => { if(document.body.contains(toast)) { toast.style.transform = 'translateX(-150%)'; toast.style.opacity = '0'; setTimeout(() => toast.remove(), 400); } }, 5000);
+                }
             };
 
             document.addEventListener('DOMContentLoaded', () => {
@@ -207,6 +210,33 @@
             };
             pollNotifs(); 
             setInterval(pollNotifs, 2500); 
+            {% endif %}
+
+            {% if isLoggedIn %}
+            // Trending Post Recommendation System AI Polling
+            const pollTrendingPosts = () => {
+                fetch('/forum/api/recommended-post', { cache: "no-store" })
+                .then(r => r.json())
+                .then(data => {
+                    console.log("[Trending] Polled API:", data);
+                    if (data && data.show_toast === true) {
+                        console.log("[Trending] New trending post detected! Showing toast for ID:", data.post_id);
+                        if (typeof window.showCustomToast === 'function') {
+                            const msg = `<div style="display:flex; justify-content:space-between; align-items:center; width:100%; gap:20px;">
+                                <a href="/forum/post/${data.post_id}" style="color: inherit; text-decoration: none; display:block;">
+                                    🔥 A trending post is gaining attention. Want to check it out? <br>
+                                    <strong style="opacity: 0.9;">${data.title}</strong>
+                                </a>
+                            </div>`;
+                            window.showCustomToast('info', msg, false);
+                        }
+                    }
+                }).catch(e => {
+                    console.error("[Trending] Error polling:", e);
+                });
+            };
+            setTimeout(pollTrendingPosts, 800); // Fire almost immediately upon log-in / page completion
+            setInterval(pollTrendingPosts, 60000); // Poll every minute for new swaps
             {% endif %}
         </script>
 

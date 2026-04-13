@@ -9,6 +9,8 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
+use Symfony\Contracts\HttpClient\HttpClientInterface;
+use Symfony\Component\HttpFoundation\JsonResponse;
 
 class ProfileController extends AbstractController
 {
@@ -59,5 +61,38 @@ class ProfileController extends AbstractController
             'user' => $user,
             'message' => $message
         ]);
+    }
+
+    #[Route('/profile/register-face', name: 'app_profile_face_register', methods: ['POST'])]
+    public function registerFace(Request $request, HttpClientInterface $httpClient): JsonResponse
+    {
+        $userId = $request->getSession()->get('user_id');
+        if (!$userId) {
+            return $this->json(['status' => 'error', 'message' => 'Not authenticated'], 401);
+        }
+
+        $data = json_decode($request->getContent(), true);
+        $base64Image = $data['image'] ?? null;
+
+        if (!$base64Image) {
+            return $this->json(['status' => 'error', 'message' => 'No image provided.']);
+        }
+
+        try {
+            // Forward base64 to Python AI server securely on backend port
+            $response = $httpClient->request('POST', 'http://127.0.0.1:5001/api/register-face', [
+                'json' => [
+                    'user_id' => $userId,
+                    'image' => $base64Image
+                ],
+                'timeout' => 15
+            ]);
+            
+            $pyData = $response->toArray(false); // Parse Json regardless of python HTTP error code
+            return $this->json($pyData);
+
+        } catch (\Exception $e) {
+            return $this->json(['status' => 'error', 'message' => 'Face Registration server is currently offline.']);
+        }
     }
 }
