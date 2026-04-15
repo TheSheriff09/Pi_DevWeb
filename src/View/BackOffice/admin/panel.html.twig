@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <!-- Use separated styles for back-office -->
+    <link rel="stylesheet" href="{{ asset('Back/css/styles.css') }}?v=2">
+    
+</head>
+<body>
+    <script>
+        if (localStorage.getItem('admin_theme') === 'dark') {
+            document.body.classList.add('dark-mode');
+        }
+    </script>
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            Admin<span>Panel</span>
+        </div>
+        <ul class="sidebar-menu">
+            <li><a href="#" class="active">Dashboard</a></li>
+            <li><a href="{{ path('app_admin_forum_dashboard') }}">Forum</a></li>
+            <li><a href="{{ path('app_admin_startup_dashboard') }}">Startup</a></li>
+            <li><a href="{{ path('app_admin_evaluation_dashboard') }}">Evaluation</a></li>
+            <li><a href="{{ path('app_admin_users') }}">Users</a></li>
+            <li><a href="{{ path('app_admin_mentorship') }}">Mentorship</a></li>
+            <li><a href="{{ path('app_admin_reclamations') }}">Reclamation & Response</a></li>
+        </ul>
+        <div class="sidebar-footer">
+            <a href="{{ path('app_logout') }}" class="logout-btn glow-btn">Sign Out</a>
+        </div>
+    </aside>
+
+    <!-- CONTENT -->
+    <main class="main-content">
+        <header class="topbar">
+            <h2 class="page-title">Admin Dashboard</h2>
+            <button id="themeToggleBtn" class="btn-pill" style="padding: 8px 15px; background: transparent; border: 2px solid var(--primary-light); color: var(--primary-light);">🌓 Toggle Theme</button>
+        </header>
+
+        <section class="content-area">
+            {% block body %}
+            <div class="dashboard-cards">
+                <div class="card">
+                    <h3>Forum</h3>
+                    <p>Manage discussions</p>
+                </div>
+                <div class="card">
+                    <h3>Startup</h3>
+                    <p>Review projects</p>
+                </div>
+                <div class="card">
+                    <h3>Evaluation</h3>
+                    <p>Check ratings</p>
+                </div>
+                <div class="card">
+                    <h3>Users</h3>
+                    <p>Manage accounts</p>
+                </div>
+                <div class="card">
+                    <h3>Mentorship</h3>
+                    <p>Oversee mentors</p>
+                </div>
+                <div class="card">
+                    <h3>Reclamation</h3>
+                    <p>Handle responses</p>
+                </div>
+            </div>
+            
+            <div class="auth-card" style="max-width: 100%; margin-bottom: 20px;">
+                <h3 class="welcome-title" style="text-align: left; font-size: 20px;">Welcome, Admin!</h3>
+                <p>Select a module from the left navigation menu to begin moderation and administration.</p>
+            </div>
+
+            <!-- 3D Animated Model Section -->
+            <div class="model-container" id="admin-threed-container">
+                <!-- Canvas will be injected here -->
+            </div>
+            {% endblock %}
+        </section>
+
+        <!-- Small Footer just for design -->
+        <footer class="footer futuristic-footer" style="padding: 15px 0;">
+            <p>&copy; {{ 'now'|date('Y') }} StartupFlow Tunisia Admin Panel.</p>
+        </footer>
+    </main>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            // Theme Toggle Logic
+            const toggleBtn = document.getElementById('themeToggleBtn');
+            if (toggleBtn) {
+                toggleBtn.addEventListener('click', () => {
+                    const isDark = document.body.classList.contains('dark-mode');
+                    if (isDark) {
+                        document.body.classList.remove('dark-mode');
+                        localStorage.setItem('admin_theme', 'light');
+                    } else {
+                        document.body.classList.add('dark-mode');
+                        localStorage.setItem('admin_theme', 'dark');
+                    }
+                });
+            }
+
+            // 3D Model logic
+            const container = document.getElementById('admin-threed-container');
+            if (!container) return;
+
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
+            const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+            
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            container.appendChild(renderer.domElement);
+
+            // Create an energetic abstract TorusKnot
+            const geometry = new THREE.TorusKnotGeometry(2, 0.5, 100, 16);
+            const material = new THREE.MeshStandardMaterial({ 
+                color: 0xb58bff,
+                emissive: 0x6f56ff,
+                emissiveIntensity: 0.6,
+                wireframe: true,
+                transparent: true,
+                opacity: 0.8
+            });
+            const torusKnot = new THREE.Mesh(geometry, material);
+            scene.add(torusKnot);
+
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+            scene.add(ambientLight);
+
+            const pointLight = new THREE.PointLight(0xffffff, 2);
+            pointLight.position.set(10, 10, 10);
+            scene.add(pointLight);
+
+            camera.position.z = 6;
+
+            function animate() {
+                requestAnimationFrame(animate);
+                
+                torusKnot.rotation.x += 0.005;
+                torusKnot.rotation.y += 0.01;
+
+                renderer.render(scene, camera);
+            }
+
+            animate();
+
+            window.addEventListener('resize', () => {
+                if(container) {
+                    camera.aspect = container.clientWidth / container.clientHeight;
+                    camera.updateProjectionMatrix();
+                    renderer.setSize(container.clientWidth, container.clientHeight);
+                }
+            });
+        });
+    </script>
+</body>
+</html>

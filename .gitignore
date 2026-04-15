@@ -1,0 +1,27 @@
+
+###> symfony/framework-bundle ###
+/.env.local
+/.env.local.php
+/.env.*.local
+/config/secrets/prod/prod.decrypt.private.php
+/public/bundles/
+/var/
+/vendor/
+###< symfony/framework-bundle ###
+
+/tmp/
+/scratch_*.php
+/test_*.php
+/check_*.php
+/db_info.php
+/describe*.php
+/enhance_names.php
+/fix_*.php
+/get_tables.php
+/revert_ids.php
+/*.txt
+/users_dump.json
+/desc.json
+.venv/
+__pycache__/
+*.pyc

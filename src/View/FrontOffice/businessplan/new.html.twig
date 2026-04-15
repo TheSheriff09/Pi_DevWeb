@@ -1,0 +1,85 @@
+{% extends "FrontOffice/base.html.twig" %}
+
+{% block title %}Create Business Plan - StartupFlow{% endblock %}
+
+{% block body %}
+<div class="auth-container" style="min-height: 100vh; padding: 40px 20px;">
+    <div class="auth-card" style="max-width: 800px; margin: 0 auto; border-radius: 20px;">
+        
+        <div style="margin-bottom: 30px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 20px;">
+            <a href="{{ path('app_entrepreneur_startup_show', {'id': startup.startupID}) }}" style="color: var(--primary-light, #9d88ff); text-decoration: none; font-size: 0.9em; display: inline-block; margin-bottom: 15px;">&larr; Back to Startup</a>
+            <h1 style="color: var(--primary, #6f56ff); margin: 0; font-size: 2.2em;">Deploy Business Plan</h1>
+            <p style="margin: 10px 0 0 0;">Create a comprehensive business model canvas for <strong>{{ startup.name }}</strong></p>
+        </div>
+
+        <form method="post" action="{{ path('app_entrepreneur_businessplan_new', {'startupId': startup.startupID}) }}" style="display: flex; flex-direction: column; gap: 20px;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 25px;">
+                <!-- Left Column -->
+                <div style="display: flex; flex-direction: column; gap: 20px;">
+                    <div>
+                        <label class="field-label" style="font-weight: 500; font-size: 0.95em; display: block; margin-bottom: 8px;">Plan Title <span style="color: #e57373;">*</span></label>
+                        <input type="text" name="title" class="pillField" placeholder="e.g., Q3 2026 Expansion Plan" style="width: 100%; border-radius: 12px;">
+                    </div>
+                    
+                    <div>
+                        <label class="field-label" style="font-weight: 500; font-size: 0.95em; display: block; margin-bottom: 8px;">Executive Summary</label>
+                        <textarea name="description" rows="5" class="pillField" placeholder="High-level overview..." style="width: 100%; border-radius: 12px; resize: vertical;"></textarea>
+                    </div>
+
+                    <div>
+                        <label class="field-label" style="font-weight: 500; font-size: 0.95em; display: block; margin-bottom: 8px;">Value Proposition</label>
+                        <textarea name="valueProposition" rows="4" class="pillField" placeholder="What problem do you solve?" style="width: 100%; border-radius: 12px; resize: vertical;"></textarea>
+                    </div>
+
+                    <div>
+                        <label class="field-label" style="font-weight: 500; font-size: 0.95em; display: block; margin-bottom: 8px;">Business Model</label>
+                        <textarea name="businessModel" rows="4" class="pillField" placeholder="How do you make money?" style="width: 100%; border-radius: 12px; resize: vertical;"></textarea>
+                    </div>
+                </div>
+
+                <!-- Right Column -->
+                <div style="display: flex; flex-direction: column; gap: 20px;">
+                    <div>
+                        <label class="field-label" style="font-weight: 500; font-size: 0.95em; display: block; margin-bottom: 8px;">Market Analysis</label>
+                        <textarea name="marketAnalysis" rows="4" class="pillField" placeholder="Competitors, target demographics..." style="width: 100%; border-radius: 12px; resize: vertical;"></textarea>
+                    </div>
+
+                    <div>
+                        <label class="field-label" style="font-weight: 500; font-size: 0.95em; display: block; margin-bottom: 8px;">Marketing Strategy</label>
+                        <textarea name="marketingStrategy" rows="4" class="pillField" placeholder="Growth channels, acquisition..." style="width: 100%; border-radius: 12px; resize: vertical;"></textarea>
+                    </div>
+
+                    <div>
+                        <label class="field-label" style="font-weight: 500; font-size: 0.95em; display: block; margin-bottom: 8px;">Financial Forecast</label>
+                        <textarea name="financialForecast" rows="4" class="pillField" placeholder="Projected revenue, burn rate..." style="width: 100%; border-radius: 12px; resize: vertical;"></textarea>
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <div>
+                            <label class="field-label" style="font-weight: 500; font-size: 0.95em; display: block; margin-bottom: 8px;">Funding Req ($)</label>
+                            <input type="number" step="1000" name="fundingRequired" class="pillField" placeholder="e.g. 500000" style="width: 100%; border-radius: 12px;">
+                        </div>
+                        <div>
+                            <label class="field-label" style="font-weight: 500; font-size: 0.95em; display: block; margin-bottom: 8px;">Status</label>
+                            <select name="status" class="pillField" style="width: 100%; border-radius: 12px;">
+                                <option value="Draft">Draft</option>
+                                <option value="Published">Published</option>
+                                <option value="Seeking Feedback">Seeking Feedback</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="field-label" style="font-weight: 500; font-size: 0.95em; display: block; margin-bottom: 8px;">Timeline Horizon</label>
+                        <input type="text" name="timeline" class="pillField" placeholder="e.g. 18 Months" style="width: 100%; border-radius: 12px;">
+                    </div>
+                </div>
+            </div>
+
+            <div style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 25px; margin-top: 10px; text-align: right;">
+                <button type="submit" class="pill-btn glow-btn" style="background: linear-gradient(135deg, var(--primary, #6f56ff), #b58bff); padding: 15px 40px; font-size: 1.1em; border: none; cursor: pointer;">Save Business Plan</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

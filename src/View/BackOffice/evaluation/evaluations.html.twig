@@ -1,0 +1,90 @@
+{% extends 'BackOffice/base_back.html.twig' %}
+
+{% block title %}Grading & Reviews{% endblock %}
+{% block header_title %}Funding Evaluations{% endblock %}
+
+{% block stylesheets %}
+    <style>
+        .search-container { position: relative; width: 300px; }
+        .search-container input { width: 100%; padding: 10px 20px 10px 40px; border-radius: 25px; border: 1px solid rgba(161,139,255,0.3); background: rgba(0,0,0,0.2); color: #fff; font-size: 0.9rem; transition: all 0.3s ease; }
+        .search-container input:focus { outline: none; border-color: #a18bff; box-shadow: 0 0 10px rgba(161,139,255,0.2); }
+        .search-icon { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #a18bff; }
+        .sort-col { cursor: pointer; transition: color 0.3s; }
+        .sort-col:hover { color: #fff; }
+    </style>
+{% endblock %}
+
+{% block body %}
+    <div class="card glass-card" style="padding: 30px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+            <h3 style="margin: 0; color: #a18bff; font-weight: 600;">Evaluation Grading List</h3>
+            <div class="search-container">
+                <span class="search-icon">🔍</span>
+                <input type="text" id="searchInput" placeholder="Search by exact ID...">
+            </div>
+        </div>
+
+        <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse; text-align: left;" id="dataTable">
+                <thead>
+                    <tr style="border-bottom: 2px solid rgba(161,139,255,0.1);">
+                        <th style="padding: 15px; color: #a18bff;" class="sort-col" data-sort="id">ID</th>
+                        <th style="padding: 15px; color: #a18bff;" class="sort-col" data-sort="fundingApplicationId">App ID</th>
+                        <th style="padding: 15px; color: #a18bff;" class="sort-col" data-sort="score">Score</th>
+                        <th style="padding: 15px; color: #a18bff;" class="sort-col" data-sort="decision">Decision</th>
+                        <th style="padding: 15px; color: #a18bff;" class="sort-col" data-sort="riskLevel">Risk</th>
+                        <th style="padding: 15px; color: #a18bff; text-align: right;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    {% include 'BackOffice/evaluation/_evaluations_tbody.html.twig' %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const searchInput = document.getElementById('searchInput');
+        const tableBody = document.getElementById('tableBody');
+        const sortCols = document.querySelectorAll('.sort-col');
+        let currentSort = 'createdAt';
+        let currentDir = 'DESC';
+
+        function updateTable() {
+            const query = searchInput.value;
+            const url = new URL(window.location.href);
+            url.searchParams.set('search', query);
+            url.searchParams.set('sortBy', currentSort);
+            url.searchParams.set('sortDir', currentDir);
+
+            fetch(url.toString(), {
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            })
+            .then(response => response.text())
+            .then(html => {
+                tableBody.innerHTML = html;
+            });
+        }
+
+        if (searchInput) {
+            searchInput.addEventListener('input', updateTable);
+        }
+
+        sortCols.forEach(col => {
+            col.addEventListener('click', () => {
+                const sortField = col.getAttribute('data-sort');
+                if (currentSort === sortField) {
+                    currentDir = currentDir === 'ASC' ? 'DESC' : 'ASC';
+                } else {
+                    currentSort = sortField;
+                    currentDir = 'ASC';
+                }
+                updateTable();
+            });
+        });
+    });
+</script>
+{% endblock %}

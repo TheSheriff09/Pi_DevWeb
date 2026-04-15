@@ -1,0 +1,59 @@
+{% extends 'BackOffice/mentorship/base_mentorship.html.twig' %}
+
+{% block title %}Manage Sessions - Mentorship Admin{% endblock %}
+
+{% block header_title %}Manage Sessions{% endblock %}
+
+{% block body %}
+    <div class="card" style="width: 100%; padding: 30px;">
+        <h3 style="margin-bottom: 20px; color: var(--primary-lighter); text-align: left;">Surveillance Overview</h3>
+        
+        <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                <thead>
+                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
+                        <th style="padding: 15px; color: #b0a8d6;">Session ID</th>
+                        <th style="padding: 15px; color: #b0a8d6;">Participants</th>
+                        <th style="padding: 15px; color: #b0a8d6;">Scheduled Date</th>
+                        <th style="padding: 15px; color: #b0a8d6;">Status</th>
+                        <th style="padding: 15px; color: #b0a8d6; text-align: center;">Follow-up Nodes</th>
+                        <th style="padding: 15px; color: #b0a8d6; text-align: right;">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in sessions %}
+                        {% set s = item.session %}
+                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.05); transition: background 0.3s;" onmouseover="this.style.background='rgba(111,86,255,0.05)'" onmouseout="this.style.background='transparent'">
+                            <td style="padding: 15px; font-weight: bold; color: var(--text-main);">#{{ s.sessionID }}</td>
+                            <td style="padding: 15px;">
+                                <strong style="color: var(--primary-lighter);">E:</strong> {{ item.entrepreneurName }}<br>
+                                <strong style="color: var(--primary-lighter);">M:</strong> {{ item.mentorName }}
+                            </td>
+                            <td style="padding: 15px; color: #b0a8d6;">{{ s.sessionDate|date('Y-m-d') }}</td>
+                            <td style="padding: 15px;">
+                                <span style="display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 0.85em; font-weight: bold; background: rgba(0,0,0,0.1); 
+                                {% if s.status|lower == 'completed' %}color: #2ecc71;{% elseif s.status|lower == 'planned' %}color: #3498db;{% else %}color: #f1c40f;{% endif %}">
+                                    {{ s.status|upper }}
+                                </span>
+                            </td>
+                            <td style="padding: 15px; text-align: center;">
+                                <span style="color: #f1c40f; font-weight: bold; margin-right: 15px;">📝 {{ item.notes }} Notes</span>
+                                <span style="color: #e74c3c; font-weight: bold;">✅ {{ item.todos }} Todos</span>
+                            </td>
+                            <td style="padding: 15px; text-align: right;">
+                                <form method="post" style="margin: 0; display: inline-block;">
+                                    <input type="hidden" name="session_id" value="{{ s.sessionID }}">
+                                    <button type="submit" class="btn-pill" style="background: rgba(231, 76, 60, 0.1); color: #ff5656; border: 1px solid rgba(231, 76, 60, 0.3); padding: 5px 12px; font-size: 0.8rem; cursor: pointer; transition: all 0.3s;" onmouseover="this.style.background='rgba(231, 76, 60, 0.2)'" onmouseout="this.style.background='rgba(231, 76, 60, 0.1)'" onclick="return confirm('Drop this session from the database?');">Delete Session</button>
+                                </form>
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="5" style="padding: 20px; text-align: center; color: #b0a8d6;">No Sessions tracked.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endblock %}

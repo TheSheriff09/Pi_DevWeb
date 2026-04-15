@@ -1,0 +1,40 @@
+{% for item in mentors %}
+    <tr class="mentor-row" style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+        <td class="mentor-id" style="padding: 15px;">#{{ item.user.id }}</td>
+        <td class="mentor-name" style="padding: 15px; font-weight: 500;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <div style="width: 32px; height: 32px; background: #6f56ff; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">
+                    {{ item.user.fullName|slice(0,1)|upper }}
+                </div>
+                {{ item.user.fullName }}
+            </div>
+        </td>
+        <td class="mentor-email" style="padding: 15px; color: #b0a8d6;">{{ item.user.email }}</td>
+        <td style="padding: 15px; color: var(--primary-lighter); font-weight: bold;">{{ item.sessionsCount }}</td>
+        <td style="padding: 15px;">
+            <span style="display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 0.85em; font-weight: bold; background: rgba(241, 196, 15, 0.1); color: #f1c40f;">
+                ★ {{ item.rating|number_format(1) }}
+            </span>
+        </td>
+        <td style="padding: 15px; text-align: right; display: flex; gap: 8px; justify-content: flex-end;">
+            <button class="btn-pill" style="background: rgba(111, 86, 255, 0.1); color: #8d79ff; border: 1px solid rgba(111, 86, 255, 0.3); padding: 6px 12px; font-size: 0.8rem; cursor: pointer; transition: all 0.3s;"
+                data-name="{{ item.user.fullName }}"
+                data-email="{{ item.user.email }}"
+                data-expertise="{{ item.user.mentorExpertise|default('Not specified')|e('html_attr') }}"
+                data-sessions="{{ item.sessionsCount }}"
+                data-rating="{{ item.rating|number_format(1) }}"
+                data-joined="{{ item.user.createdAt ? item.user.createdAt|date('F j, Y') : 'Unknown' }}"
+                onclick="openMentorModal(this)">
+                Profile
+            </button>
+            <form method="post" style="margin: 0;" onsubmit="return confirm('ADMIN WARNING: This will demote {{ item.user.fullName }} back to Entrepreneur. Future sessions will be affected. Proceed?');">
+                <input type="hidden" name="mentor_id" value="{{ item.user.id }}">
+                <button type="submit" class="btn-pill" style="background: rgba(231, 76, 60, 0.1); color: #ff5656; border: 1px solid rgba(231, 76, 60, 0.3); padding: 6px 12px; font-size: 0.8rem; cursor: pointer; transition: all 0.3s;" onmouseover="this.style.background='rgba(231, 76, 60, 0.2)'" onmouseout="this.style.background='rgba(231, 76, 60, 0.1)'">Revoke</button>
+            </form>
+        </td>
+    </tr>
+{% else %}
+    <tr>
+        <td colspan="6" style="padding: 20px; text-align: center; color: #b0a8d6;">No Mentors found in the system.</td>
+    </tr>
+{% endfor %}

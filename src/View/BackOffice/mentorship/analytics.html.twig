@@ -1,0 +1,105 @@
+{% extends 'BackOffice/admin/panel.html.twig' %}
+
+{% block title %}Mentorship Analytics{% endblock %}
+
+{% block body %}
+<div class="container" style="padding: 40px 20px; max-width: 1200px; margin: auto;">
+    
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+        <h2 style="color: var(--text-main, #fff); margin: 0; font-size: 2.2em;">Platform <span style="color: #1abc9c;">Analytics</span></h2>
+        <a href="{{ path('app_admin_mentorship') }}" class="btn-pill" style="text-decoration: none; padding: 10px 20px; background: rgba(255,255,255,0.1); color: white; border-radius: 8px;">&larr; Back to Dashboard</a>
+    </div>
+
+    <!-- Charts Area -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 30px; margin-bottom: 40px;">
+        
+        <!-- Chart 1: Sessions vs Bookings -->
+        <div class="stat-card" style="background: var(--card-bg, #1a1a2e); padding: 25px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);">
+            <h3 style="margin: 0 0 20px; color: white;">Global Interactions Over Time</h3>
+            <canvas id="interactionsChart" height="200"></canvas>
+        </div>
+
+        <!-- Chart 2: Role Distribution -->
+        <div class="stat-card" style="background: var(--card-bg, #1a1a2e); padding: 25px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);">
+            <h3 style="margin: 0 0 20px; color: white;">User Role Distribution</h3>
+            <canvas id="rolesChart" height="200"></canvas>
+        </div>
+
+    </div>
+
+    <div class="auth-card" style="margin-top: 20px;">
+        <h3 style="margin-top: 0;">Performance Insights</h3>
+        <p style="opacity: 0.8; line-height: 1.6;">The mentorship platform maintains a steady ratio of interactions. Sessions are predominantly approved, showcasing active engagement from mentors. We suggest pushing targeted notifications to increase the booking rate per entrepreneur to reach our Q3 targets.</p>
+    </div>
+
+</div>
+
+<!-- Load Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Shared Theme Variables based on light/dark mode
+    const isDark = document.body.classList.contains('dark-mode');
+    const textColor = isDark ? '#fff' : '#333';
+    const gridColor = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)';
+
+    Chart.defaults.color = textColor;
+
+    // Line Chart: Interactions
+    const ctx1 = document.getElementById('interactionsChart').getContext('2d');
+    new Chart(ctx1, {
+        type: 'line',
+        data: {
+            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+            datasets: [
+                {
+                    label: 'Bookings',
+                    data: [12, 19, 30, 45, 38, 50],
+                    borderColor: '#f1c40f',
+                    backgroundColor: 'rgba(241, 196, 15, 0.2)',
+                    fill: true,
+                    tension: 0.4
+                },
+                {
+                    label: 'Sessions',
+                    data: [8, 15, 25, 40, 35, 48],
+                    borderColor: '#2ecc71',
+                    backgroundColor: 'rgba(46, 204, 113, 0.2)',
+                    fill: true,
+                    tension: 0.4
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                x: { grid: { color: gridColor } },
+                y: { grid: { color: gridColor }, beginAtZero: true }
+            }
+        }
+    });
+
+    // Doughnut Chart: Roles
+    const ctx2 = document.getElementById('rolesChart').getContext('2d');
+    new Chart(ctx2, {
+        type: 'doughnut',
+        data: {
+            labels: ['Entrepreneurs', 'Mentors'],
+            datasets: [{
+                data: [65, 35],
+                backgroundColor: ['#e67e22', '#6f56ff'],
+                borderColor: ['transparent', 'transparent'],
+                hoverOffset: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            cutout: '70%',
+            plugins: {
+                legend: { position: 'bottom' }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}
