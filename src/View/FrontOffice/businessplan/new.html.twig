@@ -1,85 +1,188 @@
 {% extends "FrontOffice/base.html.twig" %}
 
-{% block title %}Create Business Plan - StartupFlow{% endblock %}
+{% block title %}Create Business Plan - {{ startup.name }}{% endblock %}
 
 {% block body %}
 <div class="auth-container" style="min-height: 100vh; padding: 40px 20px;">
-    <div class="auth-card" style="max-width: 800px; margin: 0 auto; border-radius: 20px;">
+    <div class="auth-card" style="max-width: 900px; margin: 0 auto; border-radius: 20px; background: rgba(20, 20, 40, 0.95); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); padding: 40px;">
         
         <div style="margin-bottom: 30px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 20px;">
-            <a href="{{ path('app_entrepreneur_startup_show', {'id': startup.startupID}) }}" style="color: var(--primary-light, #9d88ff); text-decoration: none; font-size: 0.9em; display: inline-block; margin-bottom: 15px;">&larr; Back to Startup</a>
-            <h1 style="color: var(--primary, #6f56ff); margin: 0; font-size: 2.2em;">Deploy Business Plan</h1>
-            <p style="margin: 10px 0 0 0;">Create a comprehensive business model canvas for <strong>{{ startup.name }}</strong></p>
+            <a href="{{ path('app_entrepreneur_startup_show', {'id': startup.startupID}) }}" style="color: var(--primary-light, #9d88ff); text-decoration: none; font-size: 0.9em; display: inline-block; margin-bottom: 15px; transition: all 0.3s;" onmouseover="this.style.transform='translateX(-5px)'" onmouseout="this.style.transform='none'">
+                <i class="fas fa-arrow-left"></i> Back to Startup Details
+            </a>
+            <h1 style="color: #fff; margin: 0; font-size: 2.2em; font-weight: 700;">Deploy <span style="color: var(--primary, #6f56ff);">Business Plan</span></h1>
+            <p style="margin: 10px 0 0 0; opacity: 0.7; font-size: 1.1em;">Crafting a strategic roadmap for <strong>{{ startup.name }}</strong></p>
         </div>
 
-        <form method="post" action="{{ path('app_entrepreneur_businessplan_new', {'startupId': startup.startupID}) }}" style="display: flex; flex-direction: column; gap: 20px;">
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 25px;">
+        <!-- AI Assistant Box -->
+        <div style="background: linear-gradient(135deg, rgba(111,86,255,0.15) 0%, rgba(181,139,255,0.05) 100%); border: 1px solid rgba(111,86,255,0.3); border-radius: 15px; padding: 25px; margin-bottom: 35px; display: flex; align-items: center; justify-content: space-between; gap: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
+            <div style="flex: 1;">
+                <h4 style="margin: 0; color: #fff; font-size: 1.2em; display: flex; align-items: center; gap: 10px;">
+                    <span style="font-size: 1.4em;">✨</span> Magic AI Auto-Generator
+                </h4>
+                <p style="margin: 8px 0 0 0; font-size: 0.9em; opacity: 0.8; line-height: 1.4;">
+                    Our AI will draft a complete professional business plan based on your startup details. 
+                    Just specify your target market!
+                </p>
+            </div>
+            <div style="display: flex; gap: 12px; align-items: center; background: rgba(0,0,0,0.2); padding: 8px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
+                <input type="text" id="aiTargetMarket" placeholder="e.g. Eco-conscious Gen Z" 
+                    style="background: transparent; border: none; padding: 10px; color: #fff; width: 220px; font-size: 0.95em; outline: none;">
+                <button id="aiGenerateBtn" class="pill-btn" 
+                    style="background: var(--primary, #6f56ff); padding: 10px 20px; border: none; cursor: pointer; color: white; border-radius: 8px; font-weight: 600; white-space: nowrap; transition: all 0.3s; box-shadow: 0 5px 15px rgba(111,86,255,0.4);">
+                    Draft with AI
+                </button>
+            </div>
+        </div>
+
+        <div id="aiLoading" style="display: none; text-align: center; padding: 20px; color: var(--primary-light); background: rgba(111,86,255,0.05); border-radius: 10px; margin-bottom: 20px; border: 1px solid rgba(111,86,255,0.1);">
+             <div class="spinner-border spinner-border-sm text-primary" role="status" style="width: 20px; height: 20px; border: 2px solid rgba(111,86,255,0.3); border-radius: 50%; border-top-color: #6f56ff; animation: spin 1s linear infinite;"></div>
+             <span style="margin-left: 10px; font-weight: 500;">AI is meticulously crafting your business plan...</span>
+        </div>
+
+        <form method="post" action="{{ path('app_entrepreneur_businessplan_new', {'startupId': startup.startupID}) }}" class="modern-form" novalidate>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
                 <!-- Left Column -->
-                <div style="display: flex; flex-direction: column; gap: 20px;">
+                <div style="display: flex; flex-direction: column; gap: 25px;">
                     <div>
-                        <label class="field-label" style="font-weight: 500; font-size: 0.95em; display: block; margin-bottom: 8px;">Plan Title <span style="color: #e57373;">*</span></label>
-                        <input type="text" name="title" class="pillField" placeholder="e.g., Q3 2026 Expansion Plan" style="width: 100%; border-radius: 12px;">
+                        <label class="field-label" style="color: #fff; font-weight: 500; font-size: 0.9em; display: block; margin-bottom: 10px; opacity: 0.9;">PLAN TITLE <span style="color: #ff5e5e;">*</span></label>
+                        <input type="text" name="title" class="pillField" placeholder="e.g., Strategic Growth Plan 2026" style="width: 100%; padding: 14px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: #fff;">
                     </div>
                     
                     <div>
-                        <label class="field-label" style="font-weight: 500; font-size: 0.95em; display: block; margin-bottom: 8px;">Executive Summary</label>
-                        <textarea name="description" rows="5" class="pillField" placeholder="High-level overview..." style="width: 100%; border-radius: 12px; resize: vertical;"></textarea>
+                        <label class="field-label" style="color: #fff; font-weight: 500; font-size: 0.9em; display: block; margin-bottom: 10px; opacity: 0.9;">EXECUTIVE SUMMARY</label>
+                        <textarea name="description" rows="5" class="pillField" placeholder="High-level overview of objectives..." style="width: 100%; padding: 14px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: #fff; resize: vertical;"></textarea>
                     </div>
 
                     <div>
-                        <label class="field-label" style="font-weight: 500; font-size: 0.95em; display: block; margin-bottom: 8px;">Value Proposition</label>
-                        <textarea name="valueProposition" rows="4" class="pillField" placeholder="What problem do you solve?" style="width: 100%; border-radius: 12px; resize: vertical;"></textarea>
+                        <label class="field-label" style="color: #fff; font-weight: 500; font-size: 0.9em; display: block; margin-bottom: 10px; opacity: 0.9;">VALUE PROPOSITION</label>
+                        <textarea name="valueProposition" rows="4" class="pillField" placeholder="Your unique competitive advantage..." style="width: 100%; padding: 14px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: #fff; resize: vertical;"></textarea>
                     </div>
 
                     <div>
-                        <label class="field-label" style="font-weight: 500; font-size: 0.95em; display: block; margin-bottom: 8px;">Business Model</label>
-                        <textarea name="businessModel" rows="4" class="pillField" placeholder="How do you make money?" style="width: 100%; border-radius: 12px; resize: vertical;"></textarea>
+                        <label class="field-label" style="color: #fff; font-weight: 500; font-size: 0.9em; display: block; margin-bottom: 10px; opacity: 0.9;">BUSINESS MODEL</label>
+                        <textarea name="businessModel" rows="4" class="pillField" placeholder="Revenue streams & cost structure..." style="width: 100%; padding: 14px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: #fff; resize: vertical;"></textarea>
                     </div>
                 </div>
 
                 <!-- Right Column -->
-                <div style="display: flex; flex-direction: column; gap: 20px;">
+                <div style="display: flex; flex-direction: column; gap: 25px;">
                     <div>
-                        <label class="field-label" style="font-weight: 500; font-size: 0.95em; display: block; margin-bottom: 8px;">Market Analysis</label>
-                        <textarea name="marketAnalysis" rows="4" class="pillField" placeholder="Competitors, target demographics..." style="width: 100%; border-radius: 12px; resize: vertical;"></textarea>
+                        <label class="field-label" style="color: #fff; font-weight: 500; font-size: 0.9em; display: block; margin-bottom: 10px; opacity: 0.9;">MARKET ANALYSIS</label>
+                        <textarea name="marketAnalysis" rows="4" class="pillField" placeholder="Competitor landscape & segmentation..." style="width: 100%; padding: 14px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: #fff; resize: vertical;"></textarea>
                     </div>
 
                     <div>
-                        <label class="field-label" style="font-weight: 500; font-size: 0.95em; display: block; margin-bottom: 8px;">Marketing Strategy</label>
-                        <textarea name="marketingStrategy" rows="4" class="pillField" placeholder="Growth channels, acquisition..." style="width: 100%; border-radius: 12px; resize: vertical;"></textarea>
+                        <label class="field-label" style="color: #fff; font-weight: 500; font-size: 0.9em; display: block; margin-bottom: 10px; opacity: 0.9;">MARKETING STRATEGY</label>
+                        <textarea name="marketingStrategy" rows="4" class="pillField" placeholder="Growth channels & CAC strategy..." style="width: 100%; padding: 14px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: #fff; resize: vertical;"></textarea>
                     </div>
 
                     <div>
-                        <label class="field-label" style="font-weight: 500; font-size: 0.95em; display: block; margin-bottom: 8px;">Financial Forecast</label>
-                        <textarea name="financialForecast" rows="4" class="pillField" placeholder="Projected revenue, burn rate..." style="width: 100%; border-radius: 12px; resize: vertical;"></textarea>
+                        <label class="field-label" style="color: #fff; font-weight: 500; font-size: 0.9em; display: block; margin-bottom: 10px; opacity: 0.9;">FINANCIAL FORECAST</label>
+                        <textarea name="financialForecast" rows="4" class="pillField" placeholder="Projected P&L and cash flow highlights..." style="width: 100%; padding: 14px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: #fff; resize: vertical;"></textarea>
                     </div>
                     
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
                         <div>
-                            <label class="field-label" style="font-weight: 500; font-size: 0.95em; display: block; margin-bottom: 8px;">Funding Req ($)</label>
-                            <input type="number" step="1000" name="fundingRequired" class="pillField" placeholder="e.g. 500000" style="width: 100%; border-radius: 12px;">
+                            <label class="field-label" style="color: #fff; font-weight: 500; font-size: 0.9em; display: block; margin-bottom: 10px; opacity: 0.9;">FUNDING REQ ($)</label>
+                            <input type="number" step="1000" name="fundingRequired" class="pillField" placeholder="e.g. 500000" style="width: 100%; padding: 14px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: #fff;">
                         </div>
                         <div>
-                            <label class="field-label" style="font-weight: 500; font-size: 0.95em; display: block; margin-bottom: 8px;">Status</label>
-                            <select name="status" class="pillField" style="width: 100%; border-radius: 12px;">
-                                <option value="Draft">Draft</option>
-                                <option value="Published">Published</option>
-                                <option value="Seeking Feedback">Seeking Feedback</option>
+                            <label class="field-label" style="color: #fff; font-weight: 500; font-size: 0.9em; display: block; margin-bottom: 10px; opacity: 0.9;">STATUS</label>
+                            <select name="status" class="pillField" style="width: 100%; padding: 14px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: #fff; outline: none;">
+                                <option value="Draft" style="background: #1a1a2e;">Draft</option>
+                                <option value="Published" style="background: #1a1a2e;">Published</option>
+                                <option value="Seeking Feedback" style="background: #1a1a2e;">Seeking Feedback</option>
                             </select>
                         </div>
                     </div>
 
                     <div>
-                        <label class="field-label" style="font-weight: 500; font-size: 0.95em; display: block; margin-bottom: 8px;">Timeline Horizon</label>
-                        <input type="text" name="timeline" class="pillField" placeholder="e.g. 18 Months" style="width: 100%; border-radius: 12px;">
+                        <label class="field-label" style="color: #fff; font-weight: 500; font-size: 0.9em; display: block; margin-bottom: 10px; opacity: 0.9;">TIMELINE HORIZON</label>
+                        <input type="text" name="timeline" class="pillField" placeholder="e.g. 18-Month Scaling" style="width: 100%; padding: 14px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: #fff;">
                     </div>
                 </div>
             </div>
 
-            <div style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 25px; margin-top: 10px; text-align: right;">
-                <button type="submit" class="pill-btn glow-btn" style="background: linear-gradient(135deg, var(--primary, #6f56ff), #b58bff); padding: 15px 40px; font-size: 1.1em; border: none; cursor: pointer;">Save Business Plan</button>
+            <div style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 30px; margin-top: 15px; text-align: right; display: flex; justify-content: flex-end; gap: 15px;">
+                <button type="button" onclick="window.history.back()" class="pill-btn gray-btn" style="background: rgba(255,255,255,0.05); padding: 15px 30px; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: #fff; cursor: pointer; transition: all 0.3s;">Cancel</button>
+                <button type="submit" class="pill-btn glow-btn" style="background: linear-gradient(135deg, var(--primary, #6f56ff), #b58bff); padding: 15px 45px; font-size: 1.1em; border: none; cursor: pointer; border-radius: 12px; font-weight: 600; box-shadow: 0 10px 20px rgba(111,86,255,0.3);">Save Business Plan</button>
             </div>
         </form>
     </div>
 </div>
+
+<style>
+@keyframes spin { from {transform: rotate(0deg);} to {transform: rotate(360deg);} }
+.auth-card { animation: fadeIn 0.6s ease-out; }
+@keyframes fadeIn { from {opacity: 0; transform: translateY(20px);} to {opacity: 1; transform: translateY(0);} }
+.pillField:focus { border-color: var(--primary, #6f56ff) !important; outline: none; background: rgba(255,255,255,0.08) !important; }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const aiBtn = document.getElementById('aiGenerateBtn');
+    const loading = document.getElementById('aiLoading');
+    const targetInput = document.getElementById('aiTargetMarket');
+
+    if (aiBtn) {
+        aiBtn.addEventListener('click', function() {
+            const market = targetInput.value;
+            if (!market) {
+                alert('Please provide a target market for more accurate AI suggestions.');
+                return;
+            }
+
+            loading.style.display = 'block';
+            aiBtn.disabled = true;
+            aiBtn.style.opacity = '0.5';
+
+            const formData = new FormData();
+            formData.append('startupId', '{{ startup.startupID }}');
+            formData.append('targetMarket', market);
+
+            fetch('{{ path("app_entrepreneur_businessplan_ai_generate") }}', {
+                method: 'POST',
+                body: formData,
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            })
+            .then(res => {
+                if (!res.ok) {
+                    return res.json().then(err => { throw new Error(err.error || 'Server Error'); });
+                }
+                return res.json();
+            })
+            .then(data => {
+                loading.style.display = 'none';
+                aiBtn.disabled = false;
+                aiBtn.style.opacity = '1';
+
+                // Auto-fill form
+                document.querySelector('input[name="title"]').value = data.title || '';
+                document.querySelector('textarea[name="description"]').value = data.description || '';
+                document.querySelector('textarea[name="valueProposition"]').value = data.valueProposition || '';
+                document.querySelector('textarea[name="businessModel"]').value = data.businessModel || '';
+                document.querySelector('textarea[name="marketAnalysis"]').value = data.marketAnalysis || '';
+                document.querySelector('textarea[name="marketingStrategy"]').value = data.marketingStrategy || '';
+                document.querySelector('textarea[name="financialForecast"]').value = data.financialForecast || '';
+                document.querySelector('input[name="fundingRequired"]').value = data.fundingRequired || '';
+                document.querySelector('input[name="timeline"]').value = data.timeline || '';
+
+                if (window.showCustomToast) {
+                    window.showCustomToast('success', 'AI has successfully drafted your business plan! Feel free to edit.');
+                } else {
+                    alert('AI has successfully drafted your business plan! Feel free to edit.');
+                }
+            })
+            .catch(err => {
+                loading.style.display = 'none';
+                aiBtn.disabled = false;
+                aiBtn.style.opacity = '1';
+                console.error('Fetch Error:', err);
+                alert('AI Generation Failed: ' + err.message);
+            });
+        });
+    }
+});
+</script>
 {% endblock %}

@@ -21,11 +21,19 @@ class StartupController extends AbstractController
     #[Route('/entrepreneur/startups', name: 'app_entrepreneur_startups')]
     public function index(Request $request, EntityManagerInterface $em): Response
     {
-        // Check if user is logged in and has entrepreneur role
         $userId = $request->getSession()->get('user_id');
         $userRole = $request->getSession()->get('user_role');
         
-        if (!$userId || strtoupper($userRole) !== 'ENTREPRENEUR') {
+        if (!$userId) {
+            return $this->redirectToRoute('app_login');
+        }
+        
+        if (strtoupper($userRole) === 'EVALUATOR') {
+            $this->addFlash('error', 'Access Denied: Evaluators are not allowed to access Startup Management.');
+            return $this->redirectToRoute('app_home');
+        }
+        
+        if (strtoupper($userRole) !== 'ENTREPRENEUR') {
             return $this->redirectToRoute('app_login');
         }
         
@@ -41,11 +49,19 @@ class StartupController extends AbstractController
     #[Route('/entrepreneur/startups/new', name: 'app_entrepreneur_startup_new')]
     public function new(Request $request, EntityManagerInterface $em, ValidatorInterface $validator): Response
     {
-        // Check if user is logged in and has entrepreneur role
         $userId = $request->getSession()->get('user_id');
         $userRole = $request->getSession()->get('user_role');
         
-        if (!$userId || strtoupper($userRole) !== 'ENTREPRENEUR') {
+        if (!$userId) {
+            return $this->redirectToRoute('app_login');
+        }
+        
+        if (strtoupper($userRole) === 'EVALUATOR') {
+            $this->addFlash('error', 'Access Denied: Evaluators are not allowed to access Startup Management.');
+            return $this->redirectToRoute('app_home');
+        }
+        
+        if (strtoupper($userRole) !== 'ENTREPRENEUR') {
             return $this->redirectToRoute('app_login');
         }
         
@@ -128,11 +144,19 @@ class StartupController extends AbstractController
     #[Route('/entrepreneur/startups/{id}', name: 'app_entrepreneur_startup_show', requirements: ['id' => '\d+'])]
     public function show(Request $request, EntityManagerInterface $em, int $id): Response
     {
-        // Check if user is logged in and has entrepreneur role
         $userId = $request->getSession()->get('user_id');
         $userRole = $request->getSession()->get('user_role');
         
-        if (!$userId || strtoupper($userRole) !== 'ENTREPRENEUR') {
+        if (!$userId) {
+            return $this->redirectToRoute('app_login');
+        }
+        
+        if (strtoupper($userRole) === 'EVALUATOR') {
+            $this->addFlash('error', 'Access Denied: Evaluators are not allowed to access Startup Management.');
+            return $this->redirectToRoute('app_home');
+        }
+        
+        if (strtoupper($userRole) !== 'ENTREPRENEUR') {
             return $this->redirectToRoute('app_login');
         }
         
@@ -157,11 +181,19 @@ class StartupController extends AbstractController
     #[Route('/entrepreneur/startups/{id}/edit', name: 'app_entrepreneur_startup_edit')]
     public function edit(Request $request, EntityManagerInterface $em, int $id, ValidatorInterface $validator): Response
     {
-        // Check if user is logged in and has entrepreneur role
         $userId = $request->getSession()->get('user_id');
         $userRole = $request->getSession()->get('user_role');
         
-        if (!$userId || strtoupper($userRole) !== 'ENTREPRENEUR') {
+        if (!$userId) {
+            return $this->redirectToRoute('app_login');
+        }
+        
+        if (strtoupper($userRole) === 'EVALUATOR') {
+            $this->addFlash('error', 'Access Denied: Evaluators are not allowed to access Startup Management.');
+            return $this->redirectToRoute('app_home');
+        }
+        
+        if (strtoupper($userRole) !== 'ENTREPRENEUR') {
             return $this->redirectToRoute('app_login');
         }
         
@@ -241,11 +273,19 @@ class StartupController extends AbstractController
     #[Route('/entrepreneur/startups/{id}/delete', name: 'app_entrepreneur_startup_delete')]
     public function delete(Request $request, EntityManagerInterface $em, int $id): Response
     {
-        // Check if user is logged in and has entrepreneur role
         $userId = $request->getSession()->get('user_id');
         $userRole = $request->getSession()->get('user_role');
         
-        if (!$userId || strtoupper($userRole) !== 'ENTREPRENEUR') {
+        if (!$userId) {
+            return $this->redirectToRoute('app_login');
+        }
+        
+        if (strtoupper($userRole) === 'EVALUATOR') {
+            $this->addFlash('error', 'Access Denied: Evaluators are not allowed to access Startup Management.');
+            return $this->redirectToRoute('app_home');
+        }
+        
+        if (strtoupper($userRole) !== 'ENTREPRENEUR') {
             return $this->redirectToRoute('app_login');
         }
         
@@ -274,7 +314,15 @@ class StartupController extends AbstractController
         $userId = $request->getSession()->get('user_id');
         $userRole = $request->getSession()->get('user_role');
         
-        if (!$userId || strtoupper($userRole) !== 'ENTREPRENEUR') {
+        if (!$userId) {
+            return new JsonResponse(['error' => 'Unauthorized'], Response::HTTP_UNAUTHORIZED);
+        }
+        
+        if (strtoupper($userRole) === 'EVALUATOR') {
+            return new JsonResponse(['error' => 'Access Denied: Evaluators are not allowed to access Startup Management.'], Response::HTTP_FORBIDDEN);
+        }
+        
+        if (strtoupper($userRole) !== 'ENTREPRENEUR') {
             return new JsonResponse(['error' => 'Unauthorized'], Response::HTTP_UNAUTHORIZED);
         }
         
@@ -291,30 +339,64 @@ class StartupController extends AbstractController
         $description = $startup->getDescription() ?: '';
         $sector = $startup->getSector() ?: '';
 
-        // Determine python executable (try 'python' or 'python3')
-        $pythonExe = DIRECTORY_SEPARATOR === '\\' ? 'python' : 'python3';
+        // Determine python executable (try 'py', 'python' or 'python3')
+        $pythonExe = DIRECTORY_SEPARATOR === '\\' ? 'py' : 'python3';
         $process = new Process([$pythonExe, $pythonScript, $name, $description, $sector]);
-        $process->setTimeout(300); // Allow up to 5 minutes for generation
-
-        // Inherit $_ENV for HF_TOKEN
-        $process->setEnv($_ENV);
+        $process->setTimeout(300);
 
         try {
             $process->mustRun();
             $output = $process->getOutput();
-            $data = json_decode(trim($output), true);
-            
-            if (!$data && trim($output) !== '') {
-                return new JsonResponse(['error' => 'Invalid JSON from AI script.', 'raw' => $output], Response::HTTP_INTERNAL_SERVER_ERROR);
-            }
-            if (isset($data['error'])) {
-                return new JsonResponse($data, Response::HTTP_INTERNAL_SERVER_ERROR);
-            }
+            return new JsonResponse(json_decode(trim($output), true));
+        } catch (\Exception $e) {
+            return new JsonResponse(['error' => $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
 
-            return new JsonResponse($data);
-        } catch (ProcessFailedException $exception) {
-            $errorOutput = $exception->getProcess()->getErrorOutput();
-            return new JsonResponse(['error' => 'Error running AI script.', 'raw' => $errorOutput], Response::HTTP_INTERNAL_SERVER_ERROR);
+    #[Route('/entrepreneur/startups/{id}/forecast', name: 'app_entrepreneur_startup_forecast', methods: ['POST'])]
+    public function forecastGenerate(Request $request, EntityManagerInterface $em, int $id): JsonResponse
+    {
+        $userId = $request->getSession()->get('user_id');
+        $userRole = $request->getSession()->get('user_role');
+        
+        if (!$userId) {
+            return new JsonResponse(['error' => 'Unauthorized'], Response::HTTP_UNAUTHORIZED);
+        }
+        
+        if (strtoupper($userRole) === 'EVALUATOR') {
+            return new JsonResponse(['error' => 'Access Denied: Evaluators are not allowed to access Startup Management.'], Response::HTTP_FORBIDDEN);
+        }
+        
+        if (strtoupper($userRole) !== 'ENTREPRENEUR') {
+            return new JsonResponse(['error' => 'Unauthorized'], Response::HTTP_UNAUTHORIZED);
+        }
+        
+        $startup = $em->getRepository(Startup::class)->find($id);
+        if (!$startup || $startup->getUserId() !== $userId) {
+            return new JsonResponse(['error' => 'Startup not found or unauthorized'], Response::HTTP_NOT_FOUND);
+        }
+
+        $revenue = $request->request->get('revenue');
+        $growth = $request->request->get('growth');
+        $expenses = $request->request->get('expenses');
+
+        if (!$revenue || !$growth || !$expenses) {
+            return new JsonResponse(['error' => 'Missing inputs'], Response::HTTP_BAD_REQUEST);
+        }
+
+        $projectDir = $this->getParameter('kernel.project_dir');
+        $pythonScript = $projectDir . '/bin/forecast_generator.py';
+        $pythonExe = DIRECTORY_SEPARATOR === '\\' ? 'py' : 'python3';
+
+        $process = new Process([$pythonExe, $pythonScript, $revenue, $growth, $expenses]);
+        $process->setTimeout(60);
+
+        try {
+            $process->mustRun();
+            $output = $process->getOutput();
+            return new JsonResponse(json_decode(trim($output), true));
+        } catch (\Exception $e) {
+            return new JsonResponse(['error' => $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 }

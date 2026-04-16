@@ -21,10 +21,15 @@ class SessionController extends AbstractController
     public function mySessions(Request $request, EntityManagerInterface $em): Response
     {
         $userId = $request->getSession()->get('user_id');
-        $role = $request->getSession()->get('user_role');
+        $userRole = $request->getSession()->get('user_role');
         
         if (!$userId) {
             return $this->redirectToRoute('app_login');
+        }
+        
+        if (strtoupper($userRole) === 'EVALUATOR') {
+            $this->addFlash('error', 'Access Denied: Evaluators are not allowed to access Mentorship features.');
+            return $this->redirectToRoute('app_home');
         }
 
         if ($role === 'MENTOR') {
@@ -53,9 +58,15 @@ class SessionController extends AbstractController
     public function sessionDetails(int $id, Request $request, EntityManagerInterface $em, ValidatorInterface $validator): Response
     {
         $userId = $request->getSession()->get('user_id');
-        $role = $request->getSession()->get('user_role');
+        $userRole = $request->getSession()->get('user_role');
+        
         if (!$userId) {
             return $this->redirectToRoute('app_login');
+        }
+        
+        if (strtoupper($userRole) === 'EVALUATOR') {
+            $this->addFlash('error', 'Access Denied: Evaluators are not allowed to access Mentorship features.');
+            return $this->redirectToRoute('app_home');
         }
 
         $session = $em->getRepository(Session::class)->find($id);
@@ -139,9 +150,17 @@ class SessionController extends AbstractController
     public function toggleTodo(int $id, Request $request, EntityManagerInterface $em): Response
     {
         $userId = $request->getSession()->get('user_id');
-        $role = $request->getSession()->get('user_role');
+        $userRole = $request->getSession()->get('user_role');
         
-        if (!$userId || $role !== 'ENTREPRENEUR') {
+        if (!$userId) {
+            return $this->json(['status' => 'error', 'message' => 'Unauthorized'], 401);
+        }
+        
+        if (strtoupper($userRole) === 'EVALUATOR') {
+            return $this->json(['status' => 'error', 'message' => 'Access Denied: Evaluators are not allowed to access Mentorship features.'], 403);
+        }
+        
+        if ($userRole !== 'ENTREPRENEUR') {
             return $this->json(['status' => 'error', 'message' => 'Unauthorized'], 401);
         }
 
@@ -207,9 +226,18 @@ class SessionController extends AbstractController
     public function submitFeedback(int $id, Request $request, EntityManagerInterface $em, ValidatorInterface $validator): Response
     {
         $userId = $request->getSession()->get('user_id');
-        $role = $request->getSession()->get('user_role');
+        $userRole = $request->getSession()->get('user_role');
         
-        if (!$userId || $role !== 'ENTREPRENEUR') {
+        if (!$userId) {
+            return $this->redirectToRoute('app_login');
+        }
+        
+        if (strtoupper($userRole) === 'EVALUATOR') {
+            $this->addFlash('error', 'Access Denied: Evaluators are not allowed to access Mentorship features.');
+            return $this->redirectToRoute('app_home');
+        }
+        
+        if ($userRole !== 'ENTREPRENEUR') {
             return $this->redirectToRoute('app_login');
         }
 

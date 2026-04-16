@@ -20,8 +20,15 @@ class BookingController extends AbstractController
     public function bookSession(int $mentorId, int $scheduleId, Request $request, EntityManagerInterface $em, ValidatorInterface $validator): Response
     {
         $userId = $request->getSession()->get('user_id');
+        $userRole = $request->getSession()->get('user_role');
+        
         if (!$userId) {
             return $this->redirectToRoute('app_login');
+        }
+        
+        if (strtoupper($userRole) === 'EVALUATOR') {
+            $this->addFlash('error', 'Access Denied: Evaluators are not allowed to access Mentorship features.');
+            return $this->redirectToRoute('app_home');
         }
 
         $schedule = $em->getRepository(Schedule::class)->find($scheduleId);
@@ -96,9 +103,15 @@ class BookingController extends AbstractController
     public function myBookings(Request $request, EntityManagerInterface $em): Response
     {
         $userId = $request->getSession()->get('user_id');
-        $role = $request->getSession()->get('user_role');
+        $userRole = $request->getSession()->get('user_role');
+        
         if (!$userId) {
             return $this->redirectToRoute('app_login');
+        }
+        
+        if (strtoupper($userRole) === 'EVALUATOR') {
+            $this->addFlash('error', 'Access Denied: Evaluators are not allowed to access Mentorship features.');
+            return $this->redirectToRoute('app_home');
         }
 
         if ($role === 'MENTOR') {
@@ -127,10 +140,18 @@ class BookingController extends AbstractController
     public function handleBooking(int $id, Request $request, EntityManagerInterface $em): Response
     {
         $userId = $request->getSession()->get('user_id');
-        $role = $request->getSession()->get('user_role');
+        $userRole = $request->getSession()->get('user_role');
         
-        if (!$userId || $role !== 'MENTOR') {
-            return $this->json(['status' => 'error'], 401);
+        if (!$userId) {
+            return $this->json(['status' => 'error', 'message' => 'Unauthorized'], 401);
+        }
+        
+        if (strtoupper($userRole) === 'EVALUATOR') {
+            return $this->json(['status' => 'error', 'message' => 'Access Denied: Evaluators are not allowed to access Mentorship features.'], 403);
+        }
+        
+        if ($userRole !== 'MENTOR') {
+            return $this->json(['status' => 'error', 'message' => 'Unauthorized'], 401);
         }
 
         $booking = $em->getRepository(Booking::class)->findOneBy(['bookingID' => $id, 'mentorID' => $userId]);
@@ -202,8 +223,9 @@ class BookingController extends AbstractController
     public function pollNotifications(Request $request): Response
     {
         $userId = $request->getSession()->get('user_id');
-        $role = $request->getSession()->get('user_role');
-        if (!$userId || $role !== 'ENTREPRENEUR') {
+        $userRole = $request->getSession()->get('user_role');
+        
+        if (!$userId || strtoupper($userRole) === 'EVALUATOR' || $userRole !== 'ENTREPRENEUR') {
             return $this->json([]);
         }
 

@@ -18,7 +18,15 @@ class MentorshipChatController extends AbstractController
     public function getContacts(Request $request, EntityManagerInterface $em): Response
     {
         $userId = $request->getSession()->get('user_id');
-        if (!$userId) return $this->json(['error' => 'Unauthorized'], 401);
+        $userRole = $request->getSession()->get('user_role');
+        
+        if (!$userId) {
+            return $this->json(['error' => 'Unauthorized'], 401);
+        }
+        
+        if (strtoupper($userRole) === 'EVALUATOR') {
+            return $this->json(['error' => 'Access Denied: Evaluators are not allowed to access Mentorship features.'], 403);
+        }
 
         $bookings = $em->getRepository(Booking::class)->createQueryBuilder('b')
             ->where('(b.entrepreneurID = :uid OR b.mentorID = :uid) AND b.status = :status')
@@ -69,7 +77,15 @@ class MentorshipChatController extends AbstractController
     public function getMessages(int $contactId, Request $request, EntityManagerInterface $em): Response
     {
         $userId = $request->getSession()->get('user_id');
-        if (!$userId) return $this->json(['error' => 'Unauthorized'], 401);
+        $userRole = $request->getSession()->get('user_role');
+        
+        if (!$userId) {
+            return $this->json(['error' => 'Unauthorized'], 401);
+        }
+        
+        if (strtoupper($userRole) === 'EVALUATOR') {
+            return $this->json(['error' => 'Access Denied: Evaluators are not allowed to access Mentorship features.'], 403);
+        }
 
         // Mark all incoming from this contact as read
         $em->createQueryBuilder()
@@ -110,7 +126,15 @@ class MentorshipChatController extends AbstractController
     public function sendMessage(int $receiverId, Request $request, EntityManagerInterface $em): Response
     {
         $userId = $request->getSession()->get('user_id');
-        if (!$userId) return $this->json(['error' => 'Unauthorized'], 401);
+        $userRole = $request->getSession()->get('user_role');
+        
+        if (!$userId) {
+            return $this->json(['error' => 'Unauthorized'], 401);
+        }
+        
+        if (strtoupper($userRole) === 'EVALUATOR') {
+            return $this->json(['error' => 'Access Denied: Evaluators are not allowed to access Mentorship features.'], 403);
+        }
 
         $content = trim($request->request->get('message', ''));
         if (empty($content)) return $this->json(['error' => 'Empty message'], 400);
@@ -138,7 +162,15 @@ class MentorshipChatController extends AbstractController
     public function poll(Request $request, EntityManagerInterface $em): Response
     {
         $userId = $request->getSession()->get('user_id');
-        if (!$userId) return $this->json(['error' => 'Unauthorized'], 401);
+        $userRole = $request->getSession()->get('user_role');
+        
+        if (!$userId) {
+            return $this->json(['error' => 'Unauthorized'], 401);
+        }
+        
+        if (strtoupper($userRole) === 'EVALUATOR') {
+            return $this->json(['error' => 'Access Denied: Evaluators are not allowed to access Mentorship features.'], 403);
+        }
 
         $activeContactId = $request->query->get('activeContact'); // ID of currently open chat
 

@@ -405,7 +405,11 @@
 
                 {% if pd.post.imageUrl and pd.post.imageUrl != 'default_post.png' %}
                     <div class="post-image-container">
-                        <img src="{{ asset('uploads/forum/' ~ pd.post.imageUrl) }}" alt="Post Attachment">
+                        {% if 'http' in pd.post.imageUrl %}
+                            <img src="{{ pd.post.imageUrl }}" alt="Post Attachment">
+                        {% else %}
+                            <img src="{{ asset('uploads/forum/' ~ pd.post.imageUrl) }}" alt="Post Attachment">
+                        {% endif %}
                     </div>
                 {% endif %}
                 

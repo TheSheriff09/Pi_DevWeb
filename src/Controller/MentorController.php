@@ -19,8 +19,15 @@ class MentorController extends AbstractController
     public function listMentors(Request $request, EntityManagerInterface $em): Response
     {
         $userId = $request->getSession()->get('user_id');
+        $userRole = $request->getSession()->get('user_role');
+        
         if (!$userId) {
             return $this->redirectToRoute('app_login');
+        }
+        
+        if (strtoupper($userRole) === 'EVALUATOR') {
+            $this->addFlash('error', 'Access Denied: Evaluators are not allowed to access Mentorship features.');
+            return $this->redirectToRoute('app_home');
         }
 
         $search = $request->query->get('q');
@@ -96,8 +103,15 @@ class MentorController extends AbstractController
     public function profile(int $id, Request $request, EntityManagerInterface $em): Response
     {
         $userId = $request->getSession()->get('user_id');
+        $userRole = $request->getSession()->get('user_role');
+        
         if (!$userId) {
             return $this->redirectToRoute('app_login');
+        }
+        
+        if (strtoupper($userRole) === 'EVALUATOR') {
+            $this->addFlash('error', 'Access Denied: Evaluators are not allowed to access Mentorship features.');
+            return $this->redirectToRoute('app_home');
         }
 
         $mentor = $em->getRepository(Users::class)->findOneBy(['id' => $id, 'role' => 'MENTOR']);
@@ -152,7 +166,18 @@ class MentorController extends AbstractController
     public function myFavorites(Request $request, EntityManagerInterface $em): Response
     {
         $userId = $request->getSession()->get('user_id');
+        $userRole = $request->getSession()->get('user_role');
+        
         if (!$userId) {
+            return $this->redirectToRoute('app_login');
+        }
+        
+        if (strtoupper($userRole) === 'EVALUATOR') {
+            $this->addFlash('error', 'Access Denied: Evaluators are not allowed to access Mentorship features.');
+            return $this->redirectToRoute('app_home');
+        }
+        
+        if (strtoupper($userRole) !== 'ENTREPRENEUR' && strtoupper($userRole) !== 'MENTOR') {
             return $this->redirectToRoute('app_login');
         }
 

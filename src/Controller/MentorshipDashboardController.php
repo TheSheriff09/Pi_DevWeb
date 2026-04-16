@@ -17,11 +17,18 @@ class MentorshipDashboardController extends AbstractController
     public function index(Request $request, EntityManagerInterface $em): Response
     {
         $userId = $request->getSession()->get('user_id');
-        $role = $request->getSession()->get('user_role');
+        $userRole = $request->getSession()->get('user_role');
         
         if (!$userId) {
             return $this->redirectToRoute('app_login');
         }
+        
+        if (strtoupper($userRole) === 'EVALUATOR') {
+            $this->addFlash('error', 'Access Denied: Evaluators are not allowed to access Mentorship features.');
+            return $this->redirectToRoute('app_home');
+        }
+        
+        $role = $userRole; // Keep the original $role variable for the rest of the method
 
         $sessionRepo = $em->getRepository(Session::class);
         $todoRepo = $em->getRepository(SessionTodos::class);

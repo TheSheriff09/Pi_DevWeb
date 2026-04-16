@@ -419,7 +419,11 @@
         </div>
 
         {% if post.imageUrl %}
-            <img src="{{ asset('uploads/forum/' ~ post.imageUrl) }}" onerror="this.src='{{ asset('Front/images/default_post.png') }}'" alt="Post Image" class="post-image">
+            {% if 'http' in post.imageUrl %}
+                <img src="{{ post.imageUrl }}" onerror="this.src='{{ asset('Front/images/default_post.png') }}'" alt="Post Image" class="post-image">
+            {% else %}
+                <img src="{{ asset('uploads/forum/' ~ post.imageUrl) }}" onerror="this.src='{{ asset('Front/images/default_post.png') }}'" alt="Post Image" class="post-image">
+            {% endif %}
         {% endif %}
 
         <div class="post-content" id="originalContent">

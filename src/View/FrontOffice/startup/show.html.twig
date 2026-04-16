@@ -210,6 +210,110 @@
             </div>
         </div>
 
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-top: 50px;">
+            <!-- Currency Exchange Section -->
+            <div style="background: rgba(111,86,255,0.05); border: 1px solid var(--primary-light, rgba(111, 86, 255, 0.2)); border-radius: 20px; padding: 25px; color: var(--text-main, #333);">
+                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 20px; border-bottom: 1px solid rgba(111, 86, 255, 0.1); padding-bottom: 15px;">
+                    <span style="font-size: 1.5rem;">💱</span>
+                    <h2 style="margin: 0; font-size: 1.4rem; color: var(--primary, #6f56ff);">Currency Converter</h2>
+                </div>
+                
+                <div style="display: flex; flex-direction: column; gap: 15px;">
+                    <div>
+                        <label style="display: block; font-size: 0.8rem; opacity: 0.7; margin-bottom: 6px; color: inherit;">Amount to Convert</label>
+                        <input type="number" id="currAmount" value="1000" step="any" style="width: 100%; background: rgba(0,0,0,0.05); border: 1px solid rgba(122, 92, 255, 0.2); border-radius: 12px; padding: 12px; color: inherit; outline: none;">
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr auto 1fr; gap: 15px; align-items: center;">
+                        <div>
+                            <label style="display: block; font-size: 0.75rem; opacity: 0.7; margin-bottom: 4px; color: inherit;">From</label>
+                            <select id="currFrom" style="width: 100%; background: rgba(0,0,0,0.05); border: 1px solid rgba(122, 92, 255, 0.2); border-radius: 10px; padding: 10px; color: inherit; outline: none; cursor: pointer;">
+                                <option value="USD" style="color: #000;">USD</option>
+                                <option value="EUR" style="color: #000;">EUR</option>
+                                <option value="TND" style="color: #000;">TND</option>
+                                <option value="GBP" style="color: #000;">GBP</option>
+                            </select>
+                        </div>
+                        <div style="margin-top: 20px; opacity: 0.5;">⇌</div>
+                        <div>
+                            <label style="display: block; font-size: 0.75rem; opacity: 0.7; margin-bottom: 4px; color: inherit;">To</label>
+                            <select id="currTo" style="width: 100%; background: rgba(0,0,0,0.05); border: 1px solid rgba(122, 92, 255, 0.2); border-radius: 10px; padding: 10px; color: inherit; outline: none; cursor: pointer;">
+                                <option value="TND" style="color: #000;">TND</option>
+                                <option value="USD" style="color: #000;">USD</option>
+                                <option value="EUR" style="color: #000;">EUR</option>
+                                <option value="GBP" style="color: #000;">GBP</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div id="currResultArea" style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 15px; padding: 20px; text-align: center; display: none; margin-top: 10px;">
+                        <div style="font-size: 0.85rem; opacity: 0.8; margin-bottom: 4px; color: inherit;" id="currLabel">Result</div>
+                        <div style="font-size: 1.8rem; font-weight: 800; color: #10b981;" id="currResult">--</div>
+                        <div style="font-size: 0.75rem; opacity: 0.5; margin-top: 8px; color: inherit;" id="currRate">Rate: --</div>
+                    </div>
+                    
+                    <button onclick="performConversion()" id="currBtnSend" class="pill-btn glow-btn" style="width: 100%; background: linear-gradient(135deg, #6f56ff, #9d88ff); border: none; border-radius: 12px; padding: 14px; color: #fff; font-weight: 700; cursor: pointer; transition: all 0.3s; margin-top: 5px;">Convert Now</button>
+                </div>
+            </div>
+
+            <!-- AI Financial Forecast Input (Mini Version) -->
+            <div style="background: var(--bg-card, rgba(255, 255, 255, 0.03)); border: 1px solid var(--primary-light, rgba(16, 185, 129, 0.2)); border-radius: 20px; padding: 25px;">
+                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 20px; border-bottom: 1px solid rgba(16, 185, 129, 0.1); padding-bottom: 15px;">
+                    <span style="font-size: 1.5rem;">📈</span>
+                    <h2 style="margin: 0; font-size: 1.4rem; color: #10b981;">Quick Forecast</h2>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <div>
+                            <label style="display: block; font-size: 0.75rem; margin-bottom: 4px; opacity: 0.7; color: var(--text-main);">Revenue ($)</label>
+                            <input type="number" id="forecastRev" value="10000" style="width: 100%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 10px; color: var(--text-main);">
+                        </div>
+                        <div>
+                            <label style="display: block; font-size: 0.75rem; margin-bottom: 4px; opacity: 0.7; color: var(--text-main);">Growth (%)</label>
+                            <input type="number" id="forecastGrowth" value="10" style="width: 100%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 10px; color: var(--text-main);">
+                        </div>
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 0.75rem; margin-bottom: 4px; opacity: 0.7; color: var(--text-main);">Monthly Expenses ($)</label>
+                        <input type="number" id="forecastExp" value="8000" style="width: 100%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 10px; color: var(--text-main);">
+                    </div>
+                    <button id="generateForecastBtn" class="pill-btn glow-btn" style="width: 100%; background: linear-gradient(135deg, #10b981, #34d399); border: none; border-radius: 12px; padding: 14px; color: #white; font-weight: 700; cursor: pointer; margin-top: 10px;">
+                        Generate 12-Month Forecast
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- AI Financial Forecast Result Area (Full Width) -->
+        <div style="margin-top: 30px;">
+
+            <div id="forecastLoading" style="display: none; text-align: center; padding: 40px; background: rgba(16, 185, 129, 0.05); border-radius: 15px; border: 1px dashed rgba(16, 185, 129, 0.3);">
+                <div style="display: inline-block; width: 30px; height: 30px; border: 3px solid rgba(16, 185, 129, 0.3); border-radius: 50%; border-top-color: #10b981; animation: spin 1s ease-in-out infinite;"></div>
+                <p style="margin-top: 15px; font-weight: bold; color: #34d399;">Simulating financial models... This will only take a moment.</p>
+            </div>
+
+            <div id="forecastResults" style="display: none;">
+                <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 15px; padding: 25px; margin-bottom: 20px;">
+                    <h3 style="margin-top: 0; color: #34d399; font-size: 1.4em;">Investment Recommendation</h3>
+                    <p id="forecastRec" style="font-size: 1.1em; line-height: 1.6; color: #fff; font-weight: 500; font-style: italic; border-left: 4px solid #34d399; padding-left: 20px;"></p>
+                </div>
+
+                <div style="overflow-x: auto; background: rgba(255,255,255,0.02); border-radius: 15px; border: 1px solid rgba(255,255,255,0.05);">
+                    <table style="width: 100%; border-collapse: collapse; min-width: 600px;">
+                        <thead>
+                            <tr style="background: rgba(16, 185, 129, 0.1);">
+                                <th style="padding: 15px; text-align: left; color: #34d399; border-bottom: 1px solid rgba(255,255,255,0.1);">Month</th>
+                                <th style="padding: 15px; text-align: right; color: #34d399; border-bottom: 1px solid rgba(255,255,255,0.1);">Revenue</th>
+                                <th style="padding: 15px; text-align: right; color: #34d399; border-bottom: 1px solid rgba(255,255,255,0.1);">Expenses</th>
+                                <th style="padding: 15px; text-align: right; color: #34d399; border-bottom: 1px solid rgba(255,255,255,0.1);">Net Profit/Loss</th>
+                            </tr>
+                        </thead>
+                        <tbody id="forecastTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
     </div>
 </div>
 
@@ -283,6 +387,115 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     
+    // Currency Conversion Logic
+    window.performConversion = function() {
+        const amount = document.getElementById('currAmount').value;
+        const from = document.getElementById('currFrom').value;
+        const to = document.getElementById('currTo').value;
+        const resultArea = document.getElementById('currResultArea');
+        const btn = document.getElementById('currBtnSend');
+        
+        if (!amount || amount <= 0) {
+            alert('Please enter a valid amount');
+            return;
+        }
+        
+        btn.disabled = true;
+        btn.innerText = 'Calculating...';
+        
+        fetch(`/api/currency/convert?amount=${amount}&from=${from}&to=${to}`)
+            .then(res => res.json())
+            .then(data => {
+                btn.disabled = false;
+                btn.innerText = 'Convert Now';
+                
+                if (data.error) {
+                    alert('Error: ' + data.error);
+                    return;
+                }
+                
+                document.getElementById('currResult').innerText = data.converted.toLocaleString() + ' ' + to;
+                document.getElementById('currRate').innerText = `1 ${from} = ${data.rate} ${to}`;
+                document.getElementById('currLabel').innerText = `${amount} ${from} is equal to`;
+                resultArea.style.display = 'block';
+            })
+            .catch(err => {
+                btn.disabled = false;
+                btn.innerText = 'Convert Now';
+                alert('Error connecting to currency service');
+            });
+    }
+
+    // Financial Forecast Logic
+    const forecastBtn = document.getElementById('generateForecastBtn');
+    const forecastLoading = document.getElementById('forecastLoading');
+    const forecastResults = document.getElementById('forecastResults');
+    const forecastTableBody = document.getElementById('forecastTableBody');
+    const forecastRec = document.getElementById('forecastRec');
+
+    if (forecastBtn) {
+        forecastBtn.addEventListener('click', function() {
+            const rev = document.getElementById('forecastRev').value;
+            const growth = document.getElementById('forecastGrowth').value;
+            const exp = document.getElementById('forecastExp').value;
+
+            // Reset UI
+            forecastResults.style.display = 'none';
+            forecastLoading.style.display = 'block';
+            forecastBtn.disabled = true;
+            forecastBtn.style.opacity = '0.5';
+
+            const formData = new FormData();
+            formData.append('revenue', rev);
+            formData.append('growth', growth);
+            formData.append('expenses', exp);
+
+            fetch('{{ path("app_entrepreneur_startup_forecast", {id: startup.startupID}) }}', {
+                method: 'POST',
+                body: formData,
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            })
+            .then(res => res.json())
+            .then(data => {
+                forecastLoading.style.display = 'none';
+                forecastBtn.disabled = false;
+                forecastBtn.style.opacity = '1';
+
+                if (data.error) {
+                    alert('Error: ' + data.error);
+                    return;
+                }
+
+                // Populate Recommendation
+                forecastRec.innerText = data.recommendation;
+
+                // Populate Table
+                forecastTableBody.innerHTML = '';
+                data.forecast.forEach(m => {
+                    const tr = document.createElement('tr');
+                    tr.style.borderBottom = '1px solid rgba(255,255,255,0.05)';
+                    const profitColor = m.profit >= 0 ? '#81c784' : '#e57373';
+                    tr.innerHTML = `
+                        <td style="padding: 12px 15px; color: #fff;">Month ${m.month}</td>
+                        <td style="padding: 12px 15px; text-align: right;">$${m.revenue.toLocaleString()}</td>
+                        <td style="padding: 12px 15px; text-align: right;">$${m.expenses.toLocaleString()}</td>
+                        <td style="padding: 12px 15px; text-align: right; color: ${profitColor}; font-weight: bold;">$${m.profit.toLocaleString()}</td>
+                    `;
+                    forecastTableBody.appendChild(tr);
+                });
+
+                forecastResults.style.display = 'block';
+                forecastResults.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            })
+            .catch(err => {
+                forecastLoading.style.display = 'none';
+                forecastBtn.disabled = false;
+                forecastBtn.style.opacity = '1';
+                alert('Error generating forecast');
+            });
+        });
+    }
+
     function populateList(listEl, items) {
         listEl.innerHTML = '';
         if (!items || items.length === 0) {
