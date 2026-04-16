@@ -234,6 +234,137 @@
         body.dark-mode .modal-content {
             background: #1e1e2d;
         }
+        /* Translate button on feed cards */
+        .feed-translate-container {
+            position: relative;
+            flex: 1;
+        }
+        .feed-translate-btn {
+            width: 100%;
+            background: transparent;
+            border: none;
+            color: #6c5ce7;
+            font-size: 0.95rem;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 10px;
+        }
+        body.dark-mode .feed-translate-btn { color: #a29bfe; }
+        .feed-translate-btn:hover {
+            background: rgba(108,92,231,0.1);
+        }
+        .feed-lang-dropdown {
+            position: absolute;
+            bottom: 48px;
+            left: 50%;
+            transform: translateX(-50%) scale(0.9);
+            opacity: 0;
+            pointer-events: none;
+            background: #fff;
+            border-radius: 14px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.18);
+            padding: 10px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 5px;
+            min-width: 260px;
+            transition: all 0.25s cubic-bezier(.34,1.56,.64,1);
+            z-index: 100;
+        }
+        body.dark-mode .feed-lang-dropdown {
+            background: #1e1e2e;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+        }
+        .feed-translate-container.open .feed-lang-dropdown {
+            opacity: 1;
+            pointer-events: all;
+            transform: translateX(-50%) scale(1);
+        }
+        .feed-lang-option {
+            background: rgba(108,92,231,0.07);
+            border: 1px solid rgba(108,92,231,0.15);
+            border-radius: 8px;
+            padding: 6px 10px;
+            cursor: pointer;
+            font-size: 0.83rem;
+            text-align: left;
+            transition: all 0.2s;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        body.dark-mode .feed-lang-option { color: #ccc; }
+        .feed-lang-option:hover {
+            background: rgba(108,92,231,0.2);
+            border-color: #6c5ce7;
+            color: #6c5ce7;
+        }
+        /* Inline translation panel per card */
+        .card-translation-panel {
+            display: none;
+            border-top: 2px solid rgba(108,92,231,0.25);
+            background: rgba(108,92,231,0.04);
+            animation: fadeInUp 0.35s ease;
+        }
+        body.dark-mode .card-translation-panel {
+            background: rgba(108,92,231,0.1);
+        }
+        @keyframes fadeInUp {
+            from { opacity:0; transform:translateY(8px); }
+            to   { opacity:1; transform:translateY(0); }
+        }
+        .card-translation-header {
+            background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+            color: #fff;
+            padding: 8px 16px;
+            font-size: 0.83rem;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .card-translation-body {
+            padding: 14px 18px;
+        }
+        .card-translated-title {
+            font-weight: 700;
+            font-size: 1rem;
+            color: #6c5ce7;
+            margin-bottom: 8px;
+        }
+        body.dark-mode .card-translated-title { color: #a29bfe; }
+        .card-translated-content {
+            font-size: 0.9rem;
+            line-height: 1.6;
+            color: #333;
+        }
+        body.dark-mode .card-translated-content { color: #ccc; }
+        .card-close-translation {
+            background: rgba(255,255,255,0.25);
+            border: none; color: #fff;
+            border-radius: 50%;
+            width: 22px; height: 22px;
+            cursor: pointer; font-size: 0.9rem;
+            display: flex; align-items: center; justify-content: center;
+            transition: background 0.2s;
+        }
+        .card-close-translation:hover { background: rgba(255,255,255,0.45); }
+        .feed-translate-spinner {
+            width: 14px; height: 14px;
+            border: 2px solid rgba(108,92,231,0.3);
+            border-top-color: #6c5ce7;
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+            display: none;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 {% endblock %}
 
@@ -297,10 +428,37 @@
                             <span id="likeIcon_{{ pd.post.id }}">{{ pd.userLiked ? '❤️' : '🤍' }}</span> <span id="likeText_{{ pd.post.id }}">React</span>
                         </button>
                     </div>
-                    
+
                     <a href="{{ path('app_forum_show', {'id': pd.post.id}) }}" class="action-btn">
                         💬 Comment
                     </a>
+
+                    {# ── Translate button ────────────────────────────────────── #}
+                    <div class="feed-translate-container" id="ftc_{{ pd.post.id }}">
+                        <button class="feed-translate-btn" onclick="toggleFeedLangPicker(event, {{ pd.post.id }})" id="ftBtn_{{ pd.post.id }}">
+                            🌐 <span id="ftLabel_{{ pd.post.id }}">Translate</span>
+                            <div class="feed-translate-spinner" id="ftSpinner_{{ pd.post.id }}"></div>
+                        </button>
+                        <div class="feed-lang-dropdown" id="ftDropdown_{{ pd.post.id }}">
+                            {% for code, lang in languages %}
+                                <button class="feed-lang-option" onclick="doFeedTranslate({{ pd.post.id }}, '{{ code }}', '{{ lang.name }}')">
+                                    {{ lang.flag }} {{ lang.name }}
+                                </button>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                {# ── Inline translation result panel (hidden until translate is clicked) ── #}
+                <div class="card-translation-panel" id="ctp_{{ pd.post.id }}">
+                    <div class="card-translation-header">
+                        <span id="ctpLabel_{{ pd.post.id }}">🌐 Translation</span>
+                        <button class="card-close-translation" onclick="closeFeedTranslation({{ pd.post.id }})">✕</button>
+                    </div>
+                    <div class="card-translation-body">
+                        <div class="card-translated-title" id="ctpTitle_{{ pd.post.id }}"></div>
+                        <div class="card-translated-content" id="ctpContent_{{ pd.post.id }}"></div>
+                    </div>
                 </div>
             </div>
         {% else %}
@@ -428,7 +586,7 @@
                     if (data.reacted) {
                         button.classList.add('liked-status');
                         icon.innerText = emojiChar;
-                        text.innerText = data.type.charAt(0) + data.type.slice(1).toLowerCase(); // capitalized
+                        text.innerText = data.type.charAt(0) + data.type.slice(1).toLowerCase();
                     } else {
                         button.classList.remove('liked-status');
                         icon.innerText = '🤍';
@@ -441,6 +599,79 @@
                     window.location.href = "{{ path('app_login') }}";
                 }
             } catch (e) {}
+        }
+
+        /* ── Feed Card Translation ────────────────────────────────────────── */
+        const TRANSLATE_BASE = '{{ path('app_forum_translate', {'id': 'POST_ID_PLACEHOLDER'}) }}';
+
+        function toggleFeedLangPicker(e, postId) {
+            e.stopPropagation();
+            // Close all other open pickers first
+            document.querySelectorAll('.feed-translate-container.open').forEach(function(el) {
+                if (el.id !== 'ftc_' + postId) el.classList.remove('open');
+            });
+            document.getElementById('ftc_' + postId).classList.toggle('open');
+        }
+
+        // Close all dropdowns when clicking outside
+        document.addEventListener('click', function() {
+            document.querySelectorAll('.feed-translate-container.open').forEach(function(el) {
+                el.classList.remove('open');
+            });
+        });
+
+        async function doFeedTranslate(postId, langCode, langName) {
+            document.getElementById('ftc_' + postId).classList.remove('open');
+
+            const btn     = document.getElementById('ftBtn_' + postId);
+            const label   = document.getElementById('ftLabel_' + postId);
+            const spinner = document.getElementById('ftSpinner_' + postId);
+
+            label.textContent = 'Translating…';
+            spinner.style.display = 'block';
+            btn.disabled = true;
+
+            try {
+                const url = TRANSLATE_BASE.replace('POST_ID_PLACEHOLDER', postId);
+                const fd  = new FormData();
+                fd.append('lang', langCode);
+
+                const res  = await fetch(url, { method: 'POST', body: fd });
+                const data = await res.json();
+
+                if (data.error) {
+                    alert('Translation failed: ' + data.error);
+                    return;
+                }
+
+                document.getElementById('ctpTitle_' + postId).textContent   = data.title;
+                document.getElementById('ctpContent_' + postId).textContent = data.content;
+                document.getElementById('ctpLabel_' + postId).textContent   = '🌐 Translated to ' + data.langName;
+
+                const panel = document.getElementById('ctp_' + postId);
+                panel.style.display = 'block';
+                panel.style.animation = 'none';
+                panel.offsetHeight;
+                panel.style.animation = '';
+
+                label.textContent = '🌐 ' + langName;
+            } catch (err) {
+                alert('Network error — could not reach translation service.');
+            } finally {
+                spinner.style.display = 'none';
+                btn.disabled = false;
+            }
+        }
+
+        function closeFeedTranslation(postId) {
+            const panel = document.getElementById('ctp_' + postId);
+            panel.style.transition = 'opacity 0.3s';
+            panel.style.opacity = '0';
+            setTimeout(function() {
+                panel.style.display = 'none';
+                panel.style.opacity = '1';
+                document.getElementById('ftLabel_' + postId).textContent = 'Translate';
+            }, 300);
         }
     </script>
 {% endblock %}

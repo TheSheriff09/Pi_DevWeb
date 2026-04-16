@@ -22,3 +22,11 @@ services:
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
+
+    App\Service\BadWordsFilter:
+        arguments:
+            $kernelCacheDir: '%kernel.cache_dir%'
+
+    App\Service\TranslationService:
+        arguments:
+            $myMemoryEmail: '%env(default::MYMEMORY_EMAIL)%'

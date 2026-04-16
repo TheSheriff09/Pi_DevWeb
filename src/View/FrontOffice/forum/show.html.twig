@@ -211,6 +211,197 @@
             background: rgba(255, 255, 255, 0.05);
         }
 
+        /* Flash messages */
+        .comment-flash {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 18px;
+            border-radius: 10px;
+            margin-bottom: 14px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            animation: slideDown 0.3s ease;
+        }
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-8px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        .comment-flash--error {
+            background: rgba(255, 71, 87, 0.12);
+            border: 1px solid rgba(255, 71, 87, 0.4);
+            color: #c0392b;
+        }
+        body.dark-mode .comment-flash--error {
+            background: rgba(255, 71, 87, 0.2);
+            color: #ff6b7a;
+        }
+        .comment-flash--success {
+            background: rgba(46, 213, 115, 0.12);
+            border: 1px solid rgba(46, 213, 115, 0.4);
+            color: #1e8449;
+        }
+        body.dark-mode .comment-flash--success {
+            background: rgba(46, 213, 115, 0.2);
+            color: #2ed573;
+        }
+        .flash-close {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            color: inherit;
+            opacity: 0.7;
+            padding: 0 0 0 12px;
+        }
+        .flash-close:hover { opacity: 1; }
+
+        /* Inline validation states */
+        #commentValidationMsg.valid   { color: #27ae60; }
+        #commentValidationMsg.invalid { color: #e74c3c; }
+        #commentContent.input-error   { border-color: #e74c3c !important; box-shadow: 0 0 0 2px rgba(231,76,60,0.15); }
+        #commentContent.input-ok      { border-color: #27ae60 !important; box-shadow: 0 0 0 2px rgba(39,174,96,0.15); }
+
+        #commentSubmitBtn:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+        }
+        /* Translation UI */
+        .translate-container {
+            position: relative;
+        }
+        .translate-btn {
+            background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+            color: #fff;
+            border: none;
+            padding: 8px 18px;
+            border-radius: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 10px rgba(108,92,231,0.35);
+        }
+        .translate-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 18px rgba(108,92,231,0.5);
+        }
+        .lang-dropdown {
+            position: absolute;
+            bottom: 48px;
+            left: 50%;
+            transform: translateX(-50%) scale(0.9);
+            opacity: 0;
+            pointer-events: none;
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.18);
+            padding: 10px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+            min-width: 260px;
+            transition: all 0.25s cubic-bezier(.34,1.56,.64,1);
+            z-index: 50;
+        }
+        body.dark-mode .lang-dropdown {
+            background: #1e1e2e;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+        }
+        .translate-container.open .lang-dropdown {
+            opacity: 1;
+            pointer-events: all;
+            transform: translateX(-50%) scale(1);
+        }
+        .lang-option {
+            background: rgba(108,92,231,0.07);
+            border: 1px solid rgba(108,92,231,0.15);
+            border-radius: 10px;
+            padding: 7px 12px;
+            cursor: pointer;
+            font-size: 0.88rem;
+            text-align: left;
+            transition: all 0.2s;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        body.dark-mode .lang-option { color: #ccc; }
+        .lang-option:hover {
+            background: rgba(108,92,231,0.2);
+            border-color: #6c5ce7;
+            color: #6c5ce7;
+        }
+        /* Translated content panel */
+        #translationPanel {
+            display: none;
+            margin-bottom: 30px;
+            border-radius: 16px;
+            border: 2px solid rgba(108,92,231,0.3);
+            background: rgba(108,92,231,0.05);
+            overflow: hidden;
+            animation: fadeInUp 0.4s ease;
+        }
+        body.dark-mode #translationPanel {
+            background: rgba(108,92,231,0.1);
+        }
+        @keyframes fadeInUp {
+            from { opacity:0; transform:translateY(12px); }
+            to   { opacity:1; transform:translateY(0); }
+        }
+        .translation-header {
+            background: linear-gradient(135deg,#6c5ce7,#a29bfe);
+            color: #fff;
+            padding: 10px 18px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        .translation-body {
+            padding: 20px 24px;
+        }
+        #translatedTitle {
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: #6c5ce7;
+            margin-bottom: 14px;
+        }
+        #translatedContent {
+            font-size: 1.05rem;
+            line-height: 1.8;
+            color: #333;
+            white-space: pre-wrap;
+        }
+        body.dark-mode #translatedTitle   { color: #a29bfe; }
+        body.dark-mode #translatedContent { color: #ccc; }
+        .close-translation {
+            background: rgba(255,255,255,0.25);
+            border: none;
+            color: #fff;
+            border-radius: 50%;
+            width: 26px; height: 26px;
+            cursor: pointer;
+            font-size: 1rem;
+            display: flex; align-items:center; justify-content:center;
+            transition: background 0.2s;
+        }
+        .close-translation:hover { background: rgba(255,255,255,0.45); }
+        /* Spinner */
+        .translate-spinner {
+            width: 18px; height: 18px;
+            border: 3px solid rgba(255,255,255,0.4);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+            display: none;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 {% endblock %}
 
@@ -231,8 +422,20 @@
             <img src="{{ asset('uploads/forum/' ~ post.imageUrl) }}" onerror="this.src='{{ asset('Front/images/default_post.png') }}'" alt="Post Image" class="post-image">
         {% endif %}
 
-        <div class="post-content">
+        <div class="post-content" id="originalContent">
             {{ post.content }}
+        </div>
+
+        {# ── Translation panel (hidden until a language is chosen) ─────────── #}
+        <div id="translationPanel">
+            <div class="translation-header">
+                <span id="translationLabel">🌐 Translation</span>
+                <button class="close-translation" onclick="closeTranslation()" title="Close translation">✕</button>
+            </div>
+            <div class="translation-body">
+                <div id="translatedTitle"></div>
+                <div id="translatedContent"></div>
+            </div>
         </div>
 
         <div class="post-actions">
@@ -254,6 +457,21 @@
                 <a href="{{ path('app_login') }}" class="like-btn">🤍 React ({{ likeCount }})</a>
             {% endif %}
 
+            {# ── Translate button ─────────────────────────────────────────── #}
+            <div class="translate-container" id="translateContainer">
+                <button class="translate-btn" onclick="toggleLangPicker(event)" id="translateBtn">
+                    🌐 <span id="translateBtnLabel">Translate</span>
+                    <div class="translate-spinner" id="translateSpinner"></div>
+                </button>
+                <div class="lang-dropdown" id="langDropdown">
+                    {% for code, lang in languages %}
+                        <button class="lang-option" onclick="doTranslate('{{ code }}', '{{ lang.name }}')">
+                            {{ lang.flag }} {{ lang.name }}
+                        </button>
+                    {% endfor %}
+                </div>
+            </div>
+
             <div style="color: #b0a8d6; margin-left: 10px;">💬 {{ comments|length }} Comments</div>
             
             <!-- Spacer -->
@@ -268,7 +486,21 @@
 
         <div class="comments-section">
             <h2 class="comments-title" style="color: #000;">Comments</h2>
-            
+
+            {# ── Flash messages ─────────────────────────────────────────── #}
+            {% for message in app.flashes('error') %}
+                <div class="comment-flash comment-flash--error">
+                    <span>{{ message }}</span>
+                    <button class="flash-close" onclick="this.parentElement.remove()">✕</button>
+                </div>
+            {% endfor %}
+            {% for message in app.flashes('success') %}
+                <div class="comment-flash comment-flash--success">
+                    <span>{{ message }}</span>
+                    <button class="flash-close" onclick="this.parentElement.remove()">✕</button>
+                </div>
+            {% endfor %}
+
             {% for comment in comments %}
                 <div class="comment">
                     <div class="comment-meta">
@@ -285,9 +517,33 @@
             {% if isLoggedIn %}
                 <div class="add-comment">
                     <h3 style="margin-bottom: 15px; color: var(--primary);">Add a Discussion</h3>
-                    <form action="{{ path('app_forum_comment', {'id': post.id}) }}" method="post">
-                        <textarea name="content" class="pillField" rows="3" style="border-radius: 12px; resize: vertical; margin-bottom: 15px; color: #000;" placeholder="Write your comment here..."></textarea>
-                        <button type="submit" class="signBtn" style="padding: 10px 25px;">Post Comment</button>
+                    <form id="commentForm" action="{{ path('app_forum_comment', {'id': post.id}) }}" method="post" onsubmit="return validateComment()">
+
+                        {# Hidden post content for duplicate detection #}
+                        <input type="hidden" id="postContentRef" value="{{ post.content | e('html_attr') }}">
+
+                        <textarea
+                            id="commentContent"
+                            name="content"
+                            class="pillField"
+                            rows="4"
+                            maxlength="2000"
+                            style="border-radius: 12px; resize: vertical; margin-bottom: 6px; color: #000; width: 100%; box-sizing: border-box;"
+                            placeholder="Write your comment here... (min 10 characters)"
+                            oninput="onCommentInput()"
+                        ></textarea>
+
+                        {# Live validation message #}
+                        <div id="commentValidationMsg" style="min-height: 22px; margin-bottom: 10px; font-size: 0.88rem; font-weight: 500;"></div>
+
+                        {# Character counter #}
+                        <div style="text-align: right; font-size: 0.8rem; color: #999; margin-bottom: 12px;">
+                            <span id="charCount">0</span> / 2000 characters
+                        </div>
+
+                        <button type="submit" id="commentSubmitBtn" class="signBtn" style="padding: 10px 25px;" disabled>
+                            💬 Post Comment
+                        </button>
                     </form>
                 </div>
             {% else %}
@@ -311,6 +567,62 @@
                 document.querySelector('.post-title').style.color = "var(--primary-lighter)";
                 document.querySelector('.comments-title').style.color = "var(--primary-lighter)";
             }
+        });
+
+        /* ── Comment live validation ─────────────────────────────────── */
+        const MIN_LEN = 10;
+
+        function onCommentInput() {
+            const textarea  = document.getElementById('commentContent');
+            const msgEl     = document.getElementById('commentValidationMsg');
+            const countEl   = document.getElementById('charCount');
+            const submitBtn = document.getElementById('commentSubmitBtn');
+            const postRef   = document.getElementById('postContentRef');
+
+            const value     = textarea.value;
+            const trimmed   = value.trim();
+            countEl.textContent = value.length;
+
+            let error = null;
+
+            if (trimmed.length === 0) {
+                error = '✏️ Comment cannot be empty.';
+            } else if (trimmed.length < MIN_LEN) {
+                error = `✏️ Comment is too short — at least ${MIN_LEN} characters required (${trimmed.length}/${MIN_LEN}).`;
+            } else if (postRef && trimmed.toLowerCase() === postRef.value.trim().toLowerCase()) {
+                error = '🔁 Your comment cannot be identical to the post content.';
+            }
+
+            if (error) {
+                msgEl.textContent = error;
+                msgEl.className = 'invalid';
+                textarea.className = textarea.className.replace('input-ok','').replace('input-error','').trim() + ' input-error';
+                submitBtn.disabled = true;
+            } else {
+                msgEl.textContent = '✅ Looks good — ready to post!';
+                msgEl.className = 'valid';
+                textarea.className = textarea.className.replace('input-error','').replace('input-ok','').trim() + ' input-ok';
+                submitBtn.disabled = false;
+            }
+        }
+
+        function validateComment() {
+            const textarea = document.getElementById('commentContent');
+            const trimmed  = textarea ? textarea.value.trim() : '';
+            if (trimmed.length < MIN_LEN) {
+                alert('Please write at least ' + MIN_LEN + ' characters before posting.');
+                return false;
+            }
+            return true;
+        }
+
+        /* Auto-dismiss flash messages after 6 s */
+        document.querySelectorAll('.comment-flash').forEach(function(el) {
+            setTimeout(function() {
+                el.style.transition = 'opacity 0.5s';
+                el.style.opacity = '0';
+                setTimeout(function() { el.remove(); }, 500);
+            }, 6000);
         });
 
         async function toggleLike(typeStr, emojiChar) {
@@ -345,6 +657,82 @@
             } catch (error) {
                 console.error("Error toggling like:", error);
             }
+        }
+
+        /* ── Translation feature ─────────────────────────────────────── */
+        const TRANSLATE_URL = '{{ path('app_forum_translate', {'id': post.id}) }}';
+
+        function toggleLangPicker(e) {
+            e.stopPropagation();
+            const container = document.getElementById('translateContainer');
+            container.classList.toggle('open');
+        }
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(e) {
+            const container = document.getElementById('translateContainer');
+            if (container && !container.contains(e.target)) {
+                container.classList.remove('open');
+            }
+        });
+
+        async function doTranslate(langCode, langName) {
+            // Close the picker
+            document.getElementById('translateContainer').classList.remove('open');
+
+            const btn     = document.getElementById('translateBtn');
+            const label   = document.getElementById('translateBtnLabel');
+            const spinner = document.getElementById('translateSpinner');
+
+            // Show loading state
+            label.textContent = 'Translating…';
+            spinner.style.display = 'block';
+            btn.disabled = true;
+
+            try {
+                const formData = new FormData();
+                formData.append('lang', langCode);
+
+                const res  = await fetch(TRANSLATE_URL, { method: 'POST', body: formData });
+                const data = await res.json();
+
+                if (data.error) {
+                    alert('Translation failed: ' + data.error);
+                    return;
+                }
+
+                // Populate panel
+                document.getElementById('translatedTitle').textContent   = data.title;
+                document.getElementById('translatedContent').textContent = data.content;
+                document.getElementById('translationLabel').textContent  = '🌐 Translated to ' + data.langName;
+
+                // Show panel with animation
+                const panel = document.getElementById('translationPanel');
+                panel.style.display = 'block';
+                panel.style.animation = 'none';
+                panel.offsetHeight; // reflow
+                panel.style.animation = '';
+
+                // Update button
+                label.textContent = '🌐 ' + langName;
+            } catch (err) {
+                alert('Network error — could not reach translation service.');
+                console.error(err);
+            } finally {
+                spinner.style.display = 'none';
+                btn.disabled = false;
+            }
+        }
+
+        function closeTranslation() {
+            const panel = document.getElementById('translationPanel');
+            panel.style.transition = 'opacity 0.3s';
+            panel.style.opacity = '0';
+            setTimeout(function() {
+                panel.style.display = 'none';
+                panel.style.opacity = '1';
+                document.getElementById('translateBtnLabel').textContent = 'Translate';
+            }, 300);
         }
     </script>
 {% endblock %}
