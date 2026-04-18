@@ -10,6 +10,7 @@
         "doctrine/doctrine-bundle": "^2.18",
         "doctrine/doctrine-migrations-bundle": "^3.7",
         "doctrine/orm": "^3.6",
+        "knplabs/knp-paginator-bundle": "*",
         "symfony/apache-pack": "*",
         "symfony/asset": "6.4.*",
         "symfony/console": "6.4.*",
@@ -23,7 +24,8 @@
         "symfony/runtime": "6.4.*",
         "symfony/twig-bundle": "6.4.*",
         "symfony/validator": "6.4.*",
-        "symfony/yaml": "6.4.*"
+        "symfony/yaml": "6.4.*",
+        "vich/uploader-bundle": "*"
     },
     "config": {
         "allow-plugins": {

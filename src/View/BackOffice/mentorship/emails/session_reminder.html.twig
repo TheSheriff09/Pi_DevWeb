@@ -1,0 +1,23 @@
+<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #eaeaea; border-radius: 10px; overflow: hidden;">
+    <div style="background-color: #6c5ce7; padding: 20px; text-align: center;">
+        <h2 style="color: white; margin: 0;">Upcoming Session Reminder ⏰</h2>
+    </div>
+    <div style="padding: 30px;">
+        <p style="font-size: 16px; color: #333;">Hello {{ isMentor ? mentor.fullName : entrepreneur.fullName }},</p>
+        <p style="font-size: 16px; color: #555;">This is a friendly reminder that your mentorship session is starting soon.</p>
+        
+        <div style="background-color: #f8f9fa; border-left: 4px solid #6c5ce7; padding: 15px; margin: 20px 0;">
+            <p style="margin: 5px 0;"><strong>Date:</strong> {{ session.sessionDate|date('F j, Y') }}</p>
+            <p style="margin: 5px 0;"><strong>With:</strong> {{ isMentor ? entrepreneur.fullName : mentor.fullName }}</p>
+        </div>
+
+        {% if session.meetingLink %}
+            <div style="text-align: center; margin-top: 30px;">
+                 <a href="{{ session.meetingLink }}" style="background-color: #00b894; color: white; padding: 12px 25px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">Join Video Meeting 🎥</a>
+            </div>
+        {% endif %}
+    </div>
+    <div style="background-color: #f1f2f6; padding: 15px; text-align: center; font-size: 12px; color: #888;">
+        &copy; {{ 'now'|date('Y') }} StartupFlow Inc.
+    </div>
+</div>

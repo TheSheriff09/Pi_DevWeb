@@ -1,0 +1,63 @@
+{% extends 'BackOffice/mentorship/base_mentorship.html.twig' %}
+
+{% block title %}Mentorship Dashboard{% endblock %}
+
+{% block header_title %}Progress & Performance{% endblock %}
+
+{% block body %}
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px;">
+        <!-- Entrepreneur Progress Card -->
+        <div class="mentorship-card">
+            <h3 style="margin-top: 0;">My Entrepreneur Progress</h3>
+            
+            <div style="margin-top: 20px;">
+                <p style="color: #b0a8d6; margin-bottom: 5px;">Tasks Completed ({{ todosDone }} / {{ todosTotal }})</p>
+                <div style="width: 100%; background-color: rgba(255,255,255,0.1); border-radius: 8px; height: 16px;">
+                    <div style="width: {{ progressTodos }}%; background-color: #4cd137; height: 100%; border-radius: 8px; transition: width 0.5s ease;"></div>
+                </div>
+                <small style="color: #fff; float: right; margin-top: 5px;">{{ progressTodos }}%</small>
+            </div>
+
+            <div style="margin-top: 35px;">
+                <p style="color: #b0a8d6; margin-bottom: 5px;">Sessions Completed ({{ sessionsDone }} / {{ sessionsTotal }})</p>
+                <div style="width: 100%; background-color: rgba(255,255,255,0.1); border-radius: 8px; height: 16px;">
+                    <div style="width: {{ progressSessions }}%; background-color: #00a8ff; height: 100%; border-radius: 8px; transition: width 0.5s ease;"></div>
+                </div>
+                <small style="color: #fff; float: right; margin-top: 5px;">{{ progressSessions }}%</small>
+            </div>
+        </div>
+
+        <!-- Mentors Leaderboard -->
+        <div class="mentorship-card">
+            <h3 style="margin-top: 0;">Top Mentors</h3>
+            <div style="margin-top: 20px;">
+                {% for mentor in topMentors|slice(0, 5) %}
+                    <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                        <div style="display: flex; align-items: center; gap: 15px;">
+                            {% if mentor.image_name %}
+                                <img src="{{ asset('uploads/mentors/' ~ mentor.image_name) }}" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;" alt="Mentor">
+                            {% else %}
+                                <div style="width: 40px; height: 40px; border-radius: 50%; background: var(--primary-accent); display: flex; align-items: center; justify-content: center; color: white;">
+                                    {{ mentor.fullName|slice(0, 1) }}
+                                </div>
+                            {% endif %}
+                            <span style="color: #fff; font-weight: bold;">{{ mentor.fullName }}</span>
+                        </div>
+                        <div>
+                            <span style="background: rgba(243, 156, 18, 0.2); color: #f39c12; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold;">
+                                ⭐ {{ mentor.avgScore ? mentor.avgScore|number_format(1) : 'N/A' }}
+                            </span>
+                        </div>
+                    </div>
+                {% empty %}
+                    <p style="color: #888;">No active mentors found.</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    
+    <div style="text-align: right; margin-top: 20px;">
+        <a href="{{ path('app_advanced_list') }}" class="btn-cta" style="background-color: var(--primary); margin-right: 15px;">View My Sessions & Bookings</a>
+        <a href="{{ path('app_advanced_simulate') }}" class="btn-cta">Trigger Real-time Simulator (1hr ahead)</a>
+    </div>
+{% endblock %}

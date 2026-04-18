@@ -56,6 +56,10 @@ class Session
     #[Assert\Type('float')]
     private ?float $successProbability = null;
 
+    #[ORM\Column(name: '`meetingLink`', type: Types::STRING, length: 255, nullable: true)]
+    #[Assert\Type('string')]
+    private ?string $meetingLink = null;
+
     public function getSessionID(): ?int
     {
         return $this->sessionID;
@@ -163,6 +167,17 @@ class Session
     public function setSuccessProbability(?float $successProbability): static
     {
         $this->successProbability = $successProbability;
+        return $this;
+    }
+
+    public function getMeetingLink(): ?string
+    {
+        return $this->meetingLink;
+    }
+
+    public function setMeetingLink(?string $meetingLink): static
+    {
+        $this->meetingLink = $meetingLink;
         return $this;
     }
 
