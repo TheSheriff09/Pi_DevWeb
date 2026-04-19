@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\Users;
+use App\Service\UserActivityLogger;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -18,7 +19,7 @@ use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 class SecurityController extends AbstractController
 {
     #[Route('/login', name: 'app_login')]
-    public function login(Request $request, EntityManagerInterface $em): Response
+    public function login(Request $request, EntityManagerInterface $em, UserActivityLogger $logger, MailerInterface $mailer): Response
     {
         if ($request->isMethod('POST')) {
             $email = $request->request->get('email');
@@ -28,14 +29,22 @@ class SecurityController extends AbstractController
             
             if ($user && (password_verify($password, $user->getPasswordHash()) || $password === $user->getPasswordHash())) {
                 if (strtoupper($user->getStatus()) === 'BLOCKED') {
+                    $logger->log('LOGIN_FAILED', "Blocked account login attempt for: " . $email, 'FAILED', $user);
                     return $this->render('FrontOffice/security/login.html.twig', [
                         'error' => 'Your account is blocked. Please contact support.'
                     ]);
                 }
                 
+                if ($user->isTwoFactorEmailEnabled()) {
+                    $this->triggerEmail2FA($user, $request, $mailer, $em);
+                    return $this->redirectToRoute('app_login_2fa');
+                }
+                
                 // Successful login -> manual session storage
                 $request->getSession()->set('user_id', $user->getId());
                 $request->getSession()->set('user_role', $user->getRole());
+                
+                $logger->log('LOGIN', 'User logged in successfully', 'SUCCESS', $user);
                 
                 // Redirect based on role
                 $role = strtoupper($user->getRole());
@@ -46,8 +55,8 @@ class SecurityController extends AbstractController
                 return $this->redirectToRoute('app_home');
             }
             
-            // On failure, we'll route back to login probably with an error flag
-            // (For premium UI later, we could pass an error message to twig)
+            $logger->log('LOGIN_FAILED', "Invalid credentials for: " . $email, 'FAILED');
+            
             return $this->render('FrontOffice/security/login.html.twig', [
                 'error' => 'Invalid email or password'
             ]);
@@ -56,8 +65,76 @@ class SecurityController extends AbstractController
         return $this->render('FrontOffice/security/login.html.twig');
     }
 
+    private function triggerEmail2FA(Users $user, Request $request, MailerInterface $mailer, EntityManagerInterface $em): void
+    {
+        $code = str_pad((string)random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+        $user->setTwoFactorEmailCode($code);
+        $em->flush();
+
+        $request->getSession()->set('pending_2fa_user_id', $user->getId());
+
+        $emailMsg = (new TemplatedEmail())
+            ->from(new Address('linafadhel09@gmail.com', 'StartupFlow Security'))
+            ->to(new Address($user->getEmail(), $user->getFullName() ?: 'User'))
+            ->subject('Your 2FA Verification Code 🔒')
+            ->htmlTemplate('FrontOffice/email/two_factor.html.twig')
+            ->context([
+                'code' => $code,
+                'full_name' => $user->getFullName(),
+                'year' => date('Y'),
+            ]);
+
+        try {
+            $mailer->send($emailMsg);
+        } catch (\Exception $e) {
+            // Silently carry on to allow UI to show up at least
+        }
+    }
+
+    #[Route('/login/2fa', name: 'app_login_2fa')]
+    public function login2FA(Request $request, EntityManagerInterface $em, UserActivityLogger $logger): Response
+    {
+        $pendingUserId = $request->getSession()->get('pending_2fa_user_id');
+        if (!$pendingUserId) {
+            return $this->redirectToRoute('app_login');
+        }
+
+        $user = $em->getRepository(Users::class)->find($pendingUserId);
+        if (!$user) {
+            $request->getSession()->remove('pending_2fa_user_id');
+            return $this->redirectToRoute('app_login');
+        }
+
+        if ($request->isMethod('POST')) {
+            $submittedCode = $request->request->get('code');
+            if ($submittedCode === $user->getTwoFactorEmailCode()) {
+                // Correct code!
+                $user->setTwoFactorEmailCode(null);
+                $em->flush();
+
+                $request->getSession()->remove('pending_2fa_user_id');
+                $request->getSession()->set('user_id', $user->getId());
+                $request->getSession()->set('user_role', $user->getRole());
+                
+                $logger->log('LOGIN', 'User logged in via 2FA successfully', 'SUCCESS', $user);
+                
+                $role = strtoupper($user->getRole());
+                if ($role === 'ADMIN') {
+                    return $this->redirectToRoute('app_admin_panel');
+                }
+                return $this->redirectToRoute('app_home');
+            }
+            
+            return $this->render('FrontOffice/security/2fa.html.twig', [
+                'error' => 'Invalid code. Please check your email and try again.'
+            ]);
+        }
+
+        return $this->render('FrontOffice/security/2fa.html.twig');
+    }
+
     #[Route('/register', name: 'app_register')]
-    public function register(Request $request, EntityManagerInterface $em, ValidatorInterface $validator, MailerInterface $mailer): Response
+    public function register(Request $request, EntityManagerInterface $em, ValidatorInterface $validator, MailerInterface $mailer, UserActivityLogger $logger): Response
     {
         if ($request->isMethod('POST')) {
             $name = $request->request->get('name');
@@ -103,6 +180,8 @@ class SecurityController extends AbstractController
                 $em->persist($user);
                 $em->flush();
                 
+                $logger->log('REGISTER', 'New user registered', 'SUCCESS', $user);
+                
                 // Send Welcome Email
                 $projectDir = $this->getParameter('kernel.project_dir');
                 $logoPath = $projectDir . '/public/email_logo.png';
@@ -144,8 +223,10 @@ class SecurityController extends AbstractController
     }
 
     #[Route('/logout', name: 'app_logout')]
-    public function logout(Request $request): Response
+    public function logout(Request $request, UserActivityLogger $logger): Response
     {
+        $logger->log('LOGOUT', 'User logged out', 'SUCCESS');
+        
         // Clear all manual session variables
         $request->getSession()->invalidate();
         return $this->redirectToRoute('app_home');
@@ -170,7 +251,7 @@ class SecurityController extends AbstractController
     }
 
     #[Route('/google/callback', name: 'app_google_callback')]
-    public function googleCallback(Request $request, HttpClientInterface $httpClient, EntityManagerInterface $em): Response
+    public function googleCallback(Request $request, HttpClientInterface $httpClient, EntityManagerInterface $em, UserActivityLogger $logger, MailerInterface $mailer): Response
     {
         $code = $request->query->get('code');
         if (!$code) {
@@ -214,11 +295,19 @@ class SecurityController extends AbstractController
         
         if ($user) {
             if (strtoupper($user->getStatus()) === 'BLOCKED') {
+                $logger->log('LOGIN_FAILED', "Blocked account login attempt via Google: " . $email, 'FAILED', $user);
                 return new Response("Your account is blocked.");
+            }
+            
+            if ($user->isTwoFactorEmailEnabled()) {
+                $this->triggerEmail2FA($user, $request, $mailer, $em);
+                return $this->redirectToRoute('app_login_2fa');
             }
             
             $request->getSession()->set('user_id', $user->getId());
             $request->getSession()->set('user_role', $user->getRole());
+            
+            $logger->log('LOGIN', 'User logged in via Google', 'SUCCESS', $user);
             
             if (strtoupper($user->getRole()) === 'ADMIN') {
                 return $this->redirectToRoute('app_admin_panel');
@@ -233,7 +322,7 @@ class SecurityController extends AbstractController
     }
 
     #[Route('/api/face-login', name: 'app_face_login', methods: ['POST'])]
-    public function faceLogin(Request $request, HttpClientInterface $httpClient, EntityManagerInterface $em): Response
+    public function faceLogin(Request $request, HttpClientInterface $httpClient, EntityManagerInterface $em, UserActivityLogger $logger, MailerInterface $mailer): Response
     {
         $data = json_decode($request->getContent(), true);
         $base64Image = $data['image'] ?? null;
@@ -252,12 +341,21 @@ class SecurityController extends AbstractController
                 $user = $em->getRepository(Users::class)->find($pyData['user_id']);
                 if ($user) {
                     if (strtoupper($user->getStatus()) === 'BLOCKED') {
+                        $logger->log('LOGIN_FAILED', "Blocked account login attempt via Face", 'FAILED', $user);
                         return $this->json(['status' => 'error', 'message' => 'Your account is blocked. Please contact support.']);
+                    }
+                    
+                    if ($user->isTwoFactorEmailEnabled()) {
+                        $this->triggerEmail2FA($user, $request, $mailer, $em);
+                        $redirectUrl = $this->generateUrl('app_login_2fa');
+                        return $this->json(['status' => 'success', 'redirect' => $redirectUrl]);
                     }
                     
                     // Securely assign session locally
                     $request->getSession()->set('user_id', $user->getId());
                     $request->getSession()->set('user_role', $user->getRole());
+
+                    $logger->log('LOGIN', 'User logged in via Face Recognition', 'SUCCESS', $user);
 
                     $role = strtoupper($user->getRole());
                     $redirectUrl = ($role === 'ADMIN') ? $this->generateUrl('app_admin_panel') : $this->generateUrl('app_home');
@@ -266,9 +364,11 @@ class SecurityController extends AbstractController
                 }
             }
 
+            $logger->log('LOGIN_FAILED', "Failed face recognition attempt", 'FAILED');
             return $this->json(['status' => 'error', 'message' => $pyData['message'] ?? 'This face is not recognized. Please try again or use email/password.']);
 
         } catch (\Exception $e) {
+            $logger->log('LOGIN_FAILED', "Face Login server offline", 'FAILED');
             return $this->json(['status' => 'error', 'message' => 'Face Login server is offline/timeout.']);
         }
     }

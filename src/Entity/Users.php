@@ -214,6 +214,18 @@ class Users
         return $this->imageSize;
     }
     
+    #[ORM\Column(type: Types::BOOLEAN, options: ['default' => false])]
+    private bool $isTwoFactorEmailEnabled = false;
+
+    #[ORM\Column(type: Types::STRING, length: 10, nullable: true)]
+    private ?string $twoFactorEmailCode = null;
+
+    #[ORM\Column(type: Types::FLOAT, options: ['default' => 0])]
+    private float $riskScore = 0;
+
+    #[ORM\Column(type: Types::STRING, length: 20, options: ['default' => 'NORMAL'])]
+    private string $riskLevel = 'NORMAL';
+
     public function getUpdatedAt(): ?\DateTimeInterface
     {
         return $this->updatedAt;
@@ -222,6 +234,50 @@ class Users
     public function setUpdatedAt(?\DateTimeInterface $updatedAt): static
     {
         $this->updatedAt = $updatedAt;
+        return $this;
+    }
+
+    public function isTwoFactorEmailEnabled(): bool
+    {
+        return $this->isTwoFactorEmailEnabled;
+    }
+
+    public function setIsTwoFactorEmailEnabled(bool $isTwoFactorEmailEnabled): static
+    {
+        $this->isTwoFactorEmailEnabled = $isTwoFactorEmailEnabled;
+        return $this;
+    }
+
+    public function getTwoFactorEmailCode(): ?string
+    {
+        return $this->twoFactorEmailCode;
+    }
+
+    public function setTwoFactorEmailCode(?string $twoFactorEmailCode): static
+    {
+        $this->twoFactorEmailCode = $twoFactorEmailCode;
+        return $this;
+    }
+
+    public function getRiskScore(): float
+    {
+        return $this->riskScore;
+    }
+
+    public function setRiskScore(float $riskScore): static
+    {
+        $this->riskScore = $riskScore;
+        return $this;
+    }
+
+    public function getRiskLevel(): string
+    {
+        return $this->riskLevel;
+    }
+
+    public function setRiskLevel(string $riskLevel): static
+    {
+        $this->riskLevel = $riskLevel;
         return $this;
     }
 }

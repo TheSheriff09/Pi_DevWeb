@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>User Activity Report</title>
+    <style>
+        body {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+        .header {
+            text-align: center;
+            border-bottom: 3px solid #4facfe;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            margin: 0;
+            color: #1E1E28;
+            font-size: 28px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        .header p {
+            margin: 5px 0 0;
+            color: #666;
+            font-size: 12px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+        table thead th {
+            background-color: #1E1E28;
+            color: #fff;
+            padding: 12px;
+            text-align: left;
+            text-transform: uppercase;
+            font-size: 11px;
+            letter-spacing: 1px;
+        }
+        table tbody td {
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+        }
+        table tbody tr:nth-child(even) {
+            background-color: #fafafa;
+        }
+        .status-success {
+            color: #00b050;
+            font-weight: bold;
+        }
+        .status-danger {
+            color: #ff0000;
+            font-weight: bold;
+        }
+        .action {
+            color: #4facfe;
+            font-weight: bold;
+        }
+        .footer {
+            margin-top: 40px;
+            text-align: center;
+            font-size: 10px;
+            color: #999;
+            border-top: 1px solid #eee;
+            padding-top: 15px;
+        }
+        .badge {
+            background: #eee;
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: #555;
+            font-size: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>User Activity Report</h1>
+        <p>Comprehensive Action Log | Generated on {{ 'now'|date('Y-m-d H:i:s') }}</p>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Date & Time</th>
+                <th>User ID</th>
+                <th>Action</th>
+                <th>Context / Description</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for log in logs %}
+            <tr>
+                <td>{{ log.createdAt|date('Y-m-d H:i:s') }}</td>
+                <td>
+                    {% if log.user %}
+                        <span class="badge">ID: {{ log.user.id }}</span>
+                    {% else %}
+                        System/Guest
+                    {% endif %}
+                </td>
+                <td class="action">{{ log.actionType }}</td>
+                <td>
+                    {% if log.page %}<div style="margin-bottom: 4px; font-family: monospace;">{{ log.page }}</div>{% endif %}
+                    {% if log.description %}<div style="color: #666; font-size: 11px;">{{ log.description }}</div>{% endif %}
+                </td>
+                <td class="{{ log.status == 'SUCCESS' ? 'status-success' : 'status-danger' }}">
+                    {{ log.status }}
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="5" style="text-align: center; padding: 20px;">No activities recorded.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="footer">
+        &copy; {{ 'now'|date('Y') }} StartupFlow Platform - Detailed Audit Report
+    </div>
+</body>
+</html>

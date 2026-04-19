@@ -165,7 +165,7 @@ def main():
             logging.error(f"Pipeline crashed during execution: {e}")
         
         logging.info("Sleeping for 5 minutes before next evaluation...\n")
-        time.sleep(10) # 5 minutes
+        time.sleep(300) # 5 minutes
 
 if __name__ == "__main__":
     main()

@@ -95,4 +95,29 @@ class ProfileController extends AbstractController
             return $this->json(['status' => 'error', 'message' => 'Face Registration server is currently offline.']);
         }
     }
+
+    #[Route('/profile/2fa/toggle', name: 'app_profile_2fa_toggle', methods: ['POST'])]
+    public function toggle2fa(Request $request, EntityManagerInterface $em): JsonResponse
+    {
+        $userId = $request->getSession()->get('user_id');
+        if (!$userId) {
+            return $this->json(['status' => 'error', 'message' => 'Not authenticated'], 401);
+        }
+
+        $user = $em->getRepository(Users::class)->find($userId);
+        if (!$user) {
+            return $this->json(['status' => 'error', 'message' => 'User not found'], 404);
+        }
+
+        $data = json_decode($request->getContent(), true);
+        $enable = $data['enable'] ?? false;
+
+        $user->setIsTwoFactorEmailEnabled((bool)$enable);
+        $em->flush();
+
+        return $this->json([
+            'status' => 'success', 
+            'message' => 'Email Authentication algorithm has been ' . ($enable ? 'activated' : 'disabled') . ' successfully.'
+        ]);
+    }
 }

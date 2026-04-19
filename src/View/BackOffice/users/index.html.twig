@@ -15,17 +15,25 @@
 
     <aside class="sidebar">
         <div class="sidebar-header">
-            Admin<span>Panel</span>
+            Users<span>Panel</span>
         </div>
         <ul class="sidebar-menu">
-            <li><a href="{{ path('app_admin_panel') }}">Dashboard</a></li>
-            <li><a href="{{ path('app_admin_forum_dashboard') }}">Forum</a></li>
-            <li><a href="{{ path('app_admin_startup_dashboard') }}">Startup</a></li>
-            <li><a href="{{ path('app_admin_evaluation_dashboard') }}">Evaluation</a></li>
-            <li><a href="{{ path('app_admin_users') }}" class="active">Users</a></li>
-            <li><a href="{{ path('app_admin_mentorship') }}">Mentorship</a></li>
-            <li><a href="{{ path('app_admin_reclamations') }}">Reclamation & Response</a></li>
+            <li><a href="{{ path('app_admin_users') }}" class="active">👥 Users List</a></li>
+            <li><a href="{{ path('app_admin_activity') }}">⚡ User Activity</a></li>
         </ul>
+        
+        <div style="margin-top: 30px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px;">
+            <p style="color: #666; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; margin-left: 20px;">Global Modules</p>
+            <ul class="sidebar-menu">
+                <li><a href="{{ path('app_admin_panel') }}">Dashboard</a></li>
+                <li><a href="{{ path('app_admin_forum_dashboard') }}">Forum</a></li>
+                <li><a href="{{ path('app_admin_startup_dashboard') }}">Startup</a></li>
+                <li><a href="{{ path('app_admin_evaluation_dashboard') }}">Evaluation</a></li>
+                <li><a href="{{ path('app_admin_mentorship') }}">Mentorship</a></li>
+                <li><a href="{{ path('app_admin_reclamations') }}">Reclamation & Response</a></li>
+            </ul>
+        </div>
+        
         <div class="sidebar-footer">
             <a href="{{ path('app_logout') }}" class="logout-btn glow-btn">Sign Out</a>
         </div>
@@ -57,6 +65,8 @@
                         <span style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: rgba(255,255,255,0.5); font-size: 14px;">🔍</span>
                         <input type="text" id="searchIdInput" placeholder="Search by ID..." style="padding: 10px 15px 10px 35px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.1); background: rgba(0, 0, 0, 0.2); color: #fff; outline: none; width: 250px; font-family: inherit; font-size: 0.9rem; transition: border-color 0.3s;">
                     </div>
+                    
+                    <a href="{{ path('app_admin_users_charts') }}" class="btn-pill" style="border: 2px solid #b58bff; background: transparent; color: #b58bff; text-decoration: none; padding: 10px 20px; border-radius: 20px; font-weight: bold; font-size: 14px; transition: all 0.3s; box-shadow: 0 0 10px rgba(181,139,255,0.2); margin-left: auto;">📊 View Analytics Charts</a>
                 </div>
                 <div style="overflow-x: auto;">
                     <table style="width: 100%; border-collapse: collapse; text-align: left;" id="usersTable">

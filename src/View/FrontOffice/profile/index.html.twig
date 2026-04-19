@@ -32,6 +32,27 @@
             </form>
 
             <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; text-align:center;">
+                <h3 style="margin-bottom: 10px; color:#333;">🔒 Email Two-Factor Authentication</h3>
+                <p style="font-size: 13px; color:#666; margin-bottom:15px;">Add an extra layer of security. We will send a 6-digit code to your email when you log in.</p>
+                <div style="display: flex; justify-content: center; align-items: center; gap: 10px;">
+                    <label class="switch" style="position: relative; display: inline-block; width: 50px; height: 24px;">
+                        <input type="checkbox" id="email2fa-toggle" {% if user.isTwoFactorEmailEnabled %}checked{% endif %} style="opacity: 0; width: 0; height: 0;">
+                        <span class="slider round" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 34px;"></span>
+                    </label>
+                    <span id="email2fa-status" style="font-weight: bold; color: {% if user.isTwoFactorEmailEnabled %}#2ecc71{% else %}#e74c3c{% endif %};">
+                        {% if user.isTwoFactorEmailEnabled %}Enabled{% else %}Disabled{% endif %}
+                    </span>
+                </div>
+            </div>
+
+            <style>
+                .switch input:checked + .slider { background-color: #4facfe; }
+                .switch input:focus + .slider { box-shadow: 0 0 1px #4facfe; }
+                .switch input:checked + .slider:before { transform: translateX(26px); }
+                .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
+            </style>
+
+            <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee; text-align:center;">
                 <h3 style="margin-bottom: 10px; color:#333;">Biometric Authentication</h3>
                 <p style="font-size: 13px; color:#666; margin-bottom:15px;">Add your face to securely log in without a password.</p>
                 <button type="button" class="signBtn" id="start-face-btn" style="background:#4a3f9e;">Register Face ID</button>
@@ -131,6 +152,42 @@
                 btnCapture.disabled = false;
             }
         });
+
+        // 2FA Toggle logic
+        const toggle2fa = document.getElementById('email2fa-toggle');
+        const status2fa = document.getElementById('email2fa-status');
+        
+        if (toggle2fa) {
+            toggle2fa.addEventListener('change', async (e) => {
+                const isEnabled = e.target.checked;
+                status2fa.innerText = isEnabled ? 'Enabling...' : 'Disabling...';
+                status2fa.style.color = '#f39c12';
+                
+                try {
+                    const response = await fetch('/profile/2fa/toggle', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ enable: isEnabled })
+                    });
+                    const data = await response.json();
+                    
+                    if (data.status === 'success') {
+                        status2fa.innerText = isEnabled ? 'Enabled' : 'Disabled';
+                        status2fa.style.color = isEnabled ? '#2ecc71' : '#e74c3c';
+                    } else {
+                        // Revert 
+                        e.target.checked = !isEnabled;
+                        status2fa.innerText = 'Error';
+                        status2fa.style.color = '#e74c3c';
+                        alert(data.message);
+                    }
+                } catch(err) {
+                    e.target.checked = !isEnabled;
+                    status2fa.innerText = 'Error';
+                    status2fa.style.color = '#e74c3c';
+                }
+            });
+        }
     });
     </script>
 

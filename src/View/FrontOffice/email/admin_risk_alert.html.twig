@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<body style="font-family: Arial, sans-serif; background: #fff1f0; padding: 30px;">
+    <div style="background: white; max-width: 600px; margin: auto; border: 2px solid #ff4d4f; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 12px rgba(255, 77, 79, 0.2);">
+        <div style="background: #ff4d4f; color: white; padding: 20px; text-align: center;">
+            <h1 style="margin: 0;">🚨 CRITICAL: Dangerous User Detected</h1>
+        </div>
+        <div style="padding: 30px; color: #333;">
+            <p><strong>Admin Team,</strong></p>
+            <p>The StartupFlow AI Risk Engine has classified a user as <b style="color: #ff4d4f;">DANGEROUS</b> due to their reclamation activity.</p>
+            
+            <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+                <tr>
+                    <td style="padding: 10px; border-bottom: 1px solid #eee; width: 40%;"><strong>User ID:</strong></td>
+                    <td style="padding: 10px; border-bottom: 1px solid #eee;">{{ user.id }}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 10px; border-bottom: 1px solid #eee;"><strong>Full Name:</strong></td>
+                    <td style="padding: 10px; border-bottom: 1px solid #eee;">{{ user.fullName }}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 10px; border-bottom: 1px solid #eee;"><strong>Email:</strong></td>
+                    <td style="padding: 10px; border-bottom: 1px solid #eee;">{{ user.email }}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 10px; border-bottom: 1px solid #eee; color: #ff4d4f;"><strong>Risk Score:</strong></td>
+                    <td style="padding: 10px; border-bottom: 1px solid #eee; font-size: 18px; font-weight: bold; color: #ff4d4f;">{{ score }} points</td>
+                </tr>
+            </table>
+            
+            <p>Please review their account in the Admin Dashboard immediately regarding a potential block or further action.</p>
+            
+            <p style="margin-top: 30px; font-size: 12px; color: #888;">Automated System Alert - StartupFlow AI</p>
+        </div>
+    </div>
+</body>
+</html>
