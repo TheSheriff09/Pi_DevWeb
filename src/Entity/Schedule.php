@@ -12,26 +12,29 @@ use Symfony\Component\Validator\Constraints as Assert;
 class Schedule
 {
     #[ORM\Id]
-    #[ORM\Column(type: Types::INTEGER)]
+    #[ORM\Column(name: '`scheduleID`', type: Types::INTEGER)]
     #[Assert\NotBlank]
     #[Assert\Type('integer')]
     private ?int $scheduleID = null;
 
-    #[ORM\Column(type: Types::INTEGER)]
+    #[ORM\Column(name: '`mentorID`', type: Types::INTEGER)]
     #[Assert\NotBlank]
     #[Assert\Type('integer')]
     private ?int $mentorID = null;
 
-    #[ORM\Column(type: Types::DATE_MUTABLE)]
+    #[ORM\Column(name: '`availableDate`', type: Types::DATE_MUTABLE)]
+    #[Assert\NotBlank(message: 'Available Date cannot be empty.')]
     private ?\DateTimeInterface $availableDate = null;
 
-    #[ORM\Column(type: Types::TIME_MUTABLE)]
+    #[ORM\Column(name: '`startTime`', type: Types::TIME_MUTABLE)]
+    #[Assert\NotBlank(message: 'Start Time cannot be empty.')]
     private ?\DateTimeInterface $startTime = null;
 
-    #[ORM\Column(type: Types::TIME_MUTABLE)]
+    #[ORM\Column(name: '`endTime`', type: Types::TIME_MUTABLE)]
+    #[Assert\NotBlank(message: 'End Time cannot be empty.')]
     private ?\DateTimeInterface $endTime = null;
 
-    #[ORM\Column(type: Types::BOOLEAN)]
+    #[ORM\Column(name: '`isBooked`', type: Types::BOOLEAN)]
     private ?bool $isBooked = null;
 
     public function getScheduleID(): ?int

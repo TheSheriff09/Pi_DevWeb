@@ -1,0 +1,99 @@
+{% extends 'FrontOffice/base.html.twig' %}
+
+{% block title %}My Bookings - StartupFlow{% endblock %}
+
+{% block body %}
+<div class="container" style="padding: 40px 20px; max-width: 1000px; margin: auto;">
+    <h2 style="color: var(--text-main, #fff); margin-bottom: 30px;">My Bookings</h2>
+
+    <div style="margin-bottom: 25px; display: flex; gap: 10px; flex-wrap: wrap;">
+        <button class="filter-btn" data-filter="all" style="padding: 8px 15px; border-radius: 20px; cursor: pointer; border: 1px solid var(--primary); background: var(--primary); color: white; font-weight: bold;">All</button>
+        <button class="filter-btn" data-filter="pending" style="padding: 8px 15px; border-radius: 20px; cursor: pointer; border: 1px solid #f1c40f; color: #f1c40f; background: transparent; font-weight: bold;">Pending</button>
+        <button class="filter-btn" data-filter="approved" style="padding: 8px 15px; border-radius: 20px; cursor: pointer; border: 1px solid #2ecc71; color: #2ecc71; background: transparent; font-weight: bold;">Approved</button>
+        <button class="filter-btn" data-filter="rejected" style="padding: 8px 15px; border-radius: 20px; cursor: pointer; border: 1px solid #e74c3c; color: #e74c3c; background: transparent; font-weight: bold;">Rejected</button>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 15px;">
+        {% for item in bookings %}
+            {% set booking = item.booking %}
+            <div class="mentorship-card booking-item" data-status="{{ booking.status|lower }}" style="display: flex; justify-content: space-between; align-items: center; transition: opacity 0.3s ease;">
+                
+                <div>
+                    <h3 style="margin: 0 0 5px;">{% if role == 'MENTOR' %}Entrepreneur: {% else %}Mentor: {% endif %}<span style="color: var(--primary);">{{ item.counterpartName }}</span></h3>
+                    <h4 style="margin: 0 0 8px; color: var(--text-main); font-weight: normal;">Topic: {{ booking.topic }}</h4>
+                    <p style="margin: 0; color: #ccc; font-size: 0.95em;">
+                        📅 {{ booking.requestedDate|date('D, M j, Y') }} at ⏰ {{ booking.requestedTime|date('H:i') }}
+                    </p>
+                    <p style="margin: 5px 0 0; font-size: 0.85em; color: #888;">
+                        Requested on {{ booking.creationDate|date('d M Y') }}
+                    </p>
+                </div>
+                
+                <div style="text-align: right;">
+                    <span style="display: inline-block; padding: 5px 12px; border-radius: 12px; font-weight: bold; font-size: 0.85em; margin-bottom: 10px;
+                        {% if booking.status|upper == 'PENDING' %}background: rgba(241, 196, 15, 0.2); color: #f1c40f;
+                        {% elseif booking.status|upper == 'ACCEPTED' or booking.status|upper == 'APPROVED' %}background: rgba(46, 204, 113, 0.2); color: #2ecc71;
+                        {% elseif booking.status|upper == 'REJECTED' %}background: rgba(231, 76, 60, 0.2); color: #e74c3c;
+                        {% endif %}">
+                        {{ booking.status|upper }}
+                    </span>
+                    
+                    {% if role == 'MENTOR' and booking.status|upper == 'PENDING' %}
+                        <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                            <form method="post" action="{{ path('app_handle_booking', {'id': booking.bookingID}) }}">
+                                <input type="hidden" name="action" value="accept">
+                                <button type="submit" class="btn-pill" style="background: #2ecc71; border: none; color: white; padding: 6px 15px; cursor: pointer;">Accept</button>
+                            </form>
+                            <form method="post" action="{{ path('app_handle_booking', {'id': booking.bookingID}) }}">
+                                <input type="hidden" name="action" value="reject">
+                                <button type="submit" class="btn-pill" style="background: transparent; border: 1px solid #e74c3c; color: #e74c3c; padding: 6px 15px; cursor: pointer;">Reject</button>
+                            </form>
+                        </div>
+                    {% endif %}
+                </div>
+
+            </div>
+        {% else %}
+            <div style="text-align: center; padding: 40px; background: rgba(255,255,255,0.05); border-radius: 12px; color: #aaa;">
+                You have no booking requests.
+            </div>
+        {% endfor %}
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const buttons = document.querySelectorAll('.filter-btn');
+    const items = document.querySelectorAll('.booking-item');
+    
+    buttons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            // Reset styles
+            buttons.forEach(b => {
+                b.style.background = 'transparent';
+                b.style.color = b.style.borderColor;
+            });
+            
+            // Set active style
+            if(btn.getAttribute('data-filter') === 'all') {
+                btn.style.background = 'var(--primary)';
+                btn.style.color = 'white';
+            } else {
+                btn.style.background = btn.style.borderColor;
+                btn.style.color = '#fff'; // White text on filled color block
+            }
+            
+            // Filter elements natively
+            const filter = btn.getAttribute('data-filter');
+            items.forEach(item => {
+                if (filter === 'all' || item.getAttribute('data-status') === filter) {
+                    item.style.display = 'flex';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        });
+    });
+});
+</script>
+{% endblock %}

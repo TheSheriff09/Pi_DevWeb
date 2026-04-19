@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Entity\ForumPosts;
 use App\Entity\Comments;
 use App\Entity\Interactions;
+use App\Entity\BannedWord;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -60,6 +61,12 @@ class AdminForumController extends AbstractController
                        ->getResult();
         } else {
             $posts = $em->getRepository(ForumPosts::class)->findBy([], ['createdAt' => 'DESC']);
+        }
+
+        if ($request->isXmlHttpRequest()) {
+            return $this->render('BackOffice/forum/_posts_tbody.html.twig', [
+                'posts' => $posts
+            ]);
         }
 
         return $this->render('BackOffice/forum/posts.html.twig', [
@@ -135,5 +142,55 @@ class AdminForumController extends AbstractController
         }
 
         return $this->redirectToRoute('app_admin_forum_interactions');
+    }
+
+    #[Route('/banned-words', name: 'app_admin_forum_banned_words')]
+    public function bannedWords(EntityManagerInterface $em, Request $request): Response
+    {
+        if ($redirect = $this->ensureAdmin($request)) return $redirect;
+
+        $words = $em->getRepository(BannedWord::class)->findBy([], ['createdAt' => 'DESC']);
+
+        return $this->render('BackOffice/forum/banned_words.html.twig', [
+            'words' => $words,
+            'current_menu' => 'banned_words'
+        ]);
+    }
+
+    #[Route('/banned-words/add', name: 'app_admin_forum_banned_words_add', methods: ['POST'])]
+    public function addBannedWord(Request $request, EntityManagerInterface $em): Response
+    {
+        if ($redirect = $this->ensureAdmin($request)) return $redirect;
+
+        $wordText = $request->request->get('word');
+        if ($wordText) {
+            $existing = $em->getRepository(BannedWord::class)->findOneBy(['word' => mb_strtolower(trim($wordText))]);
+            if (!$existing) {
+                $bw = new BannedWord();
+                $bw->setWord($wordText);
+                $em->persist($bw);
+                $em->flush();
+                $this->addFlash('success', 'Banned word added successfully!');
+            } else {
+                $this->addFlash('error', 'This word is already in the list.');
+            }
+        }
+
+        return $this->redirectToRoute('app_admin_forum_banned_words');
+    }
+
+    #[Route('/banned-words/{id}/delete', name: 'app_admin_forum_banned_words_delete', methods: ['POST'])]
+    public function deleteBannedWord(int $id, Request $request, EntityManagerInterface $em): Response
+    {
+        if ($redirect = $this->ensureAdmin($request)) return $redirect;
+
+        $bw = $em->getRepository(BannedWord::class)->find($id);
+        if ($bw) {
+            $em->remove($bw);
+            $em->flush();
+            $this->addFlash('success', 'Banned word removed.');
+        }
+
+        return $this->redirectToRoute('app_admin_forum_banned_words');
     }
 }

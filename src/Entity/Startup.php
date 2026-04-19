@@ -12,38 +12,41 @@ use Symfony\Component\Validator\Constraints as Assert;
 class Startup
 {
     #[ORM\Id]
-    #[ORM\GeneratedValue]
-    #[ORM\Column(type: Types::INTEGER)]
+    #[ORM\GeneratedValue(strategy: 'IDENTITY')]
+    #[ORM\Column(name: 'startupID', type: Types::INTEGER)]
     #[Assert\Type('integer')]
     private ?int $startupID = null;
 
     #[ORM\Column(type: Types::STRING, length: 255, nullable: true)]
     #[Assert\Length(max: 255)]
     #[Assert\Type('string')]
+    #[Assert\NotBlank(message: 'Startup name cannot be blank.')]
     private ?string $name = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     #[Assert\Type('string')]
+    #[Assert\NotBlank(message: 'Description cannot be blank.')]
     private ?string $description = null;
 
     #[ORM\Column(type: Types::STRING, length: 100, nullable: true)]
     #[Assert\Length(max: 100)]
     #[Assert\Type('string')]
+    #[Assert\NotBlank(message: 'Sector cannot be blank.')]
     private ?string $sector = null;
 
-    #[ORM\Column(type: Types::STRING, length: 255, nullable: true)]
+    #[ORM\Column(name: 'imageURL', type: Types::STRING, length: 255, nullable: true)]
     #[Assert\Length(max: 255)]
     #[Assert\Type('string')]
     private ?string $imageURL = null;
 
-    #[ORM\Column(type: Types::DATE_MUTABLE, nullable: true)]
+    #[ORM\Column(name: 'creationDate', type: Types::DATE_MUTABLE, nullable: true)]
     private ?\DateTimeInterface $creationDate = null;
 
-    #[ORM\Column(type: Types::FLOAT, nullable: true)]
+    #[ORM\Column(name: 'KPIscore', type: Types::FLOAT, nullable: true)]
     #[Assert\Type('float')]
     private ?float $kPIscore = null;
 
-    #[ORM\Column(type: Types::DATE_MUTABLE, nullable: true)]
+    #[ORM\Column(name: 'lastEvaluationDate', type: Types::DATE_MUTABLE, nullable: true)]
     private ?\DateTimeInterface $lastEvaluationDate = null;
 
     #[ORM\Column(type: Types::STRING, length: 50, nullable: true)]
@@ -56,24 +59,24 @@ class Startup
     #[Assert\Type('string')]
     private ?string $status = null;
 
-    #[ORM\Column(type: Types::INTEGER, nullable: true)]
+    #[ORM\Column(name: 'mentorID', type: Types::INTEGER, nullable: true)]
     #[Assert\Type('integer')]
     private ?int $mentorID = null;
 
-    #[ORM\Column(type: Types::FLOAT, nullable: true)]
+    #[ORM\Column(name: 'fundingAmount', type: Types::FLOAT, nullable: true)]
     #[Assert\Type('float')]
     private ?float $fundingAmount = null;
 
-    #[ORM\Column(type: Types::STRING, length: 100, nullable: true)]
+    #[ORM\Column(name: 'incubatorProgram', type: Types::STRING, length: 100, nullable: true)]
     #[Assert\Length(max: 100)]
     #[Assert\Type('string')]
     private ?string $incubatorProgram = null;
 
-    #[ORM\Column(type: Types::INTEGER, nullable: true)]
+    #[ORM\Column(name: 'founderID', type: Types::INTEGER, nullable: true)]
     #[Assert\Type('integer')]
     private ?int $founderID = null;
 
-    #[ORM\Column(type: Types::INTEGER, nullable: true)]
+    #[ORM\Column(name: 'businessPlanID', type: Types::INTEGER, nullable: true)]
     #[Assert\Type('integer')]
     private ?int $businessPlanID = null;
 

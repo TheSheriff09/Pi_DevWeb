@@ -24,6 +24,14 @@
             <li><a href="{{ path('app_admin_forum_posts') }}" class="{{ current_menu == 'posts' ? 'active' : '' }}">Manage Posts</a></li>
             <li><a href="{{ path('app_admin_forum_comments') }}" class="{{ current_menu == 'comments' ? 'active' : '' }}">Manage Comments</a></li>
             <li><a href="{{ path('app_admin_forum_interactions') }}" class="{{ current_menu == 'interactions' ? 'active' : '' }}">Manage Interactions</a></li>
+            <li><a href="{{ path('app_admin_forum_banned_words') }}" class="{{ current_menu == 'banned_words' ? 'active' : '' }}">Banned Words</a></li>
+                    <li style="margin-top:20px; border-top:1px solid rgba(255,255,255,0.1); padding-top:10px;"><a href="{{ path('app_admin_panel') }}" style="color:var(--primary-light);">Global Modules</a></li>
+            <li><a href="{{ path('app_admin_forum_dashboard') }}">Forum</a></li>
+            <li><a href="{{ path('app_admin_startup_dashboard') }}">Startup</a></li>
+            <li><a href="{{ path('app_admin_evaluation_dashboard') }}">Evaluation</a></li>
+            <li><a href="{{ path('app_admin_users') }}">Users</a></li>
+            <li><a href="{{ path('app_admin_mentorship') }}">Mentorship</a></li>
+            <li><a href="{{ path('app_admin_reclamations') }}">Reclamation & Response</a></li>
         </ul>
         <div class="sidebar-footer">
             <a href="{{ path('app_logout') }}" class="logout-btn glow-btn">Sign Out</a>
@@ -45,12 +53,8 @@
         <main class="dashboard-content" style="position: relative; z-index: 2;">
             
             <div class="card" style="width: 100%; margin-bottom: 20px;">
-                <form action="{{ path('app_admin_forum_posts') }}" method="get" style="display: flex; gap: 10px;">
-                    <input type="text" name="q" class="form-control" style="flex: 1; padding: 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.1); color: var(--text-main);" placeholder="Search posts by title or content..." value="{{ searchQuery }}">
-                    <button type="submit" class="btn-pill glow-btn" style="padding: 10px 20px; border: none; cursor: pointer;">Search</button>
-                    {% if searchQuery %}
-                        <a href="{{ path('app_admin_forum_posts') }}" class="btn-pill" style="padding: 10px 20px; border: 1px solid #ff9d9d; color: #ff9d9d; text-decoration: none;">Clear</a>
-                    {% endif %}
+                <form id="searchForm" style="display: flex; gap: 10px;" onsubmit="event.preventDefault();">
+                    <input type="text" id="searchInput" name="q" class="form-control" style="flex: 1; padding: 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.1); color: var(--text-main);" placeholder="Search posts by title or content..." value="{{ searchQuery }}">
                 </form>
             </div>
 
@@ -67,25 +71,8 @@
                                 <th style="padding: 15px; color: #b0a8d6; text-align: right;">Actions</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            {% for post in posts %}
-                                <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
-                                    <td style="padding: 15px;">{{ post.id }}</td>
-                                    <td style="padding: 15px; font-weight: 500;">{{ post.title }}</td>
-                                    <td style="padding: 15px;">{{ post.content|length > 40 ? post.content|slice(0, 40) ~ '...' : post.content }}</td>
-                                    <td style="padding: 15px;">{{ post.authorName }}</td>
-                                    <td style="padding: 15px; color: #b0a8d6;">{{ post.createdAt|date('Y-m-d H:i') }}</td>
-                                    <td style="padding: 15px; text-align: right;">
-                                        <form action="{{ path('app_admin_forum_post_delete', {'id': post.id}) }}" method="post" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this post?');">
-                                            <button type="submit" style="background: rgba(255, 71, 87, 0.1); border: 1px solid #ff4757; color: #ff4757; padding: 5px 10px; border-radius: 8px; cursor: pointer; transition: 0.3s;">Delete</button>
-                                        </form>
-                                    </td>
-                                </tr>
-                            {% else %}
-                                <tr>
-                                    <td colspan="6" style="padding: 15px; text-align: center; color: #b0a8d6;">No posts found.</td>
-                                </tr>
-                            {% endfor %}
+                        <tbody id="postsTableBody">
+                            {% include 'BackOffice/forum/_posts_tbody.html.twig' %}
                         </tbody>
                     </table>
                 </div>
@@ -113,7 +100,22 @@
                     }
                 });
             }
+
+            const searchInput = document.getElementById('searchInput');
+            const tableBody = document.getElementById('postsTableBody');
+
+            searchInput.addEventListener('keyup', function() {
+                const query = searchInput.value;
+                fetch(`{{ path('app_admin_forum_posts') }}?q=${encodeURIComponent(query)}`, {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                })
+                .then(response => response.text())
+                .then(html => {
+                    tableBody.innerHTML = html;
+                });
+            });
         });
     </script>
 </body>
 </html>
+

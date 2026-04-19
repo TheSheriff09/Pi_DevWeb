@@ -13,7 +13,7 @@
 
         <nav style="display: flex; gap: 30px;">
             <a href="#" style="color: #cdb5ff; font-weight: 600; text-decoration: none; border-bottom: 2px solid #8d79ff; padding-bottom: 5px;">DashBoard</a>
-            <a href="#" style="color: #a8a0d4; text-decoration: none; transition: 0.3s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#a8a0d4'">Startup</a>
+            <a href="{{ path('app_entrepreneur_startups') }}" style="color: #a8a0d4; text-decoration: none; transition: 0.3s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#a8a0d4'">Startup</a>
             <a href="#" style="color: #a8a0d4; text-decoration: none; transition: 0.3s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#a8a0d4'">Mentorship</a>
             <a href="#" style="color: #a8a0d4; text-decoration: none; transition: 0.3s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#a8a0d4'">Forum</a>
         </nav>
@@ -41,6 +41,7 @@
 
             <!-- Action Buttons -->
             <div style="display: flex; flex-direction: column; gap: 20px; max-width: 350px; margin: 0 auto;">
+                <a href="{{ path('app_entrepreneur_startups') }}" class="signBtn" style="justify-content: flex-start; gap: 15px; font-size: 16px; text-decoration: none; display: flex; align-items: center;"><span style="font-size: 20px;">🚀</span> Manage Startups</a>
                 <button class="signBtn" style="justify-content: flex-start; gap: 15px; font-size: 16px;"><span style="font-size: 20px;">👨‍🏫</span> Find Mentor</button>
                 <button class="signBtn" style="justify-content: flex-start; gap: 15px; font-size: 16px; background: rgba(141, 121, 255, 0.1); color: #fff; border: 1px solid rgba(141, 121, 255, 0.3);"><span style="font-size: 20px;">🤖</span> AI SWOT Generator</button>
                 <button class="signBtn" style="justify-content: flex-start; gap: 15px; font-size: 16px; background: rgba(255, 255, 255, 0.05); color: #fff; border: 1px solid rgba(255, 255, 255, 0.1);"><span style="font-size: 20px;">📌</span> Contact Support</button>

@@ -1,0 +1,51 @@
+{% extends 'FrontOffice/base.html.twig' %}
+
+{% block title %}My Sessions - StartupFlow{% endblock %}
+
+{% block body %}
+<div class="container" style="padding: 40px 20px; max-width: 1000px; margin: auto;">
+    <h2 style="color: var(--text-main, #fff); margin-bottom: 30px;">{% if role == 'MENTOR' %}Mentorship Sessions{% else %}My Sessions{% endif %}</h2>
+
+    <div style="display: flex; flex-direction: column; gap: 15px;">
+        {% for item in sessions %}
+            {% set sessionObj = item.session %}
+            <a href="{{ path('app_session_details', {'id': sessionObj.sessionID}) }}" style="text-decoration: none; display: block;">
+                <div class="mentorship-card" style="display: flex; justify-content: space-between; align-items: center; transition: background 0.2s;">
+                    <div>
+                        <h3 style="margin: 0 0 5px;">{% if role == 'MENTOR' %}Session with: {% else %}Session by Mentor: {% endif %}<span style="color: var(--primary);">{{ item.counterpartName }}</span></h3>
+                        <h4 style="margin: 0 0 8px; font-weight: normal;">Type: {{ sessionObj.sessionType }}</h4>
+                        <p style="margin: 0; color: #ccc; font-size: 0.95em;">
+                            📅 {{ sessionObj.sessionDate|date('D, M j, Y') }}
+                        </p>
+                    </div>
+                    <div>
+                        {% set today = date() %}
+                        {% set sDate = sessionObj.sessionDate|date('Y-m-d') %}
+                        {% set cDate = today|date('Y-m-d') %}
+                        {% if sDate < cDate %}
+                            {% set dynStatus = 'Completed' %}
+                            {% set dynColor = '#95a5a6' %}
+                            {% set dynBg = 'rgba(149,165,166,0.1)' %}
+                        {% elseif sDate == cDate %}
+                            {% set dynStatus = 'Ongoing' %}
+                            {% set dynColor = '#3498db' %}
+                            {% set dynBg = 'rgba(52,152,219,0.1)' %}
+                        {% else %}
+                            {% set dynStatus = 'Upcoming' %}
+                            {% set dynColor = '#2ecc71' %}
+                            {% set dynBg = 'rgba(46,204,113,0.1)' %}
+                        {% endif %}
+                        <span style="display: inline-block; padding: 5px 12px; border-radius: 12px; font-weight: bold; font-size: 0.85em; background: {{ dynBg }}; color: {{ dynColor }}; border: 1px solid {{ dynColor }};">
+                            {{ dynStatus }}
+                        </span>
+                    </div>
+                </div>
+            </a>
+        {% else %}
+            <div style="text-align: center; padding: 40px; background: rgba(255,255,255,0.05); border-radius: 12px; color: #aaa;">
+                You have no sessions yet.
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

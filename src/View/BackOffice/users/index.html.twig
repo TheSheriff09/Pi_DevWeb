@@ -15,17 +15,25 @@
 
     <aside class="sidebar">
         <div class="sidebar-header">
-            Admin<span>Panel</span>
+            Users<span>Panel</span>
         </div>
         <ul class="sidebar-menu">
-            <li><a href="{{ path('app_admin_panel') }}">Dashboard</a></li>
-            <li><a href="{{ path('app_admin_forum_dashboard') }}">Forum</a></li>
-            <li><a href="#">Startup</a></li>
-            <li><a href="#">Evaluation</a></li>
-            <li><a href="{{ path('app_admin_users') }}" class="active">Users</a></li>
-            <li><a href="#">Mentorship</a></li>
-            <li><a href="{{ path('app_admin_reclamations') }}">Reclamation & Response</a></li>
+            <li><a href="{{ path('app_admin_users') }}" class="active">👥 Users List</a></li>
+            <li><a href="{{ path('app_admin_activity') }}">⚡ User Activity</a></li>
         </ul>
+        
+        <div style="margin-top: 30px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px;">
+            <p style="color: #666; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; margin-left: 20px;">Global Modules</p>
+            <ul class="sidebar-menu">
+                <li><a href="{{ path('app_admin_panel') }}">Dashboard</a></li>
+                <li><a href="{{ path('app_admin_forum_dashboard') }}">Forum</a></li>
+                <li><a href="{{ path('app_admin_startup_dashboard') }}">Startup</a></li>
+                <li><a href="{{ path('app_admin_evaluation_dashboard') }}">Evaluation</a></li>
+                <li><a href="{{ path('app_admin_mentorship') }}">Mentorship</a></li>
+                <li><a href="{{ path('app_admin_reclamations') }}">Reclamation & Response</a></li>
+            </ul>
+        </div>
+        
         <div class="sidebar-footer">
             <a href="{{ path('app_logout') }}" class="logout-btn glow-btn">Sign Out</a>
         </div>
@@ -50,54 +58,30 @@
         <main class="dashboard-content" style="position: relative; z-index: 2;">
             
             <div class="card" style="width: 100%;">
-                <h3 style="margin-bottom: 20px; color: var(--primary-lighter);">Platform Users</h3>
+                <div style="display: flex; justify-content: flex-start; align-items: center; gap: 30px; margin-bottom: 20px;">
+                    <h3 style="margin: 0; color: var(--primary-lighter);">Platform Users</h3>
+                    
+                    <div style="position: relative;">
+                        <span style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: rgba(255,255,255,0.5); font-size: 14px;">🔍</span>
+                        <input type="text" id="searchIdInput" placeholder="Search by ID..." style="padding: 10px 15px 10px 35px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.1); background: rgba(0, 0, 0, 0.2); color: #fff; outline: none; width: 250px; font-family: inherit; font-size: 0.9rem; transition: border-color 0.3s;">
+                    </div>
+                    
+                    <a href="{{ path('app_admin_users_charts') }}" class="btn-pill" style="border: 2px solid #b58bff; background: transparent; color: #b58bff; text-decoration: none; padding: 10px 20px; border-radius: 20px; font-weight: bold; font-size: 14px; transition: all 0.3s; box-shadow: 0 0 10px rgba(181,139,255,0.2); margin-left: auto;">📊 View Analytics Charts</a>
+                </div>
                 <div style="overflow-x: auto;">
-                    <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                    <table style="width: 100%; border-collapse: collapse; text-align: left;" id="usersTable">
                         <thead>
                             <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
-                                <th style="padding: 15px; color: #b0a8d6;">Full Name</th>
-                                <th style="padding: 15px; color: #b0a8d6;">Email</th>
-                                <th style="padding: 15px; color: #b0a8d6;">Role</th>
-                                <th style="padding: 15px; color: #b0a8d6;">Created At</th>
-                                <th style="padding: 15px; color: #b0a8d6;">Status</th>
+                                <th style="padding: 15px; color: #b0a8d6; cursor: pointer;" class="sortable" data-sort="id">ID <span>&#9650;</span></th>
+                                <th style="padding: 15px; color: #b0a8d6; cursor: pointer;" class="sortable" data-sort="fullName">Full Name <span></span></th>
+                                <th style="padding: 15px; color: #b0a8d6; cursor: pointer;" class="sortable" data-sort="email">Email <span></span></th>
+                                <th style="padding: 15px; color: #b0a8d6; cursor: pointer;" class="sortable" data-sort="role">Role <span></span></th>
+                                <th style="padding: 15px; color: #b0a8d6; cursor: pointer;" class="sortable" data-sort="createdAt">Created At <span></span></th>
+                                <th style="padding: 15px; color: #b0a8d6; cursor: pointer;" class="sortable" data-sort="status">Status <span></span></th>
                             </tr>
                         </thead>
-                        <tbody>
-                            {% for user in users %}
-                                <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
-                                    <td style="padding: 15px; font-weight: 500;">
-                                        <span style="display: flex; align-items: center; gap: 10px;">
-                                            <div style="width: 30px; height: 30px; border-radius: 50%; background: var(--primary); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold;">
-                                                {{ user.fullName|slice(0, 1)|upper }}
-                                            </div>
-                                            {{ user.fullName }}
-                                        </span>
-                                    </td>
-                                    <td style="padding: 15px;">{{ user.email }}</td>
-                                    <td style="padding: 15px;">
-                                        <span style="background: rgba(111, 86, 255, 0.2); color: #b58bff; padding: 4px 8px; border-radius: 12px; font-size: 0.8rem; font-weight: bold;">
-                                            {{ user.role }}
-                                        </span>
-                                    </td>
-                                    <td style="padding: 15px; color: #b0a8d6;">{{ user.createdAt|date('Y-m-d') }}</td>
-                                    <td style="padding: 15px;">
-                                        {% if user.role|upper != 'ADMIN' %}
-                                            <form action="{{ path('app_admin_users_status', {id: user.id}) }}" method="POST" style="margin: 0;">
-                                                <select name="status" onchange="this.form.submit()" style="padding: 6px; border-radius: 4px; border: 1px solid {% if user.status == 'ACTIVE' %}rgba(76, 209, 55, 0.5){% else %}rgba(255, 50, 50, 0.5){% endif %}; background: #2a2b42; color: #fff; cursor: pointer; outline: none; transition: border-color 0.2s;">
-                                                    <option value="ACTIVE" {% if user.status == 'ACTIVE' %}selected{% endif %}>Active</option>
-                                                    <option value="BLOCKED" {% if user.status == 'BLOCKED' %}selected{% endif %}>Blocked</option>
-                                                </select>
-                                            </form>
-                                        {% else %}
-                                            <span style="padding: 6px; color: #4cd137; font-weight: bold; display: inline-block;">SUPERADMIN</span>
-                                        {% endif %}
-                                    </td>
-                                </tr>
-                            {% else %}
-                                <tr>
-                                    <td colspan="5" style="padding: 15px; text-align: center; color: #b0a8d6;">No users found.</td>
-                                </tr>
-                            {% endfor %}
+                        <tbody id="usersTableBody">
+                            {% include 'BackOffice/users/_users_tbody.html.twig' %}
                         </tbody>
                     </table>
                 </div>
@@ -125,6 +109,72 @@
                     }
                 });
             }
+
+            // AJAX Sorting and Searching
+            let currentSort = 'id';
+            let currentDirection = 'ASC';
+            const searchInput = document.getElementById('searchIdInput');
+            const tableBody = document.getElementById('usersTableBody');
+            const sortableHeaders = document.querySelectorAll('.sortable');
+
+            function fetchUsers() {
+                const searchId = searchInput.value;
+                const params = new URLSearchParams({
+                    sort: currentSort,
+                    direction: currentDirection
+                });
+                
+                if (searchId) {
+                    params.append('searchId', searchId);
+                }
+
+                fetch(`{{ path('app_admin_users_ajax') }}?${params.toString()}`, {
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => response.text())
+                .then(html => {
+                    tableBody.innerHTML = html;
+                })
+                .catch(error => console.error('Error fetching users:', error));
+            }
+
+            // Search by ID
+            let debounceTimer;
+            searchInput.addEventListener('input', () => {
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(() => {
+                    fetchUsers();
+                }, 300);
+            });
+
+            // Sorting
+            sortableHeaders.forEach(header => {
+                header.addEventListener('click', () => {
+                    const sortProperty = header.getAttribute('data-sort');
+                    
+                    if (currentSort === sortProperty) {
+                        currentDirection = currentDirection === 'ASC' ? 'DESC' : 'ASC';
+                    } else {
+                        currentSort = sortProperty;
+                        currentDirection = 'ASC';
+                    }
+
+                    // Update header icons
+                    sortableHeaders.forEach(h => {
+                        const span = h.querySelector('span');
+                        if (span) span.innerHTML = '';
+                    });
+
+                    const activeSpan = header.querySelector('span');
+                    if (activeSpan) {
+                        activeSpan.innerHTML = currentDirection === 'ASC' ? '&#9650;' : '&#9660;';
+                    }
+
+                    fetchUsers();
+                });
+            });
         });
     </script>
 </body>

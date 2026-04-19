@@ -12,8 +12,8 @@ use Symfony\Component\Validator\Constraints as Assert;
 class Businessplan
 {
     #[ORM\Id]
-    #[ORM\GeneratedValue]
-    #[ORM\Column(type: Types::INTEGER)]
+    #[ORM\GeneratedValue(strategy: 'IDENTITY')]
+    #[ORM\Column(name: 'businessPlanID', type: Types::INTEGER)]
     #[Assert\Type('integer')]
     private ?int $businessPlanID = null;
 
@@ -26,27 +26,27 @@ class Businessplan
     #[Assert\Type('string')]
     private ?string $description = null;
 
-    #[ORM\Column(type: Types::TEXT, nullable: true)]
+    #[ORM\Column(name: 'marketAnalysis', type: Types::TEXT, nullable: true)]
     #[Assert\Type('string')]
     private ?string $marketAnalysis = null;
 
-    #[ORM\Column(type: Types::TEXT, nullable: true)]
+    #[ORM\Column(name: 'valueProposition', type: Types::TEXT, nullable: true)]
     #[Assert\Type('string')]
     private ?string $valueProposition = null;
 
-    #[ORM\Column(type: Types::TEXT, nullable: true)]
+    #[ORM\Column(name: 'businessModel', type: Types::TEXT, nullable: true)]
     #[Assert\Type('string')]
     private ?string $businessModel = null;
 
-    #[ORM\Column(type: Types::TEXT, nullable: true)]
+    #[ORM\Column(name: 'marketingStrategy', type: Types::TEXT, nullable: true)]
     #[Assert\Type('string')]
     private ?string $marketingStrategy = null;
 
-    #[ORM\Column(type: Types::TEXT, nullable: true)]
+    #[ORM\Column(name: 'financialForecast', type: Types::TEXT, nullable: true)]
     #[Assert\Type('string')]
     private ?string $financialForecast = null;
 
-    #[ORM\Column(type: Types::FLOAT, nullable: true)]
+    #[ORM\Column(name: 'fundingRequired', type: Types::FLOAT, nullable: true)]
     #[Assert\Type('float')]
     private ?float $fundingRequired = null;
 
@@ -60,13 +60,13 @@ class Businessplan
     #[Assert\Type('string')]
     private ?string $status = null;
 
-    #[ORM\Column(type: Types::DATE_MUTABLE, nullable: true)]
+    #[ORM\Column(name: 'creationDate', type: Types::DATE_MUTABLE, nullable: true)]
     private ?\DateTimeInterface $creationDate = null;
 
-    #[ORM\Column(type: Types::DATE_MUTABLE, nullable: true)]
+    #[ORM\Column(name: 'lastUpdate', type: Types::DATE_MUTABLE, nullable: true)]
     private ?\DateTimeInterface $lastUpdate = null;
 
-    #[ORM\Column(type: Types::INTEGER, nullable: true)]
+    #[ORM\Column(name: 'startupID', type: Types::INTEGER, nullable: true)]
     #[Assert\Type('integer')]
     private ?int $startupID = null;
 

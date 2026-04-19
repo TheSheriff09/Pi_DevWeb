@@ -10,6 +10,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 class ReclamationController extends AbstractController
 {
@@ -30,7 +31,7 @@ class ReclamationController extends AbstractController
     }
 
     #[Route('/reclamation/submit', name: 'app_reclamation_submit', methods: ['POST'])]
-    public function submit(Request $request, EntityManagerInterface $em): JsonResponse
+    public function submit(Request $request, EntityManagerInterface $em, ValidatorInterface $validator, \App\Service\RiskAssessmentService $riskService): JsonResponse
     {
         $session = $request->getSession();
         $userId = $session->get('user_id');
@@ -52,12 +53,24 @@ class ReclamationController extends AbstractController
         $reclamation->setCreatedAt(new \DateTime());
         $reclamation->setRequestedId($userId);
 
+        $targetUser = null;
         if ($data['title'] === 'User problem' && !empty($data['targetId'])) {
             $reclamation->setTargetId((int) $data['targetId']);
+            $targetUser = $em->getRepository(Users::class)->find((int) $data['targetId']);
+        }
+
+        $errors = $validator->validate($reclamation);
+        if (count($errors) > 0) {
+            return new JsonResponse(['status' => 'error', 'message' => $errors[0]->getMessage()]);
         }
 
         $em->persist($reclamation);
         $em->flush();
+
+        // AI Risk Assessment Engine trigger!
+        if ($targetUser) {
+            $riskService->assessUserRisk($targetUser);
+        }
 
         return new JsonResponse(['status' => 'success']);
     }

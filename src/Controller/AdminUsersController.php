@@ -24,7 +24,26 @@ class AdminUsersController extends AbstractController
             return $this->redirectToRoute('app_login');
         }
 
-        $users = $em->getRepository(Users::class)->findAll();
+        $sort = $request->query->get('sort', 'id');
+        $direction = strtoupper($request->query->get('direction', 'ASC'));
+        if (!in_array($direction, ['ASC', 'DESC'])) {
+            $direction = 'ASC';
+        }
+
+        $validSorts = [
+            'id' => 'u.id',
+            'fullName' => 'u.fullName',
+            'email' => 'u.email',
+            'role' => 'u.role',
+            'createdAt' => 'u.createdAt',
+            'status' => 'u.status'
+        ];
+        $sortField = $validSorts[$sort] ?? 'u.id';
+
+        $users = $em->getRepository(Users::class)->createQueryBuilder('u')
+            ->orderBy($sortField, $direction)
+            ->getQuery()
+            ->getResult();
 
         return $this->render('BackOffice/users/index.html.twig', [
             'users' => $users,
@@ -49,5 +68,45 @@ class AdminUsersController extends AbstractController
         }
 
         return $this->redirectToRoute('app_admin_users');
+    }
+    #[Route('/admin/users/ajax', name: 'app_admin_users_ajax', methods: ['GET'])]
+    public function ajaxUsers(Request $request, EntityManagerInterface $em): Response
+    {
+        if (!$this->isAdmin($request)) {
+            return new Response('Unauthorized', 403);
+        }
+
+        $searchQuery = $request->query->get('searchId');
+        $sort = $request->query->get('sort', 'id');
+        $direction = strtoupper($request->query->get('direction', 'ASC'));
+        
+        if (!in_array($direction, ['ASC', 'DESC'])) {
+            $direction = 'ASC';
+        }
+
+        $validSorts = [
+            'id' => 'u.id',
+            'fullName' => 'u.fullName',
+            'email' => 'u.email',
+            'role' => 'u.role',
+            'createdAt' => 'u.createdAt',
+            'status' => 'u.status'
+        ];
+        $sortField = $validSorts[$sort] ?? 'u.id';
+
+        $qb = $em->getRepository(Users::class)->createQueryBuilder('u');
+
+        if ($searchQuery) {
+            $qb->andWhere('u.id = :searchId')
+               ->setParameter('searchId', $searchQuery);
+        }
+
+        $qb->orderBy($sortField, $direction);
+
+        $users = $qb->getQuery()->getResult();
+
+        return $this->render('BackOffice/users/_users_tbody.html.twig', [
+            'users' => $users,
+        ]);
     }
 }

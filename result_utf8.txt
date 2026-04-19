@@ -1,9 +1,0 @@
-﻿ ---------------- -------- -------- ------ -------------------------- 
-  Name             Method   Scheme   Host   Path                      
- ---------------- -------- -------- ------ -------------------------- 
-  _preview_error   ANY      ANY      ANY    /_error/{code}.{_format}  
-  app_home         ANY      ANY      ANY    /                         
-  app_login        ANY      ANY      ANY    /login                    
-  app_register     ANY      ANY      ANY    /register                 
- ---------------- -------- -------- ------ -------------------------- 
-

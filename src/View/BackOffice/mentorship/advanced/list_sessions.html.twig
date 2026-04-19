@@ -1,0 +1,169 @@
+{% extends 'BackOffice/mentorship/base_mentorship.html.twig' %}
+
+{% block title %}Mentorship Sessions & Bookings{% endblock %}
+
+{% block header_title %}My Sessions{% endblock %}
+
+{% block body %}
+    <div style="margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center;">
+        <h3 style="color: var(--primary-lighter); margin:0;">Upcoming & Past Sessions</h3>
+        <a href="{{ path('app_advanced_dashboard') }}" class="btn-pill" style="font-size: 14px; text-decoration: none;">&larr; Back to Dashboard</a>
+    </div>
+
+    <!-- SESSIONS SECTION -->
+    <div class="mentorship-card" style="margin-bottom: 30px;">
+        <table style="width: 100%; border-collapse: collapse; text-align: left;">
+            <thead>
+                <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
+                    <th style="padding: 15px; color: #b0a8d6;">ID</th>
+                    <th style="padding: 15px; color: #b0a8d6;">Mentor</th>
+                    <th style="padding: 15px; color: #b0a8d6;">Date</th>
+                    <th style="padding: 15px; color: #b0a8d6;">Type</th>
+                    <th style="padding: 15px; color: #b0a8d6;">Status</th>
+                    <th style="padding: 15px; color: #b0a8d6; text-align:right;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for session in sessions %}
+                <tr style="border-bottom: 1px solid rgba(255,255,255,0.05); transition: background 0.2s;">
+                    <td style="padding: 15px; color: #fff;">#{{ session.sessionID }}</td>
+                    <td style="padding: 15px; display: flex; align-items: center; gap: 10px;">
+                        {% if session.image_name %}
+                            <img src="{{ asset('uploads/mentors/' ~ session.image_name) }}" style="width: 30px; height: 30px; border-radius: 50%; object-fit: cover;" alt="Mentor">
+                        {% else %}
+                            <div style="width: 30px; height: 30px; border-radius: 50%; background: var(--primary-accent); display: flex; align-items: center; justify-content: center; color: white;">
+                                {{ session.mentorName ? session.mentorName|slice(0, 1) : 'M' }}
+                            </div>
+                        {% endif %}
+                        <span style="color: #fff;">{{ session.mentorName }}</span>
+                    </td>
+                    <td style="padding: 15px; color: #ddd;">{{ session.sessionDate }}</td>
+                    <td style="padding: 15px; color: #ddd;">{{ session.sessionType }}</td>
+                    <td style="padding: 15px;">
+                        <span style="padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; background: 
+                            {% if session.status == 'Ongoing' %}#2ecc71
+                            {% elseif session.status == 'Completed' %}#95a5a6
+                            {% elseif session.status == 'Scheduled' %}#3498db
+                            {% else %}#f39c12{% endif %}; color: white;">
+                            {{ session.status }}
+                        </span>
+                    </td>
+                    <td style="padding: 15px; text-align: right;">
+                        <a href="{{ path('app_advanced_workspace', {'id': session.sessionID}) }}" class="btn-pill" style="font-size: 12px; padding: 5px 10px; background: rgba(255,255,255,0.1); color: #fff; text-decoration: none;">Workspace</a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6" style="padding: 15px; text-align: center; color: #888;">No sessions found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <!-- KNP Paginator -->
+        <div style="margin-top: 20px; display: flex; justify-content: center;" class="pagination-container">
+            {{ knp_pagination_render(sessions) }}
+        </div>
+    </div>
+
+    <div style="margin-bottom: 25px; margin-top: 50px;">
+        <h3 style="color: var(--primary-lighter); margin:0;">Booking Requests</h3>
+    </div>
+
+    <!-- BOOKINGS SECTION -->
+    <div class="mentorship-card">
+        <table style="width: 100%; border-collapse: collapse; text-align: left;">
+            <thead>
+                <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
+                    <th style="padding: 15px; color: #b0a8d6;">ID</th>
+                    <th style="padding: 15px; color: #b0a8d6;">Topic</th>
+                    <th style="padding: 15px; color: #b0a8d6;">Mentor</th>
+                    <th style="padding: 15px; color: #b0a8d6;">Requested Slot</th>
+                    <th style="padding: 15px; color: #b0a8d6;">Status</th>
+                    <th style="padding: 15px; color: #b0a8d6; text-align:right;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for booking in bookings %}
+                <tr style="border-bottom: 1px solid rgba(255,255,255,0.05); transition: background 0.2s;">
+                    <td style="padding: 15px; color: #fff;">#{{ booking.bookingID }}</td>
+                    <td style="padding: 15px; color: #fff;">{{ booking.topic }}</td>
+                    <td style="padding: 15px; color: #ddd;">{{ booking.mentorName }}</td>
+                    <td style="padding: 15px; color: #ddd;">{{ booking.requestedDate }} at {{ booking.requestedTime }}</td>
+                    <td style="padding: 15px;">
+                        <span style="padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; background: {% if booking.status == 'Approved' %}#2ecc71{% elseif booking.status == 'Rejected' %}#e74c3c{% else %}#f39c12{% endif %}; color: white;">
+                            {{ booking.status }}
+                        </span>
+                    </td>
+                    <td style="padding: 15px; text-align: right;">
+                        {% if booking.status == 'Requested' %}
+                            <button onclick="approveBooking({{ booking.bookingID }})" class="btn-pill" style="font-size: 12px; padding: 5px 10px; background: rgba(46, 204, 113, 0.2); color: #2ecc71; border: 1px solid #2ecc71; cursor: pointer;">Approve</button>
+                        {% else %}
+                            <span style="color: #888; font-size: 12px;">No Actions</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6" style="padding: 15px; text-align: center; color: #888;">No booking requests found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <!-- KNP Paginator -->
+        <div style="margin-top: 20px; display: flex; justify-content: center;" class="pagination-container">
+            {{ knp_pagination_render(bookings) }}
+        </div>
+    </div>
+
+    <!-- Styles for Knp Paginator generic -->
+    <style>
+        .pagination-container .pagination {
+            display: flex;
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            gap: 5px;
+        }
+        .pagination-container .pagination li {
+            display: inline-block;
+        }
+        .pagination-container .pagination li a,
+        .pagination-container .pagination li span {
+            padding: 8px 15px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+        }
+        .pagination-container .pagination li.active span {
+            background: var(--primary-accent);
+            border-color: var(--primary-accent);
+        }
+        .pagination-container .pagination li a:hover {
+            background: rgba(255,255,255,0.15);
+        }
+    </style>
+
+    <script>
+        function approveBooking(id) {
+            if(confirm("Approve this booking? This will generate a video session automatically.")) {
+                fetch('{{ path('app_advanced_approve', {'id': 0}) }}'.replace('0', id), {
+                    method: 'POST',
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                })
+                .then(res => res.json())
+                .then(data => {
+                    alert(data.message);
+                    if(data.status === 'success') location.reload();
+                })
+                .catch(err => {
+                    console.error(err);
+                    alert("An error occurred.");
+                });
+            }
+        }
+    </script>
+{% endblock %}

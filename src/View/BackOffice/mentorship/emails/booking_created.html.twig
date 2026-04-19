@@ -1,0 +1,17 @@
+<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #eaeaea; border-radius: 10px; overflow: hidden;">
+    <div style="background-color: #f39c12; padding: 20px; text-align: center;">
+        <h2 style="color: white; margin: 0;">New Mentorship Request! 🚀</h2>
+    </div>
+    <div style="padding: 30px;">
+        <p style="font-size: 16px; color: #333;">Hello {{ mentor.fullName }},</p>
+        <p style="font-size: 16px; color: #555;">You have received a new booking request from Entrepreneur <strong>{{ entrepreneur.fullName }}</strong>.</p>
+        
+        <div style="background-color: #f8f9fa; border-left: 4px solid #f39c12; padding: 15px; margin: 20px 0;">
+            <p style="margin: 5px 0;"><strong>Topic:</strong> {{ booking.topic }}</p>
+            <p style="margin: 5px 0;"><strong>Requested Date:</strong> {{ booking.requestedDate|date('Y-m-d') }}</p>
+        </div>
+    </div>
+    <div style="background-color: #f1f2f6; padding: 15px; text-align: center; font-size: 12px; color: #888;">
+        &copy; {{ 'now'|date('Y') }} StartupFlow Inc.
+    </div>
+</div>

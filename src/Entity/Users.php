@@ -6,9 +6,12 @@ use App\Repository\UsersRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
+use Vich\UploaderBundle\Mapping\Annotation as Vich;
+use Symfony\Component\HttpFoundation\File\File;
 
 #[ORM\Entity]
 #[ORM\Table(name: '`users`')]
+#[Vich\Uploadable]
 class Users
 {
     #[ORM\Id]
@@ -53,6 +56,22 @@ class Users
     #[Assert\Length(max: 50)]
     #[Assert\Type('string')]
     private ?string $evaluatorLevel = null;
+
+    #[ORM\Column(type: Types::TEXT, nullable: true)]
+    #[Assert\Type('string')]
+    private ?string $faceEncoding = null;
+
+    #[Vich\UploadableField(mapping: 'mentors_images', fileNameProperty: 'imageName', size: 'imageSize')]
+    private ?File $imageFile = null;
+
+    #[ORM\Column(type: Types::STRING, length: 255, nullable: true)]
+    private ?string $imageName = null;
+
+    #[ORM\Column(type: Types::INTEGER, nullable: true)]
+    private ?int $imageSize = null;
+
+    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
+    private ?\DateTimeInterface $updatedAt = null;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     private ?\DateTimeInterface $createdAt = null;
@@ -150,4 +169,115 @@ class Users
         return $this;
     }
 
+    public function getFaceEncoding(): ?string
+    {
+        return $this->faceEncoding;
+    }
+
+    public function setFaceEncoding(?string $faceEncoding): static
+    {
+        $this->faceEncoding = $faceEncoding;
+        return $this;
+    }
+
+    public function setImageFile(?File $imageFile = null): void
+    {
+        $this->imageFile = $imageFile;
+
+        if (null !== $imageFile) {
+            $this->updatedAt = new \DateTimeImmutable();
+        }
+    }
+
+    public function getImageFile(): ?File
+    {
+        return $this->imageFile;
+    }
+
+    public function setImageName(?string $imageName): void
+    {
+        $this->imageName = $imageName;
+    }
+
+    public function getImageName(): ?string
+    {
+        return $this->imageName;
+    }
+
+    public function setImageSize(?int $imageSize): void
+    {
+        $this->imageSize = $imageSize;
+    }
+
+    public function getImageSize(): ?int
+    {
+        return $this->imageSize;
+    }
+    
+    #[ORM\Column(type: Types::BOOLEAN, options: ['default' => false])]
+    private bool $isTwoFactorEmailEnabled = false;
+
+    #[ORM\Column(type: Types::STRING, length: 10, nullable: true)]
+    private ?string $twoFactorEmailCode = null;
+
+    #[ORM\Column(type: Types::FLOAT, options: ['default' => 0])]
+    private float $riskScore = 0;
+
+    #[ORM\Column(type: Types::STRING, length: 20, options: ['default' => 'NORMAL'])]
+    private string $riskLevel = 'NORMAL';
+
+    public function getUpdatedAt(): ?\DateTimeInterface
+    {
+        return $this->updatedAt;
+    }
+
+    public function setUpdatedAt(?\DateTimeInterface $updatedAt): static
+    {
+        $this->updatedAt = $updatedAt;
+        return $this;
+    }
+
+    public function isTwoFactorEmailEnabled(): bool
+    {
+        return $this->isTwoFactorEmailEnabled;
+    }
+
+    public function setIsTwoFactorEmailEnabled(bool $isTwoFactorEmailEnabled): static
+    {
+        $this->isTwoFactorEmailEnabled = $isTwoFactorEmailEnabled;
+        return $this;
+    }
+
+    public function getTwoFactorEmailCode(): ?string
+    {
+        return $this->twoFactorEmailCode;
+    }
+
+    public function setTwoFactorEmailCode(?string $twoFactorEmailCode): static
+    {
+        $this->twoFactorEmailCode = $twoFactorEmailCode;
+        return $this;
+    }
+
+    public function getRiskScore(): float
+    {
+        return $this->riskScore;
+    }
+
+    public function setRiskScore(float $riskScore): static
+    {
+        $this->riskScore = $riskScore;
+        return $this;
+    }
+
+    public function getRiskLevel(): string
+    {
+        return $this->riskLevel;
+    }
+
+    public function setRiskLevel(string $riskLevel): static
+    {
+        $this->riskLevel = $riskLevel;
+        return $this;
+    }
 }

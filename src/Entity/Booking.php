@@ -12,43 +12,43 @@ use Symfony\Component\Validator\Constraints as Assert;
 class Booking
 {
     #[ORM\Id]
-    #[ORM\Column(type: Types::INTEGER)]
+    #[ORM\Column(name: '`bookingID`', type: Types::INTEGER)]
     #[Assert\NotBlank]
     #[Assert\Type('integer')]
     private ?int $bookingID = null;
 
-    #[ORM\Column(type: Types::INTEGER)]
+    #[ORM\Column(name: '`entrepreneurID`', type: Types::INTEGER)]
     #[Assert\NotBlank]
     #[Assert\Type('integer')]
     private ?int $entrepreneurID = null;
 
-    #[ORM\Column(type: Types::INTEGER)]
+    #[ORM\Column(name: '`mentorID`', type: Types::INTEGER)]
     #[Assert\NotBlank]
     #[Assert\Type('integer')]
     private ?int $mentorID = null;
 
-    #[ORM\Column(type: Types::INTEGER)]
+    #[ORM\Column(name: '`startupID`', type: Types::INTEGER)]
     #[Assert\Type('integer')]
     private ?int $startupID = null;
 
-    #[ORM\Column(type: Types::DATE_MUTABLE)]
+    #[ORM\Column(name: '`requestedDate`', type: Types::DATE_MUTABLE)]
     private ?\DateTimeInterface $requestedDate = null;
 
-    #[ORM\Column(type: Types::TIME_MUTABLE)]
+    #[ORM\Column(name: '`requestedTime`', type: Types::TIME_MUTABLE)]
     private ?\DateTimeInterface $requestedTime = null;
 
-    #[ORM\Column(type: Types::STRING, length: 255)]
+    #[ORM\Column(name: '`topic`', type: Types::STRING, length: 255)]
     #[Assert\NotBlank]
     #[Assert\Length(max: 255)]
     #[Assert\Type('string')]
     private ?string $topic = null;
 
-    #[ORM\Column(type: Types::STRING)]
+    #[ORM\Column(name: '`status`', type: Types::STRING)]
     #[Assert\Length(max: 255)]
     #[Assert\Type('string')]
     private ?string $status = null;
 
-    #[ORM\Column(type: Types::DATETIME_MUTABLE)]
+    #[ORM\Column(name: '`creationDate`', type: Types::DATETIME_MUTABLE)]
     private ?\DateTimeInterface $creationDate = null;
 
     public function getBookingID(): ?int

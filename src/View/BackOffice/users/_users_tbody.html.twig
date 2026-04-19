@@ -1,0 +1,38 @@
+{% for user in users %}
+                                <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                    <td style="padding: 15px; color: #b0a8d6; font-weight: bold;">
+                                        #{{ user.id }}
+                                    </td>
+                                    <td style="padding: 15px; font-weight: 500;">
+                                        <span style="display: flex; align-items: center; gap: 10px;">
+                                            <div style="width: 30px; height: 30px; border-radius: 50%; background: var(--primary); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold;">
+                                                {{ user.fullName|slice(0, 1)|upper }}
+                                            </div>
+                                            {{ user.fullName }}
+                                        </span>
+                                    </td>
+                                    <td style="padding: 15px;">{{ user.email }}</td>
+                                    <td style="padding: 15px;">
+                                        <span style="background: rgba(111, 86, 255, 0.2); color: #b58bff; padding: 4px 8px; border-radius: 12px; font-size: 0.8rem; font-weight: bold;">
+                                            {{ user.role }}
+                                        </span>
+                                    </td>
+                                    <td style="padding: 15px; color: #b0a8d6;">{{ user.createdAt|date('Y-m-d') }}</td>
+                                    <td style="padding: 15px;">
+                                        {% if user.role|upper != 'ADMIN' %}
+                                            <form action="{{ path('app_admin_users_status', {id: user.id}) }}" method="POST" style="margin: 0;">
+                                                <select name="status" onchange="this.form.submit()" style="padding: 6px; border-radius: 4px; border: 1px solid {% if user.status == 'ACTIVE' %}rgba(76, 209, 55, 0.5){% else %}rgba(255, 50, 50, 0.5){% endif %}; background: #2a2b42; color: #fff; cursor: pointer; outline: none; transition: border-color 0.2s;">
+                                                    <option value="ACTIVE" {% if user.status == 'ACTIVE' %}selected{% endif %}>Active</option>
+                                                    <option value="BLOCKED" {% if user.status == 'BLOCKED' %}selected{% endif %}>Blocked</option>
+                                                </select>
+                                            </form>
+                                        {% else %}
+                                            <span style="padding: 6px; color: #4cd137; font-weight: bold; display: inline-block;">SUPERADMIN</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% else %}
+                                <tr>
+                                    <td colspan="6" style="padding: 15px; text-align: center; color: #b0a8d6;">No users found.</td>
+                                </tr>
+                            {% endfor %}

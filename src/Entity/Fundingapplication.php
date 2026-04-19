@@ -17,7 +17,7 @@ class Fundingapplication
     #[Assert\Type('integer')]
     private ?int $id = null;
 
-    #[ORM\Column(type: Types::INTEGER)]
+    #[ORM\Column(name: 'entrepreneurId', type: Types::INTEGER)]
     #[Assert\NotBlank]
     #[Assert\Type('integer')]
     private ?int $entrepreneurId = null;
@@ -33,21 +33,21 @@ class Fundingapplication
     #[Assert\Type('string')]
     private ?string $status = null;
 
-    #[ORM\Column(type: Types::DATE_MUTABLE)]
+    #[ORM\Column(name: 'submissionDate', type: Types::DATE_MUTABLE)]
     private ?\DateTimeInterface $submissionDate = null;
 
-    #[ORM\Column(type: Types::STRING, length: 255)]
+    #[ORM\Column(name: 'applicationReason', type: Types::STRING, length: 255)]
     #[Assert\NotBlank]
     #[Assert\Length(max: 255)]
     #[Assert\Type('string')]
     private ?string $applicationReason = null;
 
-    #[ORM\Column(type: Types::INTEGER)]
+    #[ORM\Column(name: 'projectId', type: Types::INTEGER)]
     #[Assert\NotBlank]
     #[Assert\Type('integer')]
     private ?int $projectId = null;
 
-    #[ORM\Column(type: Types::STRING, length: 255)]
+    #[ORM\Column(name: 'paymentSchedule', type: Types::STRING, length: 255)]
     #[Assert\NotBlank]
     #[Assert\Length(max: 255)]
     #[Assert\Type('string')]
