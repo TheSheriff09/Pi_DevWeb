@@ -78,7 +78,7 @@
                                     </td>
                                     <td style="padding: 15px; max-width: 250px; overflow-wrap: break-word;">{{ rec.description }}</td>
                                     <td style="padding: 15px;">{{ usersMap[rec.requestedId] ?? 'Unknown' }}</td>
-                                    <td style="padding: 15px;">{{ rec.title == 'User problem' ? (usersMap[rec.targetId] ?? 'Unknown') : '-' }}</td>
+                                    <td style="padding: 15px;">{{ (rec.title == 'User problem' or rec.title == 'AI Bias Alert') ? (usersMap[rec.targetId] ?? 'Unknown') : '-' }}</td>
                                     <td style="padding: 15px; color: var(--text-main); opacity: 0.8;">{{ rec.createdAt|date('Y-m-d H:i') }}</td>
                                     <td style="padding: 15px;">
                                         <form action="{{ path('app_admin_reclamation_status', {id: rec.id}) }}" method="POST" style="display: inline-block;">

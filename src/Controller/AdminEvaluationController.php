@@ -33,10 +33,28 @@ class AdminEvaluationController extends AbstractController
 
         $latestApplications = $em->getRepository(Fundingapplication::class)->findBy([], ['submissionDate' => 'DESC'], 5);
 
+        $avgScoreResult = $em->createQuery('SELECT AVG(e.score) FROM App\Entity\Fundingevaluation e')->getSingleScalarResult();
+        $avgScore = $avgScoreResult ? (float) $avgScoreResult : 0.0;
+
+        $topEvaluations = $em->getRepository(Fundingevaluation::class)->findBy([], ['score' => 'DESC'], 5);
+
+        $evaluationsAll = $em->getRepository(Fundingevaluation::class)->findAll();
+        $decisionCounts = ['Approved' => 0, 'Rejected' => 0];
+        foreach ($evaluationsAll as $ev) {
+            $dec = $ev->getDecision() ?: 'Pending';
+            if (!isset($decisionCounts[$dec])) {
+                $decisionCounts[$dec] = 0;
+            }
+            $decisionCounts[$dec]++;
+        }
+
         return $this->render('BackOffice/evaluation/dashboard.html.twig', [
             'applicationsCount' => $applicationsCount,
             'evaluationsCount' => $evaluationsCount,
             'latestApplications' => $latestApplications,
+            'avgScore' => $avgScore,
+            'topEvaluations' => $topEvaluations,
+            'decisionCounts' => $decisionCounts,
             'current_module' => 'evaluation',
             'current_menu' => 'dashboard'
         ]);

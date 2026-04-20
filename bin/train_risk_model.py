@@ -26,7 +26,7 @@ X_train = [
     # Critical (scam, illegal)
     "they stole my money", "illegal activities", "scam artist", "financial theft",
     "child abuse", "death threat", "selling illegal drugs", "ponzi scheme",
-    "dangerous criminal activity"
+    "dangerous criminal activity" , "bias detected"
 ]
 
 y_train = [
