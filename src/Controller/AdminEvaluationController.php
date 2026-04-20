@@ -212,4 +212,72 @@ class AdminEvaluationController extends AbstractController
 
         return $this->redirectToRoute('app_admin_evaluation_evaluations');
     }
+
+    #[Route('/pdf/report', name: 'app_admin_evaluation_pdf')]
+    public function pdfReport(EntityManagerInterface $em, Request $request): Response
+    {
+        if ($redirect = $this->ensureAdmin($request)) return $redirect;
+
+        $applications = $em->getRepository(Fundingapplication::class)->findAll();
+        $evaluations = $em->getRepository(Fundingevaluation::class)->findAll();
+
+        $logoPath = $this->getParameter('kernel.project_dir') . '/public/Front/images/email/logo.png';
+        $logoBase64 = '';
+        if (file_exists($logoPath)) {
+            $logoBase64 = base64_encode(file_get_contents($logoPath));
+        }
+
+        $totalRequested = 0;
+        $statusCounts = ['Pending' => 0, 'Approved' => 0, 'Rejected' => 0];
+        foreach ($applications as $app) {
+            $totalRequested += (float) $app->getAmount();
+            $status = $app->getStatus();
+            if (isset($statusCounts[$status])) $statusCounts[$status]++;
+            else $statusCounts[$status] = 1;
+        }
+
+        $avgScore = 0;
+        $riskCounts = [];
+        if (count($evaluations) > 0) {
+            $sum = 0;
+            foreach ($evaluations as $ev) {
+                $sum += (int) $ev->getScore();
+                $r = $ev->getRiskLevel();
+                if(!isset($riskCounts[$r])) $riskCounts[$r] = 0;
+                $riskCounts[$r]++;
+            }
+            $avgScore = $sum / count($evaluations);
+        }
+
+        $html = $this->renderView('BackOffice/evaluation/pdf_report.html.twig', [
+            'applications' => $applications,
+            'evaluations' => $evaluations,
+            'totalRequested' => $totalRequested,
+            'appCount' => count($applications),
+            'evalCount' => count($evaluations),
+            'statusCounts' => $statusCounts,
+            'avgScore' => $avgScore,
+            'riskCounts' => $riskCounts,
+            'logoBase64' => $logoBase64,
+            'date' => new \DateTime()
+        ]);
+
+        $options = new \Dompdf\Options();
+        $options->set('defaultFont', 'Arial');
+        $options->set('isRemoteEnabled', true);
+
+        $dompdf = new \Dompdf\Dompdf($options);
+        $dompdf->loadHtml($html);
+        $dompdf->setPaper('A4', 'portrait');
+        $dompdf->render();
+
+        return new Response(
+            $dompdf->output(),
+            200,
+            [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'attachment; filename="StartupFlow_Evaluation_Report.pdf"'
+            ]
+        );
+    }
 }

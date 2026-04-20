@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Funding Decision Required</title>
+</head>
+<body style="margin: 0; padding: 20px; font-family: 'Helvetica Neue', Arial, sans-serif; background-color: #f4f6fb; color: #333;">
+    <div style="max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+        
+        <!-- Header -->
+        <div style="background-color: #0f0f1a; padding: 30px; text-align: center;">
+            <img src="cid:logo" alt="StartupFlow Logo" style="max-width: 200px; margin-bottom: 0px;">
+        </div>
+
+        <!-- Content Body -->
+        <div style="padding: 40px 30px;">
+            <h1 style="color: #6f56ff; font-size: 24px; margin-top: 0; text-align: center;">Application Status Notification</h1>
+            
+            <p style="font-size: 16px; line-height: 1.6; color: #555;">Dear <strong>{{ entrepreneur.fullname|default('Entrepreneur') }}</strong>,</p>
+            
+            <p style="font-size: 16px; line-height: 1.6; color: #555;">
+                We are writing to inform you that the evaluation process for your funding application related to the startup <strong style="color: #6f56ff;">{{ startup.name }}</strong> has been fully completed.
+            </p>
+
+            <div style="margin: 30px 0; background-color: #f8f9ff; border: 1px solid #e0d9ff; border-radius: 8px; padding: 20px;">
+                <table style="width: 100%; font-size: 15px;">
+                    <tr>
+                        <td style="padding-bottom: 10px; color: #888;">Requested Amount:</td>
+                        <td style="padding-bottom: 10px; font-weight: bold;">${{ application.amount|number_format(2, '.', ',') }}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding-bottom: 10px; color: #888;">Final Decision:</td>
+                        <td style="padding-bottom: 10px;">
+                            {% if decision == 'Accepted' or decision == 'Approved' %}
+                                <span style="display:inline-block; padding: 5px 12px; background: #e8f5e9; color: #2e7d32; border-radius: 20px; font-weight: bold; text-transform: uppercase; font-size: 13px;">{{ decision }}</span>
+                            {% else %}
+                                <span style="display:inline-block; padding: 5px 12px; background: #ffebee; color: #c62828; border-radius: 20px; font-weight: bold; text-transform: uppercase; font-size: 13px;">{{ decision }}</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding-bottom: 10px; color: #888;">Overall Score:</td>
+                        <td style="padding-bottom: 10px; font-weight: bold; color: #6f56ff;">{{ evaluation.score }} / 100</td>
+                    </tr>
+                </table>
+            </div>
+
+            {% if decision == 'Rejected' %}
+            <div style="background-color: #fff8f8; border-left: 4px solid #ff6b6b; padding: 15px; margin-bottom: 25px;">
+                <h4 style="margin-top: 0; color: #ff6b6b; margin-bottom: 5px;">Evaluation Feedback</h4>
+                <p style="margin: 0; font-size: 14px; color: #666; font-style: italic;">"{{ evaluation.evaluationComments }}"</p>
+            </div>
+            {% else %}
+            <p style="font-size: 16px; line-height: 1.6; color: #2e7d32; text-align:center; font-weight:bold;">
+                Congratulations! Your funding timeline will be initiated shortly by the capital distribution wing.
+            </p>
+            {% endif %}
+
+            <p style="font-size: 15px; line-height: 1.6; color: #777; border-top: 1px solid #eee; padding-top: 20px;">
+                If you have any questions regarding your evaluation metrics, please reach out to our support hub directly through your entrepreneur portal.
+            </p>
+        </div>
+
+        <!-- Footer -->
+        <div style="background-color: #f7f7fa; padding: 20px; text-align: center; border-top: 1px solid #eaeaea;">
+            <p style="margin: 0; font-size: 12px; color: #999;">
+                &copy; {{ "now"|date("Y") }} StartupFlow Administration Hub. All rights reserved.
+            </p>
+        </div>
+    </div>
+</body>
+</html>

@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Entity\Reclamations;
 use App\Entity\Responses as ReclamationResponses;
 use App\Entity\Users;
+use App\Entity\Fundingevaluation;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -26,10 +27,50 @@ class AdminReclamationController extends AbstractController
             return $this->redirectToRoute('app_login');
         }
 
+        $evaluations = $em->getRepository(Fundingevaluation::class)->findAll();
+        $existingAlerts = $em->getRepository(Reclamations::class)->findBy(['title' => 'AI Bias Alert']);
+        $existingAppIds = [];
+        foreach ($existingAlerts as $alert) {
+            if (preg_match('/Application #(\d+)/', $alert->getDescription(), $matches)) {
+                $existingAppIds[] = (int)$matches[1];
+            }
+        }
+        
+        $flushNeeded = false;
+        foreach ($evaluations as $eval) {
+            $decision = $eval->getDecision();
+            $score = $eval->getScore() !== null ? (float)$eval->getScore() : 50.0;
+            $evalId = $eval->getEvaluatorId() ?: 0;
+            $appId = $eval->getFundingApplicationId() ?: 0;
+
+            if (($decision === 'Approved' && $score < 40) || ($decision === 'Rejected' && $score > 70)) {
+                if (!in_array($appId, $existingAppIds)) {
+                    $cat = $eval->getFundingCategory() ?: 'General';
+                    $message = "Reclamation Alert: Application #{$appId} " . strtolower($decision) . " with probability {$score}%. Possible bias detected.";
+                    
+                    $biasRec = new \App\Entity\Reclamations();
+                    $biasRec->setTitle('AI Bias Alert');
+                    $biasRec->setDescription($message . " (Category: {$cat})");
+                    $biasRec->setRequestedId(0); // System
+                    $biasRec->setTargetId($evalId);
+                    $biasRec->setStatus('OPEN');
+                    $biasRec->setCreatedAt($eval->getCreatedAt() ?: new \DateTime());
+                    
+                    $em->persist($biasRec);
+                    $existingAppIds[] = $appId;
+                    $flushNeeded = true;
+                }
+            }
+        }
+        
+        if ($flushNeeded) {
+            $em->flush();
+        }
+
         $reclamationsRaw = $em->getRepository(Reclamations::class)->findAll();
         
         $usersResult = $em->getRepository(Users::class)->findAll();
-        $usersMap = [];
+        $usersMap = [0 => 'System']; // 0 is used for System requests
         $adminsMap = [];
         foreach ($usersResult as $user) {
             $usersMap[$user->getId()] = $user->getFullName();

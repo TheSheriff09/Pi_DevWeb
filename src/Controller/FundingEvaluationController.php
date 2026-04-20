@@ -12,6 +12,8 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
+use Symfony\Component\Mailer\MailerInterface;
+use Symfony\Bridge\Twig\Mime\TemplatedEmail;
 
 class FundingEvaluationController extends AbstractController
 {
@@ -51,7 +53,7 @@ class FundingEvaluationController extends AbstractController
     }
 
     #[Route('/evaluator/funding/{id}/evaluate', name: 'app_evaluator_funding_evaluate')]
-    public function evaluate(Request $request, EntityManagerInterface $em, int $id, ValidatorInterface $validator): Response
+    public function evaluate(Request $request, EntityManagerInterface $em, int $id, ValidatorInterface $validator, MailerInterface $mailer): Response
     {
         $userId = $request->getSession()->get('user_id');
         $userRole = $request->getSession()->get('user_role');
@@ -111,6 +113,30 @@ class FundingEvaluationController extends AbstractController
             $em->persist($evaluation);
             $em->flush(); // Flushes both the evaluation AND the updated Application status symmetrically
 
+            // Send Email Notification
+            $entrepreneur = $em->getRepository(Users::class)->find($application->getEntrepreneurId());
+            if ($entrepreneur && $entrepreneur->getEmail()) {
+                $email = (new TemplatedEmail())
+                    ->from('admin@startupflow.com')
+                    ->to($entrepreneur->getEmail())
+                    ->subject('Decision on your Funding Application: ' . $decision)
+                    ->htmlTemplate('FrontOffice/email/funding_decision.html.twig')
+                    ->context([
+                        'application' => $application,
+                        'startup' => $startup,
+                        'evaluation' => $evaluation,
+                        'decision' => $decision,
+                        'entrepreneur' => $entrepreneur
+                    ]);
+                
+                $logoPath = $this->getParameter('kernel.project_dir') . '/public/Front/images/email/logo.png';
+                if (file_exists($logoPath)) {
+                    $email->embedFromPath($logoPath, 'logo');
+                }
+
+                $mailer->send($email);
+            }
+
             return $this->redirectToRoute('app_evaluator_funding_list');
         }
 
@@ -122,7 +148,7 @@ class FundingEvaluationController extends AbstractController
     }
 
     #[Route('/evaluator/funding/{id}/autoevaluate', name: 'app_evaluator_funding_autoevaluate', methods: ['POST'])]
-    public function autoEvaluate(Request $request, EntityManagerInterface $em, int $id): Response
+    public function autoEvaluate(Request $request, EntityManagerInterface $em, int $id, MailerInterface $mailer): Response
     {
         $userId = $request->getSession()->get('user_id');
         $userRole = $request->getSession()->get('user_role');
@@ -183,6 +209,32 @@ class FundingEvaluationController extends AbstractController
 
         $em->persist($evaluation);
         $em->flush();
+
+        // Send Email Notification
+        $startup = $em->getRepository(Startup::class)->find($application->getProjectId());
+        $entrepreneur = $em->getRepository(Users::class)->find($application->getEntrepreneurId());
+        
+        if ($entrepreneur && $entrepreneur->getEmail() && $startup) {
+            $email = (new TemplatedEmail())
+                ->from('admin@startupflow.com')
+                ->to($entrepreneur->getEmail())
+                ->subject('Decision on your Funding Application: ' . $decision)
+                ->htmlTemplate('FrontOffice/email/funding_decision.html.twig')
+                ->context([
+                    'application' => $application,
+                    'startup' => $startup,
+                    'evaluation' => $evaluation,
+                    'decision' => $decision,
+                    'entrepreneur' => $entrepreneur
+                ]);
+            
+            $logoPath = $this->getParameter('kernel.project_dir') . '/public/Front/images/email/logo.png';
+            if (file_exists($logoPath)) {
+                $email->embedFromPath($logoPath, 'logo');
+            }
+
+            $mailer->send($email);
+        }
 
         $this->addFlash('success', 'Application was technically ' . $decision . ' with a ' . $score . '% computed likelihood!');
         return $this->redirectToRoute('app_evaluator_funding_list');

@@ -1,9 +1,15 @@
-{% extends 'BackOffice/base_back.html.twig' %}
+{% extends 'BackOffice/evaluation/base_evaluation.html.twig' %}
 
 {% block title %}Evaluation Dashboard{% endblock %}
 {% block header_title %}Grading & Analytics{% endblock %}
 
 {% block body %}
+    <div style="display: flex; justify-content: flex-end; margin-bottom: 20px;">
+        <a href="{{ path('app_admin_evaluation_pdf') }}" class="pill-btn glow-btn" style="background: linear-gradient(135deg, #a18bff, #8256ff); padding: 10px 20px; color: white; text-decoration: none; display: inline-flex; align-items: center; gap: 10px; font-weight: bold; border-radius: 20px;">
+            📄 Download Complete PDF Report
+        </a>
+    </div>
+
     <div class="dashboard-cards" style="margin-bottom: 40px; display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 25px;">
         <div class="card glass-card" style="position: relative; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); background: rgba(255, 157, 157, 0.05); padding: 25px;">
             <div style="position: absolute; top: -10px; right: -10px; font-size: 5rem; opacity: 0.1; color: #ff9d9d;">📁</div>

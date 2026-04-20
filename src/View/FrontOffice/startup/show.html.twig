@@ -118,9 +118,9 @@
             </div>
 
             {% if fundingApplications is defined and fundingApplications|length > 0 %}
-                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;">
+                <div id="fundingAppsGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;">
                     {% for fn in fundingApplications %}
-                        <div style="padding: 20px; border-radius: 15px; border: 1px solid rgba(16, 185, 129, 0.2); background: rgba(16, 185, 129, 0.05);">
+                        <div class="funding-app-card" style="padding: 20px; border-radius: 15px; border: 1px solid rgba(16, 185, 129, 0.2); background: rgba(16, 185, 129, 0.05);">
                             <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px;">
                                 <div>
                                     <h4 style="margin: 0; font-size: 1.25em; color: #34d399;">${{ fn.amount|number_format(0, '.', ',') }}</h4>
@@ -147,15 +147,64 @@
                                 {% endif %}
                                 
                                 <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: space-between;">
-                                    <button onclick="predictApproval({{ fn.id }}, this)" data-url="{{ path('app_entrepreneur_funding_predict', {'id': fn.id}) }}" class="pill-btn glow-btn" style="background: linear-gradient(135deg, #2196f3, #64b5f6); padding: 8px 15px; border: none; cursor: pointer; color: white; display: inline-flex; align-items: center; gap: 8px; font-size: 0.85em; border-radius: 12px; transition: all 0.3s;">
-                                        <span>🔮</span> Predict Approval
-                                    </button>
-                                    <span id="pred-result-{{ fn.id }}" style="font-weight: bold; font-size: 1.1em; display: none; color: #fff;"></span>
+                                    {% if fn.status == 'Rejected' %}
+                                        <a href="{{ path('app_counterfactual_simulate', {'id': fn.id}) }}" class="pill-btn glow-btn" style="background: linear-gradient(135deg, #e53935, #ff8a80); padding: 8px 15px; border: none; cursor: pointer; color: white; display: inline-flex; align-items: center; gap: 8px; font-size: 0.85em; border-radius: 12px; text-decoration: none;">
+                                            <span>⚡</span> Counterfactual Simulator
+                                        </a>
+                                    {% else %}
+                                        <button onclick="predictApproval({{ fn.id }}, this)" data-url="{{ path('app_entrepreneur_funding_predict', {'id': fn.id}) }}" class="pill-btn glow-btn" style="background: linear-gradient(135deg, #2196f3, #64b5f6); padding: 8px 15px; border: none; cursor: pointer; color: white; display: inline-flex; align-items: center; gap: 8px; font-size: 0.85em; border-radius: 12px; transition: all 0.3s;">
+                                            <span>🔮</span> Predict Approval
+                                        </button>
+                                        <span id="pred-result-{{ fn.id }}" style="font-weight: bold; font-size: 1.1em; display: none; color: #fff;"></span>
+                                    {% endif %}
                                 </div>
                             </div>
                         </div>
                     {% endfor %}
                 </div>
+
+                {% if fundingApplications|length > 6 %}
+                    <div style="display: flex; justify-content: center; align-items: center; gap: 15px; margin-top: 25px;">
+                        <button id="prevFundingAppBtn" class="pill-btn glow-btn" style="background: rgba(16, 185, 129, 0.1); border: 1px solid #10b981; color: #10b981; cursor: pointer; padding: 8px 15px; border-radius: 50%; font-weight: bold; width: 40px; height: 40px;" onclick="changeFundingPage(-1)">&larr;</button>
+                        <span id="fundingPageInfo" style="color: rgba(255,255,255,0.7); font-size: 0.95em; font-weight: 500;">Page 1 of 3</span>
+                        <button id="nextFundingAppBtn" class="pill-btn glow-btn" style="background: rgba(16, 185, 129, 0.1); border: 1px solid #10b981; color: #10b981; cursor: pointer; padding: 8px 15px; border-radius: 50%; font-weight: bold; width: 40px; height: 40px;" onclick="changeFundingPage(1)">&rarr;</button>
+                    </div>
+                    <script>
+                        let currentFundingPage = 1;
+                        const totalFundingApps = {{ fundingApplications|length }};
+                        const appsPerPage = 6;
+                        const totalFundingPages = Math.ceil(totalFundingApps / appsPerPage);
+                        
+                        function updateFundingAppsVisibility() {
+                            const grid = document.getElementById('fundingAppsGrid');
+                            if (!grid) return;
+                            const cards = grid.getElementsByClassName('funding-app-card');
+                            
+                            for (let i = 0; i < cards.length; i++) {
+                                if (i >= (currentFundingPage - 1) * appsPerPage && i < currentFundingPage * appsPerPage) {
+                                    cards[i].style.display = 'block';
+                                } else {
+                                    cards[i].style.display = 'none';
+                                }
+                            }
+                            
+                            document.getElementById('fundingPageInfo').innerText = `Page ${currentFundingPage} of ${totalFundingPages}`;
+                            document.getElementById('prevFundingAppBtn').disabled = currentFundingPage === 1;
+                            document.getElementById('prevFundingAppBtn').style.opacity = currentFundingPage === 1 ? '0.3' : '1';
+                            document.getElementById('nextFundingAppBtn').disabled = currentFundingPage === totalFundingPages;
+                            document.getElementById('nextFundingAppBtn').style.opacity = currentFundingPage === totalFundingPages ? '0.3' : '1';
+                        }
+                        
+                        function changeFundingPage(dir) {
+                            currentFundingPage += dir;
+                            if (currentFundingPage < 1) currentFundingPage = 1;
+                            if (currentFundingPage > totalFundingPages) currentFundingPage = totalFundingPages;
+                            updateFundingAppsVisibility();
+                        }
+                        
+                        document.addEventListener('DOMContentLoaded', updateFundingAppsVisibility);
+                    </script>
+                {% endif %}
             {% else %}
                 <div style="text-align: center; padding: 40px 20px; background: rgba(16, 185, 129, 0.05); border-radius: 15px; border: 2px dashed rgba(16, 185, 129, 0.2);">
                     <div style="font-size: 2.5em; margin-bottom: 15px; opacity: 0.8;">🌱</div>

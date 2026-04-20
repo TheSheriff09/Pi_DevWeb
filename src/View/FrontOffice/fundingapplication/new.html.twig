@@ -12,6 +12,47 @@
             <p style="margin: 10px 0 0 0; opacity: 0.8;">Submit a direct request for your project: <strong>{{ startup.name }}</strong></p>
         </div>
 
+        {% if latestApplication %}
+            <div style="margin-bottom: 20px; display: flex; justify-content: flex-end;">
+                <button type="button" onclick="autoFillApplication()" class="pill-btn glow-btn" title="Quickly reuse your saved application details." style="background: rgba(33, 150, 243, 0.1); border: 1px solid #64b5f6; color: #64b5f6; padding: 10px 20px; font-size: 0.9em; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; border-radius: 12px; transition: all 0.3s;">
+                    <span>⚡</span> Auto‑Fill Application
+                </button>
+            </div>
+            
+            <script>
+                function autoFillApplication() {
+                    const amountInput = document.querySelector('input[name="amount"]');
+                    const reasonInput = document.querySelector('textarea[name="applicationReason"]');
+                    const scheduleSelect = document.querySelector('select[name="paymentSchedule"]');
+                    
+                    if(amountInput) amountInput.value = {{ latestApplication.amount|json_encode }};
+                    if(reasonInput) reasonInput.value = {{ latestApplication.applicationReason|json_encode|raw }};
+                    if(scheduleSelect) scheduleSelect.value = {{ latestApplication.paymentSchedule|json_encode|raw }};
+                    
+                    let attachmentHint = document.getElementById('attachmentHint');
+                    if (!attachmentHint && {{ latestApplication.attachment|json_encode|raw }} !== 'No Attachment') {
+                        const fileContainer = document.querySelector('input[name="attachment"]').parentElement;
+                        attachmentHint = document.createElement('div');
+                        attachmentHint.id = 'attachmentHint';
+                        attachmentHint.style.marginTop = '10px';
+                        attachmentHint.style.padding = '10px';
+                        attachmentHint.style.background = 'rgba(76, 175, 80, 0.1)';
+                        attachmentHint.style.borderLeft = '3px solid #81c784';
+                        attachmentHint.style.fontSize = '0.85em';
+                        attachmentHint.style.color = '#A5D6A7';
+                        attachmentHint.innerHTML = '<strong>Attachment Auto-Filled!</strong> Inheriting previous file unless you upload a new one overriding it.';
+                        fileContainer.appendChild(attachmentHint);
+                        
+                        const hiddenInput = document.createElement('input');
+                        hiddenInput.type = 'hidden';
+                        hiddenInput.name = 'previousAttachment';
+                        hiddenInput.value = {{ latestApplication.attachment|json_encode|raw }};
+                        document.querySelector('form').appendChild(hiddenInput);
+                    }
+                }
+            </script>
+        {% endif %}
+
         <form method="post" action="{{ path('app_entrepreneur_funding_new', {'startupId': startup.startupID}) }}" enctype="multipart/form-data" style="display: flex; flex-direction: column; gap: 20px;">
             
             <div>

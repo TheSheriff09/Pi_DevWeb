@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Evaluation Admin{% endblock %}</title>
+    <!-- Same CSS for front and back where applicable, but we load Back CSS here -->
+    <link rel="stylesheet" href="{{ asset('Back/css/styles.css') }}?v=2">
+    {% block stylesheets %}{% endblock %}
+</head>
+<body>
+    <script>
+        if (localStorage.getItem('admin_theme') === 'dark') {
+            document.body.classList.add('dark-mode');
+        }
+    </script>
+
+    <!-- SIDEBAR FOR EVALUATION MODULE -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <h2>Evaluation Admin</h2>
+        </div>
+        <ul class="sidebar-menu">
+            <li><a href="{{ path('app_admin_panel') }}" style="color: #ff9d9d;">&larr; Main Admin</a></li>
+            <li><a href="{{ path('app_admin_evaluation_dashboard') }}" class="{{ current_menu|default('') == 'dashboard' ? 'active' : '' }}">Dashboard</a></li>
+            <li><a href="{{ path('app_admin_evaluation_applications') }}" class="{{ current_menu|default('') == 'applications' ? 'active' : '' }}">Applications</a></li>
+            <li><a href="{{ path('app_admin_evaluation_evaluations') }}" class="{{ current_menu|default('') == 'evaluations' ? 'active' : '' }}">Grading</a></li>
+
+            <li style="margin-top:20px; border-top:1px solid rgba(255,255,255,0.1); padding-top:10px;"><a href="{{ path('app_admin_panel') }}" style="color:var(--primary-light);">Global Modules</a></li>
+            <li><a href="{{ path('app_admin_forum_dashboard') }}">Forum</a></li>
+            <li><a href="{{ path('app_admin_startup_dashboard') }}">Startup</a></li>
+            <li><a href="{{ path('app_admin_evaluation_dashboard') }}">Evaluation</a></li>
+            <li><a href="{{ path('app_admin_users') }}">Users</a></li>
+            <li><a href="{{ path('app_admin_mentorship') }}">Mentorship</a></li>
+            <li><a href="{{ path('app_admin_reclamations') }}">Reclamation & Response</a></li>
+        </ul>
+        <div class="sidebar-footer">
+            <a href="{{ path('app_logout') }}" class="logout-btn glow-btn">Sign Out</a>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <div class="main-content">
+        <!-- TOPBAR -->
+        <header class="topbar">
+            <div class="topbar-left">
+                <h2>{% block header_title %}Overview{% endblock %}</h2>
+            </div>
+            <div class="topbar-right">
+                <button id="themeToggleBtn" class="btn-pill" style="border: 2px solid var(--primary-light); background: transparent; color: var(--primary-light);">🌓</button>
+                <div class="user-profile">
+                    <div class="avatar" style="background-color: var(--primary);">
+                        <span style="color: white; font-weight: bold;">A</span>
+                    </div>
+                    <span>Admin</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- DASHBOARD SPECIFIC CONTENT -->
+        <main class="dashboard-content" style="position: relative; z-index: 2;">
+            <!-- FLASH MESSAGES -->
+            <div id="flash-container" style="margin-bottom: 20px;">
+                {% for label, messages in app.flashes %}
+                    {% for message in messages %}
+                        <div class="card glass-card" style="padding: 15px 25px; margin-bottom: 10px; border-left: 5px solid {% if label == 'success' %}#2ecc71{% else %}#e74c3c{% endif %}; animation: slideIn 0.3s ease-out;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span style="color: #fff; font-weight: 500;">
+                                    {% if label == 'success' %}✅{% else %}⚠️{% endif %} {{ message }}
+                                </span>
+                                <button onclick="this.parentElement.parentElement.remove()" style="background:transparent; border:none; color:white; cursor:pointer; font-size:1.2rem;">&times;</button>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% endfor %}
+            </div>
+
+            {% block body %}{% endblock %}
+        </main>
+        
+        <footer class="futuristic-footer" style="padding: 20px; text-align: center; border-top: 1px solid rgba(255, 255, 255, 0.1);">
+            <p style="color: #b0a8d6;">&copy; {{ 'now'|date('Y') }} StartupFlow Admin.</p>
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const toggleBtn = document.getElementById('themeToggleBtn');
+            if (toggleBtn) {
+                toggleBtn.addEventListener('click', () => {
+                    const isDark = document.body.classList.contains('dark-mode');
+                    if (isDark) {
+                        document.body.classList.remove('dark-mode');
+                        localStorage.setItem('admin_theme', 'light');
+                    } else {
+                        document.body.classList.add('dark-mode');
+                        localStorage.setItem('admin_theme', 'dark');
+                    }
+                });
+            }
+        });
+    </script>
+    {% block javascripts %}{% endblock %}
+</body>
+</html>

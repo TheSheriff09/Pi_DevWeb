@@ -59,7 +59,12 @@ class FundingApplicationController extends AbstractController
                     $application->setAttachment('No Attachment'); 
                 }
             } else {
-                $application->setAttachment($request->request->get('attachment') ?: 'No Attachment');
+                $previous = $request->request->get('previousAttachment');
+                if ($previous) {
+                    $application->setAttachment($previous);
+                } else {
+                    $application->setAttachment($request->request->get('attachment') ?: 'No Attachment');
+                }
             }
 
             // Hardcode automated relations without touching the template:
@@ -83,9 +88,16 @@ class FundingApplicationController extends AbstractController
             return $this->redirectToRoute('app_entrepreneur_startup_show', ['id' => $startupId]);
         }
 
+        // Extract the most historical application mapped specifically to the user for auto-filling logic
+        $latestApplication = $em->getRepository(Fundingapplication::class)->findOneBy(
+            ['entrepreneurId' => $userId],
+            ['id' => 'DESC']
+        );
+
         return $this->render('FrontOffice/fundingapplication/new.html.twig', [
             'startup' => $startup,
-            'user' => $em->getRepository(Users::class)->find($userId)
+            'user' => $em->getRepository(Users::class)->find($userId),
+            'latestApplication' => $latestApplication
         ]);
     }
 

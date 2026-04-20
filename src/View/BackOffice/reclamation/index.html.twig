@@ -55,34 +55,34 @@
                 <div style="overflow-x: auto;">
                     <table style="width: 100%; border-collapse: collapse; text-align: left;">
                         <thead>
-                            <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
-                                <th style="padding: 15px; color: #b0a8d6;">ID</th>
-                                <th style="padding: 15px; color: #b0a8d6;">Type</th>
-                                <th style="padding: 15px; color: #b0a8d6;">Description</th>
-                                <th style="padding: 15px; color: #b0a8d6;">Requested By</th>
-                                <th style="padding: 15px; color: #b0a8d6;">Target User</th>
-                                <th style="padding: 15px; color: #b0a8d6;">Date</th>
-                                <th style="padding: 15px; color: #b0a8d6;">Status</th>
-                                <th style="padding: 15px; color: #b0a8d6;">Action</th>
+                            <tr style="border-bottom: 1px solid rgba(128,128,128,0.2);">
+                                <th style="padding: 15px; color: var(--text-main); opacity: 0.8;">ID</th>
+                                <th style="padding: 15px; color: var(--text-main); opacity: 0.8;">Type</th>
+                                <th style="padding: 15px; color: var(--text-main); opacity: 0.8;">Description</th>
+                                <th style="padding: 15px; color: var(--text-main); opacity: 0.8;">Requested By</th>
+                                <th style="padding: 15px; color: var(--text-main); opacity: 0.8;">Target User</th>
+                                <th style="padding: 15px; color: var(--text-main); opacity: 0.8;">Date</th>
+                                <th style="padding: 15px; color: var(--text-main); opacity: 0.8;">Status</th>
+                                <th style="padding: 15px; color: var(--text-main); opacity: 0.8;">Action</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for recItem in reclamations %}
                                 {% set rec = recItem.entity %}
-                                <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                <tr style="border-bottom: 1px solid rgba(128,128,128,0.1);">
                                     <td style="padding: 15px;">{{ rec.id }}</td>
                                     <td style="padding: 15px; font-weight: 500;">
-                                        <span style="background: rgba(111, 86, 255, 0.2); color: #fff; padding: 5px 10px; border-radius: 20px; font-size: 0.8rem;">
+                                        <span style="background: rgba(111, 86, 255, 0.2); color: var(--primary); padding: 5px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: bold;">
                                             {{ rec.title }}
                                         </span>
                                     </td>
                                     <td style="padding: 15px; max-width: 250px; overflow-wrap: break-word;">{{ rec.description }}</td>
                                     <td style="padding: 15px;">{{ usersMap[rec.requestedId] ?? 'Unknown' }}</td>
                                     <td style="padding: 15px;">{{ rec.title == 'User problem' ? (usersMap[rec.targetId] ?? 'Unknown') : '-' }}</td>
-                                    <td style="padding: 15px; color: #b0a8d6;">{{ rec.createdAt|date('Y-m-d H:i') }}</td>
+                                    <td style="padding: 15px; color: var(--text-main); opacity: 0.8;">{{ rec.createdAt|date('Y-m-d H:i') }}</td>
                                     <td style="padding: 15px;">
                                         <form action="{{ path('app_admin_reclamation_status', {id: rec.id}) }}" method="POST" style="display: inline-block;">
-                                            <select name="status" onchange="this.form.submit()" style="padding: 5px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.2); background: #2a2b42; color: #fff;">
+                                            <select name="status" onchange="this.form.submit()" style="padding: 5px; border-radius: 4px; border: 1px solid rgba(128,128,128,0.3); background: transparent; color: var(--text-main);">
                                                 <option value="OPEN" {% if rec.status == 'OPEN' %}selected{% endif %}>Open</option>
                                                 <option value="IN_PROGRESS" {% if rec.status == 'IN_PROGRESS' %}selected{% endif %}>In Progress</option>
                                                 <option value="RESOLVED" {% if rec.status == 'RESOLVED' %}selected{% endif %}>Resolved</option>
@@ -93,10 +93,10 @@
                                     <td style="padding: 15px; display: flex; flex-wrap: wrap; gap: 8px;">
                                         <div style="display: none;" id="responses-data-{{ rec.id }}">
                                             {% for res in recItem.responsesList %}
-                                                <div style="background: rgba(255,255,255,0.05); padding: 10px; margin-bottom: 8px; border-radius: 6px; border-left: 3px solid var(--primary-lighter);">
-                                                    <strong style="color: #4cd137;">{{ res.adminName }}:</strong>
-                                                    <p style="margin: 5px 0 0 0; font-size: 0.9em; overflow-wrap: break-word;">{{ res.content }}</p>
-                                                    <small style="color: #888; font-size: 0.8em;">{{ res.date }}</small>
+                                                <div style="background: rgba(128,128,128,0.05); padding: 10px; margin-bottom: 8px; border-radius: 6px; border-left: 3px solid var(--primary);">
+                                                    <strong style="color: #2e7d32;">{{ res.adminName }}:</strong>
+                                                    <p style="margin: 5px 0 0 0; font-size: 0.9em; overflow-wrap: break-word; color: var(--text-main);">{{ res.content }}</p>
+                                                    <small style="color: var(--text-main); opacity: 0.6; font-size: 0.8em;">{{ res.date }}</small>
                                                 </div>
                                             {% endfor %}
                                         </div>
@@ -113,7 +113,7 @@
                                 </tr>
                             {% else %}
                                 <tr>
-                                    <td colspan="8" style="padding: 15px; text-align: center; color: #b0a8d6;">No reclamations found.</td>
+                                    <td colspan="8" style="padding: 15px; text-align: center; color: var(--text-main); opacity: 0.8;">No reclamations found.</td>
                                 </tr>
                             {% endfor %}
                         </tbody>
@@ -123,8 +123,8 @@
             
         </main>
         
-        <footer class="futuristic-footer" style="padding: 20px; text-align: center; border-top: 1px solid rgba(255, 255, 255, 0.1);">
-            <p style="color: #b0a8d6;">&copy; {{ 'now'|date('Y') }} StartupFlow Admin.</p>
+        <footer class="futuristic-footer" style="padding: 20px; text-align: center; border-top: 1px solid rgba(128, 128, 128, 0.2);">
+            <p style="color: var(--text-main); opacity: 0.8;">&copy; {{ 'now'|date('Y') }} StartupFlow Admin.</p>
         </footer>
     </div>
 
@@ -179,7 +179,7 @@
             // Render previous responses
             const sourceDiv = document.getElementById('responses-data-' + id);
             if (sourceDiv && sourceDiv.innerHTML.trim() !== '') {
-                container.innerHTML = '<strong style="display:block; margin-bottom:10px; color:#b0a8d6;">History:</strong>' + sourceDiv.innerHTML;
+                container.innerHTML = '<strong style="display:block; margin-bottom:10px; color:var(--text-main); opacity:0.8;">History:</strong>' + sourceDiv.innerHTML;
             } else {
                 container.innerHTML = '<p style="color: #666; font-style: italic;">No previous responses.</p>';
             }
