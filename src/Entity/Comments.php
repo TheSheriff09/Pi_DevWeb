@@ -38,6 +38,9 @@ class Comments
     #[Assert\Type('string')]
     private ?string $authorName = null;
 
+    #[ORM\Column(type: Types::INTEGER, nullable: true)]
+    private ?int $parentId = null;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -98,4 +101,56 @@ class Comments
         return $this;
     }
 
+    public function getParentId(): ?int
+    {
+        return $this->parentId;
+    }
+
+    public function setParentId(?int $parentId): static
+    {
+        $this->parentId = $parentId;
+        return $this;
+    }
+
+    #[ORM\Column(type: Types::INTEGER, options: ['default' => 0])]
+    private int $upvotes = 0;
+
+    #[ORM\Column(type: Types::INTEGER, options: ['default' => 0])]
+    private int $downvotes = 0;
+
+    #[ORM\Column(type: Types::BOOLEAN, options: ['default' => false])]
+    private bool $isEdited = false;
+
+    public function getUpvotes(): int
+    {
+        return $this->upvotes;
+    }
+
+    public function setUpvotes(int $upvotes): static
+    {
+        $this->upvotes = $upvotes;
+        return $this;
+    }
+
+    public function getDownvotes(): int
+    {
+        return $this->downvotes;
+    }
+
+    public function setDownvotes(int $downvotes): static
+    {
+        $this->downvotes = $downvotes;
+        return $this;
+    }
+
+    public function getIsEdited(): bool
+    {
+        return $this->isEdited;
+    }
+
+    public function setIsEdited(bool $isEdited): static
+    {
+        $this->isEdited = $isEdited;
+        return $this;
+    }
 }

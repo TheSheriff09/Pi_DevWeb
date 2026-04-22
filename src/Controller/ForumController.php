@@ -3,9 +3,12 @@
 namespace App\Controller;
 
 use App\Entity\ForumPosts;
+use App\Entity\ForumFollow;
 use App\Entity\Comments;
 use App\Entity\Interactions;
 use App\Entity\Users;
+use App\Entity\CommentReaction;
+use App\Entity\Report;
 use App\Service\BadWordsFilter;
 use App\Service\TranslationService;
 use Doctrine\ORM\EntityManagerInterface;
@@ -26,10 +29,37 @@ class ForumController extends AbstractController
         $userId = $request->getSession()->get('user_id');
         $isLoggedIn = !empty($userId);
 
-        $posts = $em->getRepository(ForumPosts::class)->findBy([], ['createdAt' => 'DESC']);
+        $followingIds = [];
+        if ($isLoggedIn) {
+            $follows = $em->getRepository(ForumFollow::class)->findBy(['followerId' => $userId]);
+            foreach ($follows as $f) {
+                $followingIds[] = $f->getFollowingId();
+            }
+        }
+
+        if ($isLoggedIn && count($followingIds) > 0) {
+            $qb = $em->getRepository(ForumPosts::class)->createQueryBuilder('p');
+            $qb->addSelect('(CASE WHEN p.userId IN (:followingIds) THEN 1 ELSE 0 END) AS HIDDEN isFollowed')
+               ->setParameter('followingIds', $followingIds)
+               ->orderBy('p.isPinned', 'DESC')
+               ->addOrderBy('isFollowed', 'DESC')
+               ->addOrderBy('p.createdAt', 'DESC');
+            $allPosts = $qb->getQuery()->getResult();
+        } else {
+            $allPosts = $em->getRepository(ForumPosts::class)->findBy([], ['isPinned' => 'DESC', 'createdAt' => 'DESC']);
+        }
+
         $postsData = [];
 
-        foreach ($posts as $post) {
+        // Analytics Data
+        $totalPostsCount = count($allPosts);
+        $totalCommentsCount = $em->getRepository(Comments::class)->count([]);
+        $trendingPosts = $em->getRepository(ForumPosts::class)->findBy([], ['views' => 'DESC'], 3);
+
+        foreach ($allPosts as $post) {
+            if (!$post->getIsActive() && (!isset($userId) || $post->getUserId() !== $userId)) {
+                continue; // Skip inactive posts for non-owners
+            }
             $postId = $post->getId();
             
             // Count comments
@@ -39,7 +69,6 @@ class ForumController extends AbstractController
             // Using generic count matching 'type' => 'like' (ignoring case usually or just enforce lower/upper)
             $likeCount = $em->getRepository(Interactions::class)->count(['postId' => $postId]);
 
-            // Optional: determine if currentUser liked it
             $userLiked = false;
             if ($isLoggedIn) {
                 $interaction = $em->getRepository(Interactions::class)->findOneBy(['postId' => $postId, 'userId' => $userId]);
@@ -47,12 +76,15 @@ class ForumController extends AbstractController
                     $userLiked = true;
                 }
             }
+            
+            $authorUser = $em->getRepository(Users::class)->find($post->getUserId());
 
             $postsData[] = [
                 'post' => $post,
                 'commentCount' => $commentCount,
                 'likeCount' => $likeCount,
-                'userLiked' => $userLiked
+                'userLiked' => $userLiked,
+                'author' => $authorUser
             ];
         }
 
@@ -60,6 +92,9 @@ class ForumController extends AbstractController
             'postsData'  => $postsData,
             'isLoggedIn' => $isLoggedIn,
             'languages'  => TranslationService::supportedLanguages(),
+            'totalPostsCount' => $totalPostsCount,
+            'totalCommentsCount' => $totalCommentsCount,
+            'trendingPosts' => $trendingPosts,
         ]);
     }
 
@@ -162,6 +197,8 @@ class ForumController extends AbstractController
         }
 
         $em->persist($post);
+        $user->setGamificationPoints($user->getGamificationPoints() + 10);
+        $em->persist($user);
         $em->flush();
 
         $this->addFlash('success', 'Post created successfully!');
@@ -179,7 +216,25 @@ class ForumController extends AbstractController
             return $this->redirectToRoute('app_forum_index');
         }
 
-        $comments = $em->getRepository(Comments::class)->findBy(['postId' => $id], ['createdAt' => 'ASC']);
+        // Increment Views
+        $post->setViews($post->getViews() + 1);
+        $em->flush();
+
+        $allComments = $em->getRepository(Comments::class)->findBy(['postId' => $id], ['createdAt' => 'ASC']);
+        $rootComments = [];
+        $replies = [];
+        
+        foreach ($allComments as $c) {
+            if ($c->getParentId()) {
+                $replies[$c->getParentId()][] = $c;
+            } else {
+                $rootComments[] = $c;
+            }
+        }
+        
+        // Sort root comments by upvotes
+        usort($rootComments, fn($a, $b) => $b->getUpvotes() <=> $a->getUpvotes());
+
         $likeCount = $em->getRepository(Interactions::class)->count(['postId' => $id]);
         
         $userLiked = false;
@@ -192,7 +247,9 @@ class ForumController extends AbstractController
 
         return $this->render('FrontOffice/forum/show.html.twig', [
             'post'          => $post,
-            'comments'      => $comments,
+            'rootComments'  => $rootComments,
+            'replies'       => $replies,
+            'totalComments' => count($allComments),
             'likeCount'     => $likeCount,
             'userLiked'     => $userLiked,
             'isLoggedIn'    => $isLoggedIn,
@@ -211,8 +268,14 @@ class ForumController extends AbstractController
 
         $user = $em->getRepository(Users::class)->find($userId);
         $post = $em->getRepository(ForumPosts::class)->find($id);
+        $parentId = $request->request->get('parentId');
 
         if ($post && $user) {
+            if ($post->getIsCommentsLocked()) {
+                $this->addFlash('error', '🔒 This post is locked by the owner. You cannot add new comments.');
+                return $this->redirectToRoute('app_forum_show', ['id' => $id]);
+            }
+
             $content = trim($request->request->get('content', ''));
 
             // ── Validation 1: empty comment ───────────────────────────────
@@ -241,6 +304,10 @@ class ForumController extends AbstractController
             $comment->setPostId($post->getId());
             $comment->setUserId($user->getId());
             $comment->setAuthorName($user->getFullName());
+            
+            if ($parentId) {
+                $comment->setParentId((int)$parentId);
+            }
 
             $errors = $validator->validate($comment);
             if (count($errors) > 0) {
@@ -249,6 +316,8 @@ class ForumController extends AbstractController
             }
 
             $em->persist($comment);
+            $user->setGamificationPoints($user->getGamificationPoints() + 5);
+            $em->persist($user);
             $em->flush();
             $this->addFlash('success', '💬 Comment posted successfully!');
         }
@@ -394,5 +463,320 @@ class ForumController extends AbstractController
         } catch (\Exception $e) {
             return $this->json(['error' => $e->getMessage()], 503);
         }
+    }
+
+    #[Route('/post/{id}/toggle-active', name: 'app_forum_toggle_active', methods: ['POST'])]
+    public function toggleActive(int $id, Request $request, EntityManagerInterface $em): Response
+    {
+        $userId = $request->getSession()->get('user_id');
+        $post = $em->getRepository(ForumPosts::class)->find($id);
+        
+        if ($post && $post->getUserId() === $userId) {
+            $post->setIsActive(!$post->getIsActive());
+            $em->flush();
+            $this->addFlash('success', 'Post visibility toggled.');
+        } else {
+            $this->addFlash('error', 'Unauthorized action.');
+        }
+        
+        return $this->redirectToRoute('app_forum_index');
+    }
+
+    #[Route('/post/{id}/toggle-lock', name: 'app_forum_toggle_lock', methods: ['POST'])]
+    public function toggleLock(int $id, Request $request, EntityManagerInterface $em): Response
+    {
+        $userId = $request->getSession()->get('user_id');
+        $post = $em->getRepository(ForumPosts::class)->find($id);
+        
+        if ($post && $post->getUserId() === $userId) {
+            $post->setIsCommentsLocked(!$post->getIsCommentsLocked());
+            $em->flush();
+            $this->addFlash('success', 'Comments lock state updated.');
+        } else {
+            $this->addFlash('error', 'Unauthorized action.');
+        }
+        
+        return $this->redirectToRoute('app_forum_show', ['id' => $id]);
+    }
+
+    #[Route('/comment/{id}/edit', name: 'app_forum_comment_edit', methods: ['POST'])]
+    public function editComment(int $id, Request $request, EntityManagerInterface $em, ValidatorInterface $validator, BadWordsFilter $filter): Response
+    {
+        $userId = $request->getSession()->get('user_id');
+        $comment = $em->getRepository(Comments::class)->find($id);
+
+        if (!$comment || $comment->getUserId() !== $userId) {
+            $this->addFlash('error', 'Unauthorized or comment not found.');
+            return $this->redirectToRoute('app_forum_index');
+        }
+
+        // Time window check (15 minutes)
+        if ((new \DateTime())->diff($comment->getCreatedAt())->i >= 15) {
+            $this->addFlash('error', 'You can no longer edit this comment. The 15-minute window has passed.');
+            return $this->redirectToRoute('app_forum_show', ['id' => $comment->getPostId()]);
+        }
+
+        $content = trim($request->request->get('content', ''));
+        if ($content !== '') {
+            $violation = $filter->findViolation($content);
+            if ($violation !== null) {
+                $this->addFlash('error', 'Forbidden word in edited comment.');
+            } else {
+                $comment->setContent($content);
+                $comment->setIsEdited(true);
+                $em->flush();
+                $this->addFlash('success', 'Comment updated.');
+            }
+        } else {
+            $this->addFlash('error', 'Comment cannot be empty.');
+        }
+
+        return $this->redirectToRoute('app_forum_show', ['id' => $comment->getPostId()]);
+    }
+
+    #[Route('/comment/{id}/delete', name: 'app_forum_comment_delete_user', methods: ['POST'])]
+    public function deleteCommentUser(int $id, Request $request, EntityManagerInterface $em): Response
+    {
+        $userId = $request->getSession()->get('user_id');
+        $comment = $em->getRepository(Comments::class)->find($id);
+
+        if (!$comment || $comment->getUserId() !== $userId) {
+            $this->addFlash('error', 'Unauthorized or comment not found.');
+            return $this->redirectToRoute('app_forum_index');
+        }
+
+        // Time window check (15 minutes)
+        if ((new \DateTime())->diff($comment->getCreatedAt())->i >= 15) {
+            $this->addFlash('error', 'You can no longer delete this comment. The 15-minute window has passed.');
+            return $this->redirectToRoute('app_forum_show', ['id' => $comment->getPostId()]);
+        }
+
+        $postId = $comment->getPostId();
+        $em->remove($comment);
+        $em->flush();
+        $this->addFlash('success', 'Comment deleted.');
+
+        return $this->redirectToRoute('app_forum_show', ['id' => $postId]);
+    }
+
+    #[Route('/comment/{id}/vote', name: 'app_forum_comment_vote', methods: ['POST'])]
+    public function voteComment(int $id, Request $request, EntityManagerInterface $em): JsonResponse
+    {
+        $userId = $request->getSession()->get('user_id');
+        if (!$userId) return $this->json(['error' => 'Not authenticated'], 401);
+
+        $comment = $em->getRepository(Comments::class)->find($id);
+        if (!$comment) return $this->json(['error' => 'Comment not found'], 404);
+
+        $type = $request->query->get('type', 'upvote'); // 'upvote' or 'downvote'
+        if (!in_array($type, ['upvote', 'downvote'])) $type = 'upvote';
+
+        $reaction = $em->getRepository(CommentReaction::class)->findOneBy(['commentId' => $id, 'userId' => $userId]);
+
+        if ($reaction) {
+            if ($reaction->getType() === $type) {
+                // remove vote
+                $em->remove($reaction);
+                if ($type === 'upvote') $comment->setUpvotes(max(0, $comment->getUpvotes() - 1));
+                else $comment->setDownvotes(max(0, $comment->getDownvotes() - 1));
+            } else {
+                // switch vote
+                if ($type === 'upvote') {
+                    $comment->setDownvotes(max(0, $comment->getDownvotes() - 1));
+                    $comment->setUpvotes($comment->getUpvotes() + 1);
+                } else {
+                    $comment->setUpvotes(max(0, $comment->getUpvotes() - 1));
+                    $comment->setDownvotes($comment->getDownvotes() + 1);
+                }
+                $reaction->setType($type);
+            }
+        } else {
+            // new vote
+            $reaction = new CommentReaction();
+            $reaction->setCommentId($id);
+            $reaction->setUserId($userId);
+            $reaction->setType($type);
+            $em->persist($reaction);
+
+            if ($type === 'upvote') $comment->setUpvotes($comment->getUpvotes() + 1);
+            else $comment->setDownvotes($comment->getDownvotes() + 1);
+        }
+
+        $em->flush();
+
+        return $this->json(['upvotes' => $comment->getUpvotes(), 'downvotes' => $comment->getDownvotes()]);
+    }
+
+    #[Route('/api/users/mention-search', name: 'app_forum_mention_search', methods: ['GET'])]
+    public function mentionSearch(Request $request, EntityManagerInterface $em): JsonResponse
+    {
+        $query = $request->query->get('q', '');
+
+        $qb = $em->getRepository(Users::class)->createQueryBuilder('u');
+        
+        if (strlen($query) > 0) {
+            $qb->where('u.fullName LIKE :query')
+               ->setParameter('query', $query . '%');
+        }
+
+        $users = $qb->setMaxResults(50)
+                    ->getQuery()
+                    ->getResult();
+
+        $result = [];
+        foreach ($users as $user) {
+            $result[] = ['key' => $user->getFullName(), 'value' => $user->getFullName()];
+        }
+        return $this->json($result);
+    }
+
+    #[Route('/report', name: 'app_forum_report', methods: ['POST'])]
+    public function reportContent(Request $request, EntityManagerInterface $em): Response
+    {
+        $userId = $request->getSession()->get('user_id');
+        if (!$userId) return $this->redirectToRoute('app_login');
+
+        $type = $request->request->get('type'); // 'post' or 'comment'
+        $targetId = $request->request->get('target_id');
+        $reason = trim($request->request->get('reason', ''));
+
+        if ($type && $targetId && $reason !== '') {
+            $report = new Report();
+            $report->setReporterId($userId);
+            $report->setTargetType($type);
+            $report->setTargetId((int)$targetId);
+            $report->setReason($reason);
+            $report->setCreatedAt(new \DateTime());
+            $em->persist($report);
+            $em->flush();
+            $this->addFlash('success', 'Content reported successfully.');
+        } else {
+            $this->addFlash('error', 'Invalid report submission.');
+        }
+
+        return $this->redirect($request->headers->get('referer') ?? $this->generateUrl('app_forum_index'));
+    }
+
+    #[Route('/post/{id}/pin', name: 'app_forum_pin_post', methods: ['POST'])]
+    public function pinPost(int $id, Request $request, EntityManagerInterface $em): Response
+    {
+        $userId = $request->getSession()->get('user_id');
+        if (!$userId) return $this->redirectToRoute('app_login');
+
+        $user = $em->getRepository(Users::class)->find($userId);
+        $post = $em->getRepository(ForumPosts::class)->find($id);
+
+        if ($post && $user) {
+            if ($post->getUserId() !== $userId) {
+                $this->addFlash('error', 'You can only pin your own posts.');
+            } else if ($user->getGamificationPoints() >= 50) {
+                $user->setGamificationPoints($user->getGamificationPoints() - 50);
+                $post->setIsPinned(true);
+                $em->flush();
+                $this->addFlash('success', 'Post pinned successfully for 50 points!');
+            } else {
+                $this->addFlash('error', 'You need at least 50 points to pin your post.');
+            }
+        }
+        
+        return $this->redirectToRoute('app_forum_index');
+    }
+
+    #[Route('/profile/{id}', name: 'app_forum_profile')]
+    public function profile(int $id, Request $request, EntityManagerInterface $em): Response
+    {
+        $currentUserId = $request->getSession()->get('user_id');
+        $isLoggedIn = !empty($currentUserId);
+        
+        $targetUser = $em->getRepository(Users::class)->find($id);
+        if (!$targetUser) {
+            return $this->redirectToRoute('app_forum_index');
+        }
+
+        if ($isLoggedIn && $currentUserId === $targetUser->getId() && $request->isMethod('POST')) {
+            $bio = $request->request->get('forumBio');
+            if ($bio !== null) $targetUser->setForumBio($bio);
+            
+            $file = $request->files->get('forumImage');
+            if ($file) {
+                $filename = uniqid() . '.' . $file->guessExtension();
+                $dir = $this->getParameter('kernel.project_dir') . '/public/uploads/forum_profiles';
+                if (!is_dir($dir)) mkdir($dir, 0777, true);
+                $file->move($dir, $filename);
+                $targetUser->setForumImage($filename);
+            }
+            $em->flush();
+            $this->addFlash('success', 'Profile updated successfully!');
+            return $this->redirectToRoute('app_forum_profile', ['id' => $id]);
+        }
+
+        $followerCount = $em->getRepository(ForumFollow::class)->count(['followingId' => $id]);
+        $followingCount = $em->getRepository(ForumFollow::class)->count(['followerId' => $id]);
+
+        $postRepo = $em->getRepository(ForumPosts::class);
+        $commentRepo = $em->getRepository(Comments::class);
+
+        $totalPosts = $postRepo->count(['userId' => $id]);
+        $totalComments = $commentRepo->count(['userId' => $id]);
+
+        $bestPost = $postRepo->findOneBy(['userId' => $id], ['views' => 'DESC']);
+        $bestComment = $commentRepo->findOneBy(['userId' => $id], ['upvotes' => 'DESC']);
+
+        $isFollowing = false;
+        if ($isLoggedIn) {
+            $isFollowing = (bool) $em->getRepository(ForumFollow::class)->count([
+                'followerId' => $currentUserId,
+                'followingId' => $id
+            ]);
+        }
+
+        return $this->render('FrontOffice/forum/profile.html.twig', [
+            'targetUser' => $targetUser,
+            'isOwner' => ($isLoggedIn && $currentUserId === $id),
+            'isFollowing' => $isFollowing,
+            'isLoggedIn' => $isLoggedIn,
+            'stats' => [
+                'followers' => $followerCount,
+                'following' => $followingCount,
+                'totalPosts' => $totalPosts,
+                'totalComments' => $totalComments
+            ],
+            'bestPost' => $bestPost,
+            'bestComment' => $bestComment
+        ]);
+    }
+
+    #[Route('/profile/{id}/follow-toggle', name: 'app_forum_toggle_follow', methods: ['POST'])]
+    public function toggleFollow(int $id, Request $request, EntityManagerInterface $em): Response
+    {
+        $currentUserId = $request->getSession()->get('user_id');
+        if (!$currentUserId) {
+            return $this->redirectToRoute('app_login');
+        }
+
+        if ($currentUserId === $id) {
+            return $this->redirectToRoute('app_forum_profile', ['id' => $id]);
+        }
+
+        $followRepo = $em->getRepository(ForumFollow::class);
+        $existing = $followRepo->findOneBy([
+            'followerId' => $currentUserId,
+            'followingId' => $id
+        ]);
+
+        if ($existing) {
+            $em->remove($existing);
+            $this->addFlash('success', 'You unfollowed this user.');
+        } else {
+            $follow = new ForumFollow();
+            $follow->setFollowerId($currentUserId);
+            $follow->setFollowingId($id);
+            $follow->setCreatedAt(new \DateTime());
+            $em->persist($follow);
+            $this->addFlash('success', 'You are now following this user!');
+        }
+        $em->flush();
+
+        return $this->redirectToRoute('app_forum_profile', ['id' => $id]);
     }
 }

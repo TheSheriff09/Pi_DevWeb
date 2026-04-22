@@ -6,6 +6,8 @@ use App\Entity\ForumPosts;
 use App\Entity\Comments;
 use App\Entity\Interactions;
 use App\Entity\BannedWord;
+use App\Entity\Report;
+use App\Entity\Users;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -192,5 +194,97 @@ class AdminForumController extends AbstractController
         }
 
         return $this->redirectToRoute('app_admin_forum_banned_words');
+    }
+
+    #[Route('/reports', name: 'app_admin_forum_reports')]
+    public function reports(EntityManagerInterface $em, Request $request): Response
+    {
+        if ($redirect = $this->ensureAdmin($request)) return $redirect;
+
+        $reports = $em->getRepository(Report::class)->findBy([], ['createdAt' => 'DESC']);
+        
+        // Enrich reports for the view
+        $reportsData = [];
+        foreach ($reports as $report) {
+            $content = '';
+            $authorName = '';
+            if ($report->getTargetType() === 'post') {
+                $post = $em->getRepository(ForumPosts::class)->find($report->getTargetId());
+                if ($post) {
+                    $content = $post->getContent();
+                    $authorName = $post->getAuthorName();
+                }
+            } else {
+                $comment = $em->getRepository(Comments::class)->find($report->getTargetId());
+                if ($comment) {
+                    $content = $comment->getContent();
+                    $authorName = $comment->getAuthorName();
+                }
+            }
+
+            $reportsData[] = [
+                'report' => $report,
+                'contentSnippet' => mb_strimwidth($content, 0, 100, '...'),
+                'authorName' => $authorName ?: 'Unknown'
+            ];
+        }
+
+        return $this->render('BackOffice/forum/reports.html.twig', [
+            'reportsData' => $reportsData,
+            'current_menu' => 'reports'
+        ]);
+    }
+
+    #[Route('/reports/{id}/delete-content', name: 'app_admin_forum_report_delete_content', methods: ['POST'])]
+    public function reportDeleteContent(int $id, Request $request, EntityManagerInterface $em): Response
+    {
+        if ($redirect = $this->ensureAdmin($request)) return $redirect;
+
+        $report = $em->getRepository(Report::class)->find($id);
+        if ($report) {
+            if ($report->getTargetType() === 'post') {
+                $post = $em->getRepository(ForumPosts::class)->find($report->getTargetId());
+                if ($post) $em->remove($post);
+            } elseif ($report->getTargetType() === 'comment') {
+                $comment = $em->getRepository(Comments::class)->find($report->getTargetId());
+                if ($comment) $em->remove($comment);
+            }
+            $em->remove($report); // Resolve report
+            $em->flush();
+            $this->addFlash('success', 'Offending content and report deleted.');
+        }
+
+        return $this->redirectToRoute('app_admin_forum_reports');
+    }
+
+    #[Route('/reports/{id}/ban-user', name: 'app_admin_forum_report_ban_user', methods: ['POST'])]
+    public function reportBanUser(int $id, Request $request, EntityManagerInterface $em): Response
+    {
+        if ($redirect = $this->ensureAdmin($request)) return $redirect;
+
+        $report = $em->getRepository(Report::class)->find($id);
+        if ($report) {
+            $offenderId = null;
+            if ($report->getTargetType() === 'post') {
+                $post = $em->getRepository(ForumPosts::class)->find($report->getTargetId());
+                if ($post) $offenderId = $post->getUserId();
+            } elseif ($report->getTargetType() === 'comment') {
+                $comment = $em->getRepository(Comments::class)->find($report->getTargetId());
+                if ($comment) $offenderId = $comment->getUserId();
+            }
+
+            if ($offenderId) {
+                $user = $em->getRepository(Users::class)->find($offenderId);
+                if ($user) {
+                    $user->setStatus('BLOCKED');
+                    $em->flush();
+                    $this->addFlash('success', 'User has been banned.');
+                }
+            } else {
+                $this->addFlash('error', 'Could not locate the user to ban.');
+            }
+        }
+
+        return $this->redirectToRoute('app_admin_forum_reports');
     }
 }

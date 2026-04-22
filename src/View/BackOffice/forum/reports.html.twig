@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Forum Admin - Banned Words</title>
+    <title>Forum Admin - Reports</title>
     <link rel="stylesheet" href="{{ asset('Back/css/styles.css') }}?v=2">
 </head>
 <body>
@@ -13,7 +13,7 @@
         }
     </script>
 
-    <!-- SIDEBAR -->
+    <!-- SIDEBAR FOR FORUM MODULE -->
     <aside class="sidebar">
         <div class="sidebar-header">
             <h2>Forum Admin</h2>
@@ -26,7 +26,6 @@
             <li><a href="{{ path('app_admin_forum_interactions') }}" class="{{ current_menu == 'interactions' ? 'active' : '' }}">Manage Interactions</a></li>
             <li><a href="{{ path('app_admin_forum_banned_words') }}" class="{{ current_menu == 'banned_words' ? 'active' : '' }}">Banned Words</a></li>
             <li><a href="{{ path('app_admin_forum_reports') }}" class="{{ current_menu == 'reports' ? 'active' : '' }}">Reported Content</a></li>
-            
             <li style="margin-top:20px; border-top:1px solid rgba(255,255,255,0.1); padding-top:10px;"><a href="{{ path('app_admin_panel') }}" style="color:var(--primary-light);">Global Modules</a></li>
             <li><a href="{{ path('app_admin_forum_dashboard') }}">Forum</a></li>
             <li><a href="{{ path('app_admin_startup_dashboard') }}">Startup</a></li>
@@ -42,87 +41,92 @@
 
     <!-- MAIN CONTENT -->
     <div class="main-content">
+        <!-- TOPBAR -->
         <header class="topbar">
             <div class="topbar-left">
-                <h2>Banned Keywords</h2>
+                <h2>Reported Content</h2>
             </div>
             <div class="topbar-right">
                 <button id="themeToggleBtn" class="btn-pill" style="border: 2px solid var(--primary-light); background: transparent; color: var(--primary-light);">🌓</button>
             </div>
         </header>
 
-        <main class="dashboard-content">
+        <main class="dashboard-content" style="position: relative; z-index: 2;">
             
             {% for message in app.flashes('success') %}
-                <div class="card" style="background: rgba(46, 213, 115, 0.2); border: 1px solid #2ed573; color: #2ed573; margin-bottom: 20px; padding: 15px;">
+                <div style="background: rgba(46, 213, 115, 0.12); color: #1e8449; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
                     {{ message }}
                 </div>
             {% endfor %}
             {% for message in app.flashes('error') %}
-                <div class="card" style="background: rgba(255, 71, 87, 0.2); border: 1px solid #ff4757; color: #ff4757; margin-bottom: 20px; padding: 15px;">
+                <div style="background: rgba(255, 71, 87, 0.12); color: #c0392b; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
                     {{ message }}
                 </div>
             {% endfor %}
 
-            <div class="card" style="margin-bottom: 30px;">
-                <h3 style="margin-bottom: 15px; color: var(--primary-lighter);">Add New Forbidden Word</h3>
-                <form action="{{ path('app_admin_forum_banned_words_add') }}" method="post" style="display: flex; gap: 10px;">
-                    <input type="text" name="word" placeholder="Enter word or phrase..." required 
-                           style="flex: 1; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.1); color: inherit;">
-                    <button type="submit" class="btn-pill glow-btn" style="padding: 10px 25px; background: var(--primary);">Add to List</button>
-                </form>
-                <p style="font-size: 0.8rem; color: #b0a8d6; margin-top: 10px;">
-                    * Words are case-insensitive. Obfuscation (like k!ll instead of kill) is handled automatically.
-                </p>
-            </div>
-
-            <div class="card">
-                <h3 style="margin-bottom: 20px; color: var(--primary-lighter);">Active Banned Words</h3>
+            <div class="card" style="width: 100%;">
                 <div style="overflow-x: auto;">
                     <table style="width: 100%; border-collapse: collapse; text-align: left;">
                         <thead>
                             <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
-                                <th style="padding: 15px; color: #b0a8d6;">Keyword</th>
-                                <th style="padding: 15px; color: #b0a8d6;">Date Added</th>
+                                <th style="padding: 15px; color: #b0a8d6;">Type</th>
+                                <th style="padding: 15px; color: #b0a8d6;">Author</th>
+                                <th style="padding: 15px; color: #b0a8d6;">Content</th>
+                                <th style="padding: 15px; color: #b0a8d6;">Reporter Reason</th>
+                                <th style="padding: 15px; color: #b0a8d6;">Date</th>
                                 <th style="padding: 15px; color: #b0a8d6; text-align: right;">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {% for bw in words %}
+                            {% for row in reportsData %}
                                 <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
-                                    <td style="padding: 15px; font-weight: 600;">{{ bw.word }}</td>
-                                    <td style="padding: 15px; color: #b0a8d6;">{{ bw.createdAt|date('Y-m-d H:i') }}</td>
-                                    <td style="padding: 15px; text-align: right;">
-                                        <form action="{{ path('app_admin_forum_banned_words_delete', {id: bw.id}) }}" method="post" onsubmit="return confirm('Remove this word?');">
-                                            <button type="submit" style="background: transparent; border: 1px solid #ff4757; color: #ff4757; padding: 5px 12px; border-radius: 6px; cursor: pointer;">Delete</button>
+                                    <td style="padding: 15px;">
+                                        <span style="padding: 4px 8px; border-radius: 4px; background: rgba(108,92,231,0.2); color: var(--primary-light);">{{ row.report.targetType|capitalize }}</span>
+                                    </td>
+                                    <td style="padding: 15px; font-weight: 500;">{{ row.authorName }}</td>
+                                    <td style="padding: 15px;">{{ row.contentSnippet }}</td>
+                                    <td style="padding: 15px; color: #e74c3c;">{{ row.report.reason }}</td>
+                                    <td style="padding: 15px; color: #999; font-size: 0.9em;">{{ row.report.createdAt|date('Y-m-d H:i') }}</td>
+                                    <td style="padding: 15px; text-align: right; display:flex; gap:10px; justify-content:flex-end;">
+                                        <form action="{{ path('app_admin_forum_report_delete_content', {'id': row.report.id}) }}" method="post" onsubmit="return confirm('Delete this content and ignore the report?');">
+                                            <button type="submit" class="btn-pill" style="padding: 5px 10px; font-size: 0.8rem; background: rgba(255,0,0,0.1); color: #ff4757; border: 1px solid #ff4757;">Delete Content</button>
+                                        </form>
+                                        <form action="{{ path('app_admin_forum_report_ban_user', {'id': row.report.id}) }}" method="post" onsubmit="return confirm('Ban the user who POSTED this content?');">
+                                            <button type="submit" class="btn-pill" style="padding: 5px 10px; font-size: 0.8rem; background: #e74c3c; color: white; border: none;">Ban User</button>
                                         </form>
                                     </td>
                                 </tr>
                             {% else %}
                                 <tr>
-                                    <td colspan="3" style="padding: 20px; text-align: center; color: #b0a8d6;">No custom words added yet.</td>
+                                    <td colspan="6" style="padding: 30px; text-align: center; color: #888;">No reported content! 🎉</td>
                                 </tr>
                             {% endfor %}
                         </tbody>
                     </table>
                 </div>
             </div>
+            
         </main>
-
+        
         <footer class="futuristic-footer" style="padding: 20px; text-align: center; border-top: 1px solid rgba(255, 255, 255, 0.1);">
             <p style="color: #b0a8d6;">&copy; {{ 'now'|date('Y') }} StartupFlow Admin.</p>
         </footer>
     </div>
 
     <script>
-        document.getElementById('themeToggleBtn').addEventListener('click', () => {
-            const isDark = document.body.classList.contains('dark-mode');
-            if (isDark) {
-                document.body.classList.remove('dark-mode');
-                localStorage.setItem('admin_theme', 'light');
-            } else {
-                document.body.classList.add('dark-mode');
-                localStorage.setItem('admin_theme', 'dark');
+        document.addEventListener("DOMContentLoaded", function() {
+            const toggleBtn = document.getElementById('themeToggleBtn');
+            if (toggleBtn) {
+                toggleBtn.addEventListener('click', () => {
+                    const isDark = document.body.classList.contains('dark-mode');
+                    if (isDark) {
+                        document.body.classList.remove('dark-mode');
+                        localStorage.setItem('admin_theme', 'light');
+                    } else {
+                        document.body.classList.add('dark-mode');
+                        localStorage.setItem('admin_theme', 'dark');
+                    }
+                });
             }
         });
     </script>

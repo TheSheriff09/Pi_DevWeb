@@ -76,6 +76,12 @@ class Users
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     private ?\DateTimeInterface $createdAt = null;
 
+    #[ORM\Column(type: Types::TEXT, nullable: true)]
+    private ?string $forumBio = null;
+
+    #[ORM\Column(type: Types::STRING, length: 255, nullable: true)]
+    private ?string $forumImage = null;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -278,6 +284,42 @@ class Users
     public function setRiskLevel(string $riskLevel): static
     {
         $this->riskLevel = $riskLevel;
+        return $this;
+    }
+
+    #[ORM\Column(type: Types::INTEGER, options: ['default' => 0])]
+    private int $gamificationPoints = 0;
+
+    public function getGamificationPoints(): int
+    {
+        return $this->gamificationPoints;
+    }
+
+    public function setGamificationPoints(int $gamificationPoints): static
+    {
+        $this->gamificationPoints = $gamificationPoints;
+        return $this;
+    }
+
+    public function getForumBio(): ?string
+    {
+        return $this->forumBio;
+    }
+
+    public function setForumBio(?string $forumBio): static
+    {
+        $this->forumBio = $forumBio;
+        return $this;
+    }
+
+    public function getForumImage(): ?string
+    {
+        return $this->forumImage;
+    }
+
+    public function setForumImage(?string $forumImage): static
+    {
+        $this->forumImage = $forumImage;
         return $this;
     }
 }

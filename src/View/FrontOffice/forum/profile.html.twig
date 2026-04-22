@@ -1,0 +1,421 @@
+{% extends 'FrontOffice/base.html.twig' %}
+
+{% block title %}Forum Profile - {{ targetUser.fullName|default('User') }}{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        :root {
+            --primary: #6c5ce7;
+            --primary-light: #a29bfe;
+        }
+
+        .profile-container {
+            max-width: 900px;
+            margin: 40px auto;
+            color: #333;
+            font-family: 'Inter', sans-serif;
+            background: #ffffff;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.05);
+            position: relative;
+        }
+
+        body.dark-mode .profile-container {
+            background: #1e1e2f;
+            color: #fff;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.4);
+        }
+
+        .profile-header {
+            position: relative;
+            background: linear-gradient(135deg, rgba(108,92,231,0.05), rgba(162,155,254,0.02));
+            padding: 50px 30px 30px;
+            text-align: center;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+        }
+
+        body.dark-mode .profile-header {
+            background: linear-gradient(135deg, rgba(108,92,231,0.2), rgba(162,155,254,0.1));
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .profile-avatar-wrap {
+            position: relative;
+            width: 150px;
+            height: 150px;
+            margin: 0 auto 20px;
+            border-radius: 50%;
+            padding: 5px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            box-shadow: 0 10px 25px rgba(108,92,231,0.2);
+        }
+
+        .profile-avatar {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+            background: #fff;
+            border: 3px solid #ffffff;
+        }
+        body.dark-mode .profile-avatar { border: 3px solid #1e1e2f; }
+
+        h1.user-name {
+            font-size: 2.2rem;
+            margin: 0 0 5px;
+            font-weight: 700;
+            background: linear-gradient(to right, #333, #6c5ce7);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        body.dark-mode h1.user-name {
+            background: linear-gradient(to right, #fff, #a29bfe);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .user-role {
+            font-size: 1rem;
+            color: #6c5ce7;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+        body.dark-mode .user-role { color: #a29bfe; font-weight: normal; }
+
+        .user-bio {
+            max-width: 600px;
+            margin: 0 auto 25px;
+            font-size: 1.1rem;
+            color: #555;
+            line-height: 1.6;
+        }
+        body.dark-mode .user-bio { color: #ccc; }
+
+        .stats-row {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            margin-bottom: 25px;
+        }
+
+        .stat-item { text-align: center; }
+
+        .stat-val {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: #222;
+            display: block;
+        }
+        body.dark-mode .stat-val { color: #fff; }
+
+        .stat-label {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            color: #888;
+            letter-spacing: 1px;
+            font-weight: 600;
+        }
+
+        .action-btns form { display: inline-block; }
+
+        .btn-follow {
+            background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+            color: white;
+            border: none;
+            padding: 12px 35px;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 5px 15px rgba(108,92,231,0.3);
+        }
+        .btn-follow:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(108,92,231,0.4);
+        }
+
+        .btn-unfollow {
+            background: transparent;
+            color: #6c5ce7;
+            border: 2px solid #6c5ce7;
+            padding: 10px 33px;
+        }
+        body.dark-mode .btn-unfollow {
+            color: #a29bfe;
+            border-color: #a29bfe;
+        }
+        .btn-unfollow:hover { background: rgba(108,92,231,0.05); }
+        body.dark-mode .btn-unfollow:hover { background: rgba(162,155,254,0.1); }
+
+        .profile-body {
+            padding: 40px 30px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+
+        .content-card {
+            background: rgba(0,0,0,0.02);
+            border: 1px solid rgba(0,0,0,0.05);
+            border-radius: 15px;
+            padding: 25px;
+            transition: transform 0.3s;
+        }
+        body.dark-mode .content-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .content-card:hover {
+            transform: translateY(-5px);
+            background: rgba(0,0,0,0.04);
+        }
+        body.dark-mode .content-card:hover { background: rgba(255, 255, 255, 0.08); }
+
+        .card-title {
+            font-size: 1.2rem;
+            color: #6c5ce7;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 700;
+        }
+        body.dark-mode .card-title { color: #a29bfe; font-weight: 600; }
+
+        .best-post-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+            line-height: 1.4;
+        }
+        .best-post-title a { color: #333; text-decoration: none; }
+        body.dark-mode .best-post-title a { color: #fff; }
+        .best-post-title a:hover { text-decoration: underline; }
+
+        .metrics-badge {
+            display: inline-flex;
+            align-items: center;
+            background: rgba(108,92,231,0.1);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            color: #6c5ce7;
+            gap: 6px;
+            font-weight: 600;
+        }
+        body.dark-mode .metrics-badge { background: rgba(108,92,231,0.2); color: #a29bfe; font-weight: normal; }
+
+        .comment-text {
+            font-style: italic;
+            color: #555;
+            line-height: 1.6;
+            margin-bottom: 15px;
+            border-left: 3px solid #6c5ce7;
+            padding-left: 15px;
+        }
+        body.dark-mode .comment-text { color: #ddd; }
+
+        .edit-form-wrap {
+            grid-column: 1 / -1;
+            background: rgba(0,0,0,0.03);
+            padding: 30px;
+            border-radius: 15px;
+            border: 1px dashed rgba(0,0,0,0.1);
+            margin-top: 20px;
+        }
+        body.dark-mode .edit-form-wrap {
+            background: rgba(0,0,0,0.2);
+            border: 1px dashed rgba(255,255,255,0.1);
+        }
+
+        .edit-form-wrap h3 { margin-bottom: 20px; color: #333; }
+        body.dark-mode .edit-form-wrap h3 { color: #fff; }
+
+        .form-control {
+            display: block;
+            width: 100%;
+            padding: 12px 15px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            border: 1px solid rgba(0,0,0,0.1);
+            background: rgba(255,255,255,0.8);
+            color: #333;
+            font-family: inherit;
+        }
+        body.dark-mode .form-control {
+            border: 1px solid rgba(255,255,255,0.1);
+            background: rgba(255,255,255,0.05);
+            color: #fff;
+        }
+        .form-control:focus { outline: none; border-color: #6c5ce7; }
+
+        .btn-submit {
+            background: #6c5ce7;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        .btn-submit:hover { background: #5a4bcf; }
+        body.dark-mode .btn-submit:hover { background: #a29bfe; }
+
+        .back-link {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: #6c5ce7;
+            text-decoration: none;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: color 0.3s;
+        }
+        body.dark-mode .back-link { color: #a29bfe; font-weight: 500; }
+        .back-link:hover { color: #333; }
+        body.dark-mode .back-link:hover { color: #fff; }
+
+        @media (max-width: 768px) {
+            .profile-body { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 768px) {
+            .profile-body { grid-template-columns: 1fr; }
+        }
+
+        /* Custom File Upload Button */
+        input[type="file"]::file-selector-button {
+            background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+            color: #fff;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            margin-right: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        input[type="file"]::file-selector-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(108,92,231,0.3);
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+    <div class="profile-container">
+        <div class="profile-header">
+            <a href="{{ path('app_forum_index') }}" class="back-link">← Back to Forum</a>
+            
+            <div class="profile-avatar-wrap">
+                {% if targetUser.forumImage %}
+                    <img src="{{ asset('uploads/forum_profiles/' ~ targetUser.forumImage) }}" class="profile-avatar" alt="Avatar">
+                {% else %}
+                    <img src="https://ui-avatars.com/api/?name={{ targetUser.fullName|url_encode }}&background=6c5ce7&color=fff&size=150" class="profile-avatar" alt="Avatar">
+                {% endif %}
+            </div>
+
+            <h1 class="user-name">{{ targetUser.fullName|default('Unknown User') }}</h1>
+            <div class="user-role">{{ targetUser.role|default('Member') }}</div>
+
+            {% if targetUser.forumBio %}
+                <p class="user-bio">"{{ targetUser.forumBio }}"</p>
+            {% else %}
+                <p class="user-bio" style="font-style: italic; opacity: 0.5;">No forum bio provided yet.</p>
+            {% endif %}
+
+            <div class="stats-row">
+                <div class="stat-item">
+                    <span class="stat-val">{{ stats.followers }}</span>
+                    <span class="stat-label">Followers</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-val">{{ stats.following }}</span>
+                    <span class="stat-label">Following</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-val">{{ stats.totalPosts }}</span>
+                    <span class="stat-label">Posts</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-val">{{ stats.totalComments }}</span>
+                    <span class="stat-label">Comments</span>
+                </div>
+            </div>
+
+            <div class="action-btns">
+                {% if not isOwner and isLoggedIn %}
+                    <form action="{{ path('app_forum_toggle_follow', {'id': targetUser.id}) }}" method="POST">
+                        {% if isFollowing %}
+                            <button type="submit" class="btn-follow btn-unfollow">Unfollow</button>
+                        {% else %}
+                            <button type="submit" class="btn-follow">Follow +</button>
+                        {% endif %}
+                    </form>
+                {% elseif not isLoggedIn %}
+                    <a href="{{ path('app_login') }}" class="btn-follow" style="text-decoration:none; display:inline-block;">Log in to Follow</a>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="profile-body">
+            <!-- Best Post Card -->
+            <div class="content-card">
+                <h3 class="card-title">🔥 Most Viewed Post</h3>
+                {% if bestPost %}
+                    <div class="best-post-title">
+                        <a href="{{ path('app_forum_show', {'id': bestPost.id}) }}">
+                            {{ bestPost.title|default('Untitled') }}
+                        </a>
+                    </div>
+                    <div class="metrics-badge">
+                        👁️ {{ bestPost.views }} Views
+                    </div>
+                {% else %}
+                    <p style="color: #888;">This user hasn't posted anything yet.</p>
+                {% endif %}
+            </div>
+
+            <!-- Best Comment Card -->
+            <div class="content-card">
+                <h3 class="card-title">⭐ Top Comment</h3>
+                {% if bestComment %}
+                    <p class="comment-text">"{{ bestComment.content|length > 100 ? bestComment.content|slice(0, 100) ~ '...' : bestComment.content }}"</p>
+                    <div class="metrics-badge">
+                        👍 {{ bestComment.upvotes }} Upvotes
+                    </div>
+                    <div style="margin-top: 15px;">
+                        <a href="{{ path('app_forum_show', {'id': bestComment.postId}) }}" style="color: #a29bfe; font-size: 0.9rem;">View Discussion →</a>
+                    </div>
+                {% else %}
+                    <p style="color: #888;">No comments yet.</p>
+                {% endif %}
+            </div>
+
+            <!-- Edit Form for Owner -->
+            {% if isOwner %}
+                <div class="edit-form-wrap">
+                    <h3>🛠️ Edit Forum Profile</h3>
+                    <form action="{{ path('app_forum_profile', {'id': targetUser.id}) }}" method="POST" enctype="multipart/form-data">
+                        
+                        <label for="forumBio" style="display:block; margin-bottom:8px; color: #a29bfe; font-size: 0.9rem;">Forum Bio (About You)</label>
+                        <textarea name="forumBio" id="forumBio" class="form-control" rows="3" placeholder="Tell the community about yourself...">{{ targetUser.forumBio }}</textarea>
+
+                        <label for="forumImage" style="display:block; margin-bottom:8px; color: #a29bfe; font-size: 0.9rem;">Custom Forum Avatar</label>
+                        <input type="file" name="forumImage" id="forumImage" class="form-control" accept="image/*" style="padding: 9px;">
+                        
+                        <button type="submit" class="btn-submit">Save Changes</button>
+                    </form>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}

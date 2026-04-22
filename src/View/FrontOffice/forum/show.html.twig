@@ -206,9 +206,24 @@
             background: rgba(0, 0, 0, 0.02);
             padding: 20px;
             border-radius: 12px;
+            position: relative;
         }
         body.dark-mode .add-comment {
             background: rgba(255, 255, 255, 0.05);
+        }
+
+        .mention-item {
+            padding: 8px 12px;
+            cursor: pointer;
+            border-bottom: 1px solid #eee;
+            color: #333;
+            font-size: 0.9rem;
+        }
+        .mention-item:hover {
+            background: #f0f0f0;
+        }
+        body.dark-mode .mention-item {
+            color: #222; /* keep black for list inside white box */
         }
 
         /* Flash messages */
@@ -266,6 +281,35 @@
             opacity: 0.45;
             cursor: not-allowed;
         }
+
+        /* Modal classes */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(5px);
+            z-index: 10000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal.active {
+            display: flex !important;
+        }
+        .modal-content {
+            background: #fff;
+            border: 1px solid var(--primary);
+            padding: 30px;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 500px;
+            position: relative;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        body.dark-mode .modal-content {
+            background: #1e1e2d;
+        }
+
         /* Translation UI */
         .translate-container {
             position: relative;
@@ -413,7 +457,7 @@
             <a href="{{ path('app_forum_index') }}" style="color: var(--primary-light); text-decoration: none; margin-bottom: 20px; display: inline-block;">&larr; Back to Forum</a>
             <h1 class="post-title" style="color: #000;">{{ post.title }}</h1>
             <div class="post-meta">
-                <span style="color: #666;">Posted by <strong style="color: var(--primary);">{{ post.authorName }}</strong></span>
+                <span style="color: #666;">Posted by <strong style="color: var(--primary);"><a href="{{ path('app_forum_profile', {'id': post.userId}) }}" style="color: inherit; text-decoration: none;" onmouseover="this.style.textDecoration='underline';" onmouseout="this.style.textDecoration='none';">{{ post.authorName }}</a></strong></span>
                 <span style="color: #666;">{{ post.createdAt|date('F j, Y, g:i a') }}</span>
             </div>
         </div>
@@ -476,13 +520,20 @@
                 </div>
             </div>
 
-            <div style="color: #b0a8d6; margin-left: 10px;">💬 {{ comments|length }} Comments</div>
+            <div style="color: #b0a8d6; margin-left: 10px;">💬 {{ totalComments }} Comments</div>
             
             <!-- Spacer -->
             <div style="flex: 1;"></div>
 
+            {% if isLoggedIn %}
+                <button type="button" class="delete-btn" style="border-color:#ffa502; color:#ffa502; background:rgba(255,165,2,0.1);" onclick="openReport('post', {{ post.id }})">🚩 Report</button>
+            {% endif %}
+
             {% if isLoggedIn and currentUserId == post.userId %}
-                <form action="{{ path('app_forum_delete', {'id': post.id}) }}" method="post" onsubmit="return confirm('Are you sure you want to delete this post?');">
+                <form action="{{ path('app_forum_toggle_lock', {'id': post.id}) }}" method="post" style="display:inline; margin-right: 10px;" onsubmit="promptConfirm(event, 'Are you sure you want to {{ post.isCommentsLocked ? 'unlock' : 'lock' }} comments?', this);">
+                    <button type="submit" class="delete-btn" style="border-color:#3498db; color:#3498db; background:rgba(52,152,219,0.1);">{{ post.isCommentsLocked ? '🔓 Unlock Comments' : '🔒 Lock Comments' }}</button>
+                </form>
+                <form action="{{ path('app_forum_delete', {'id': post.id}) }}" method="post" onsubmit="promptConfirm(event, 'Are you sure you want to delete this post?', this);">
                     <button type="submit" class="delete-btn">Delete Post</button>
                 </form>
             {% endif %}
@@ -505,23 +556,87 @@
                 </div>
             {% endfor %}
 
-            {% for comment in comments %}
-                <div class="comment">
-                    <div class="comment-meta">
-                        <strong>{{ comment.authorName }}</strong> - {{ comment.createdAt|date('M d, Y H:i') }}
+            {% for comment in rootComments %}
+                <div class="comment" id="comment-{{ comment.id }}">
+                    <div class="comment-meta" style="display:flex; justify-content:space-between; align-items:flex-start;">
+                        <span>
+                            <strong>{{ comment.authorName }}</strong> - Posted on {{ comment.createdAt|date('F j, Y') }} at {{ comment.createdAt|date('g:i a') }}
+                            {% if comment.isEdited %}<em style="font-size:0.75rem;">(edited)</em>{% endif %}
+                        </span>
+                        <div style="display:flex; gap: 8px; align-items:center;">
+                            <button onclick="voteComment({{ comment.id }}, 'upvote')" style="background:none;border:none;cursor:pointer;" title="Upvote">👍 <span id="upvotes_{{ comment.id }}">{{ comment.upvotes }}</span></button>
+                            <button onclick="voteComment({{ comment.id }}, 'downvote')" style="background:none;border:none;cursor:pointer;" title="Downvote">👎 <span id="downvotes_{{ comment.id }}">{{ comment.downvotes }}</span></button>
+                            
+                            {% if isLoggedIn %}
+                                <button onclick="toggleReplyForm({{ comment.id }})" style="background:none;border:none;cursor:pointer;color:var(--primary-light);" title="Reply">↩️ Reply</button>
+                            {% endif %}
+
+                            {% if isLoggedIn and comment.userId == app.session.get('user_id') %}
+                                <button onclick="editCommentPrompt({{ comment.id }}, '{{ comment.content|escape('js') }}')" style="background:none;border:none;cursor:pointer;color:#ffa502;" title="Edit">✏️</button>
+                                <form action="{{ path('app_forum_comment_delete_user', {'id': comment.id}) }}" method="post" style="display:inline;" onsubmit="promptConfirm(event, 'Delete this comment?', this);">
+                                    <button type="submit" style="background:none;border:none;cursor:pointer;color:#e74c3c;" title="Delete">🗑️</button>
+                                </form>
+                            {% else %}
+                                <button onclick="openReport('comment', {{ comment.id }})" style="background:none;border:none;cursor:pointer;color:#e74c3c;" title="Report Comment">🚩</button>
+                            {% endif %}
+                        </div>
                     </div>
                     <div class="comment-content">
                         {{ comment.content }}
                     </div>
+
+                    {# ── Reply Form (Hidden) ── #}
+                    {% if isLoggedIn %}
+                        <div id="reply-form-{{ comment.id }}" style="display:none; margin-top: 15px; padding-left: 20px; border-left: 2px solid var(--primary-light);">
+                            <form action="{{ path('app_forum_comment', {'id': post.id}) }}" method="post" onsubmit="return validateReply({{ comment.id }})">
+                                <input type="hidden" name="parentId" value="{{ comment.id }}">
+                                <textarea name="content" id="reply-content-{{ comment.id }}" class="pillField" rows="2" style="width:100%; border-radius:8px; margin-bottom:8px; color:black;" placeholder="Write a reply..."></textarea>
+                                <div style="display:flex; gap:10px;">
+                                    <button type="submit" class="signBtn" style="padding: 5px 15px; font-size: 0.9rem;">Post Reply</button>
+                                    <button type="button" class="signBtn" style="padding: 5px 15px; font-size: 0.9rem; background:transparent; border:1px solid #999; color:#999;" onclick="toggleReplyForm({{ comment.id }})">Cancel</button>
+                                </div>
+                            </form>
+                        </div>
+                    {% endif %}
+
+                    {# ── Nested Replies ── #}
+                    {% if replies[comment.id] is defined %}
+                        <div class="comment-replies" style="margin-top: 15px; margin-left: 30px; padding-left: 15px; border-left: 2px dashed rgba(108,92,231,0.2);">
+                            {% for reply in replies[comment.id] %}
+                                <div class="comment reply" style="background: rgba(255,255,255,0.02); padding: 12px; border-radius: 8px; margin-bottom: 10px;">
+                                    <div class="comment-meta" style="font-size: 0.9rem; margin-bottom: 5px;">
+                                        <strong>{{ reply.authorName }}</strong> • {{ reply.createdAt|date('M d, H:i') }}
+                                        <div style="float:right; display:flex; gap: 8px;">
+                                              <button onclick="voteComment({{ reply.id }}, 'upvote')" style="background:none;border:none;cursor:pointer;font-size:0.8rem;">👍 {{ reply.upvotes }}</button>
+                                              {% if isLoggedIn and reply.userId == app.session.get('user_id') %}
+                                                  <form action="{{ path('app_forum_comment_delete_user', {'id': reply.id}) }}" method="post" style="display:inline;" onsubmit="promptConfirm(event, 'Delete this reply?', this);">
+                                                      <button type="submit" style="background:none;border:none;cursor:pointer;color:#e74c3c;font-size:0.8rem;">🗑️</button>
+                                                  </form>
+                                              {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="comment-content" style="font-size: 0.95rem;">
+                                        {{ reply.content }}
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
                 </div>
             {% else %}
                 <p style="color: #888;">No comments yet. Be the first to share your thoughts!</p>
             {% endfor %}
 
-            {% if isLoggedIn %}
-                <div class="add-comment">
+            {% if post.isCommentsLocked %}
+                <div class="add-comment" style="text-align: center; border: 1px solid rgba(231, 76, 60, 0.3); background: rgba(231, 76, 60, 0.05);">
+                    <h3 style="color: #e74c3c; margin-bottom: 10px;">🔒 Comments Locked</h3>
+                    <p style="color: #888;">The owner of this post has frozen the discussion. No further comments can be added.</p>
+                </div>
+            {% elseif isLoggedIn %}
+                <div class="add-comment" style="position: relative;">
                     <h3 style="margin-bottom: 15px; color: var(--primary);">Add a Discussion</h3>
-                    <form id="commentForm" action="{{ path('app_forum_comment', {'id': post.id}) }}" method="post" onsubmit="return validateComment()">
+                    <div id="mentionBox" style="display:none; position:absolute; bottom:120px; left:20px; background:white; border:1px solid #ccc; max-height:150px; overflow-y:auto; z-index:1000; border-radius:8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); width:250px;"></div>
+                    <form id="commentForm" action="{{ path('app_forum_comment', {'id': post.id}) }}" method="post" onsubmit="return validateComment()" novalidate>
 
                         {# Hidden post content for duplicate detection #}
                         <input type="hidden" id="postContentRef" value="{{ post.content | e('html_attr') }}">
@@ -531,9 +646,8 @@
                             name="content"
                             class="pillField"
                             rows="4"
-                            maxlength="2000"
                             style="border-radius: 12px; resize: vertical; margin-bottom: 6px; color: #000; width: 100%; box-sizing: border-box;"
-                            placeholder="Write your comment here... (min 10 characters)"
+                            placeholder="Write your comment here..."
                             oninput="onCommentInput()"
                         ></textarea>
 
@@ -559,6 +673,46 @@
         </div>
     </div>
 
+    <!-- Edit Comment Modal -->
+    <div id="editCommentModal" class="modal">
+        <div class="modal-content auth-card">
+            <span onclick="document.getElementById('editCommentModal').classList.remove('active')" style="position:absolute; top:15px; right:20px; font-size:24px; cursor:pointer;">&times;</span>
+            <h2 style="margin-bottom:20px;">Edit Comment</h2>
+            <form id="editCommentForm" method="post" action="" novalidate>
+                <textarea id="editCommentContent" name="content" class="pillField" rows="4" style="width:100%; box-sizing:border-box; color:black;"></textarea>
+                <button type="submit" class="signBtn" style="margin-top:15px;">Update Comment</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Report Modal -->
+    <div id="reportModal" class="modal">
+        <div class="modal-content auth-card">
+            <span onclick="document.getElementById('reportModal').classList.remove('active')" style="position:absolute; top:15px; right:20px; font-size:24px; cursor:pointer;">&times;</span>
+            <h2 style="margin-bottom:20px;">Report Content</h2>
+            <form method="post" action="{{ path('app_forum_report') }}" novalidate>
+                <input type="hidden" id="reportType" name="type" value="">
+                <input type="hidden" id="reportTargetId" name="target_id" value="">
+                
+                <label class="field-label" for="reportReason">Reason for reporting</label>
+                <textarea id="reportReason" name="reason" class="pillField" rows="4" style="width:100%; box-sizing:border-box; color:black;" placeholder="Why are you reporting this?"></textarea>
+                
+                <button type="submit" class="signBtn" style="margin-top:15px; background: #e74c3c;">Submit Report</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Custom Confirm Modal -->
+    <div id="customConfirmModal" class="modal">
+        <div class="modal-content auth-card" style="text-align: center; max-width: 400px;">
+             <h3 id="confirmModalText" style="margin-bottom: 25px; color: var(--text-main);">Are you sure?</h3>
+             <div style="display: flex; gap: 15px; justify-content: center;">
+                 <button onclick="confirmCustomAction()" class="signBtn" style="flex: 1; background: #e74c3c;">Yes</button>
+                 <button type="button" onclick="closeCustomConfirm()" class="signBtn" style="flex: 1; background: transparent; border: 1px solid var(--text-main); color: var(--text-main);">Cancel</button>
+             </div>
+        </div>
+    </div>
+
 {% endblock %}
 
 {% block javascripts %}
@@ -572,6 +726,24 @@
                 document.querySelector('.comments-title').style.color = "var(--primary-lighter)";
             }
         });
+
+        /* Custom Confirm Logic */
+        let pendingForm = null;
+        function promptConfirm(event, message, formElement) {
+            event.preventDefault();
+            document.getElementById('confirmModalText').textContent = message;
+            pendingForm = formElement;
+            document.getElementById('customConfirmModal').classList.add('active');
+        }
+        function closeCustomConfirm() {
+            document.getElementById('customConfirmModal').classList.remove('active');
+            pendingForm = null;
+        }
+        function confirmCustomAction() {
+            if (pendingForm) {
+                pendingForm.submit();
+            }
+        }
 
         /* ── Comment live validation ─────────────────────────────────── */
         const MIN_LEN = 10;
@@ -737,6 +909,120 @@
                 panel.style.opacity = '1';
                 document.getElementById('translateBtnLabel').textContent = 'Translate';
             }, 300);
+        }
+
+        /* ── Vote Comment ─────────────────────────────────────── */
+        async function voteComment(commentId, typeStr) {
+            try {
+                const response = await fetch(`{{ path('app_forum_comment_vote', {'id': 'COMMENT_ID'}) }}`.replace('COMMENT_ID', commentId) + `?type=${typeStr}`, {
+                    method: 'POST',
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    document.getElementById('upvotes_'+commentId).innerText = data.upvotes;
+                    document.getElementById('downvotes_'+commentId).innerText = data.downvotes;
+                } else if (response.status === 401) {
+                    window.location.href = "{{ path('app_login') }}";
+                }
+            } catch (error) {
+                console.error("Error toggling comment vote:", error);
+            }
+        }
+
+        /* ── Mentions (Autocomplete) ─────────────────────────── */
+        const textarea = document.getElementById('commentContent');
+        if(textarea) {
+            let cachedUsers = null;
+
+            textarea.addEventListener('input', async function(e) {
+                const text = textarea.value;
+                const cursorPos = textarea.selectionStart;
+                const textBeforeCursor = text.substring(0, cursorPos);
+                const match = textBeforeCursor.match(/@(\w*)$/);
+                const box = document.getElementById('mentionBox');
+
+                if (match) {
+                    const query = match[1].toLowerCase();
+                    
+                    if (!cachedUsers) {
+                        try {
+                            const res = await fetch(`{{ path('app_forum_mention_search') }}?q=`);
+                            if(res.ok) cachedUsers = await res.json();
+                            else cachedUsers = [];
+                        } catch (err) {
+                            cachedUsers = [];
+                        }
+                    }
+
+                    const filtered = cachedUsers.filter(u => u.value.toLowerCase().startsWith(query)).slice(0, 10);
+
+                    box.innerHTML = '';
+                    if (filtered.length > 0) {
+                        filtered.forEach(u => {
+                            const div = document.createElement('div');
+                            div.textContent = "@" + u.value;
+                            div.className = 'mention-item';
+                            div.onclick = function() {
+                                const replaceStart = textBeforeCursor.lastIndexOf('@');
+                                textarea.value = text.substring(0, replaceStart) + '@' + u.value + ' ' + text.substring(cursorPos);
+                                box.style.display = 'none';
+                                cachedUsers = null;
+                                textarea.focus();
+                                if (typeof validateComment === 'function') validateComment();
+                            };
+                            box.appendChild(div);
+                        });
+                        box.style.display = 'block';
+                    } else {
+                        box.style.display = 'none';
+                    }
+                } else {
+                    box.style.display = 'none';
+                    cachedUsers = null;
+                }
+            });
+        }
+
+        /* ── Report & Edit Modals ────────────────────────────── */
+        function openReport(type, id) {
+            document.getElementById('reportType').value = type;
+            document.getElementById('reportTargetId').value = id;
+            document.getElementById('reportModal').classList.add('active');
+        }
+
+        function editCommentPrompt(id, currentContent) {
+            document.getElementById('editCommentContent').value = currentContent;
+            document.getElementById('editCommentForm').action = `{{ path('app_forum_comment_edit', {'id': 'COMMENT_ID'}) }}`.replace('COMMENT_ID', id);
+            document.getElementById('editCommentModal').classList.add('active');
+        }
+
+        /* ── Threaded Reply Logic ─────────────────────────────────── */
+        function toggleReplyForm(commentId) {
+            const form = document.getElementById(`reply-form-${commentId}`);
+            if (form.style.display === 'none') {
+                // Close other open reply forms first for better focus
+                document.querySelectorAll('[id^="reply-form-"]').forEach(f => f.style.display = 'none');
+                form.style.display = 'block';
+                document.getElementById(`reply-content-${commentId}`).focus();
+            } else {
+                form.style.display = 'none';
+            }
+        }
+
+        function validateReply(commentId) {
+            const textarea = document.getElementById(`reply-content-${commentId}`);
+            const trimmed = textarea.value.trim();
+            if (trimmed.length === 0) {
+                alert('✏️ Your reply cannot be empty. Please write something before posting.');
+                return false;
+            }
+            if (trimmed.length < 3) {
+                alert('✏️ Your reply is too short. Please add more detail.');
+                return false;
+            }
+            return true;
         }
     </script>
 {% endblock %}

@@ -131,4 +131,59 @@ class ForumPosts
         return $this;
     }
 
+    #[ORM\Column(type: Types::BOOLEAN, options: ['default' => true])]
+    private bool $isActive = true;
+
+    public function getIsActive(): bool
+    {
+        return $this->isActive;
+    }
+
+    public function setIsActive(bool $isActive): static
+    {
+        $this->isActive = $isActive;
+        return $this;
+    }
+
+    #[ORM\Column(type: Types::BOOLEAN, options: ['default' => false])]
+    private bool $isPinned = false;
+
+    public function getIsPinned(): bool
+    {
+        return $this->isPinned;
+    }
+
+    public function setIsPinned(bool $isPinned): static
+    {
+        $this->isPinned = $isPinned;
+        return $this;
+    }
+
+    #[ORM\Column(type: Types::INTEGER, options: ['default' => 0])]
+    private int $views = 0;
+
+    public function getViews(): int
+    {
+        return $this->views;
+    }
+
+    public function setViews(int $views): static
+    {
+        $this->views = $views;
+        return $this;
+    }
+
+    #[ORM\Column(type: Types::BOOLEAN, options: ['default' => false])]
+    private bool $isCommentsLocked = false;
+
+    public function getIsCommentsLocked(): bool
+    {
+        return $this->isCommentsLocked;
+    }
+
+    public function setIsCommentsLocked(bool $isCommentsLocked): static
+    {
+        $this->isCommentsLocked = $isCommentsLocked;
+        return $this;
+    }
 }
