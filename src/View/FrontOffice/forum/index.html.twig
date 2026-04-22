@@ -1,0 +1,987 @@
+{% extends 'FrontOffice/base.html.twig' %}
+
+{% block title %}StartupFlow Tunisia - Forum{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .forum-header {
+            text-align: center;
+            padding: 100px 20px 20px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .forum-feed {
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+            padding: 20px 20px 80px;
+            max-width: 900px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 2;
+        }
+
+        .forum-card {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid rgba(200, 200, 200, 0.5);
+            border-radius: 12px;
+            overflow: hidden;
+            color: #111;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        body.dark-mode .forum-card {
+            background: rgba(30, 30, 45, 0.6);
+            border-color: rgba(255, 255, 255, 0.1);
+            color: var(--text-main);
+        }
+
+        .create-post-btn-wrap {
+            text-align: center;
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+
+        /* Post Header (Avatar + Meta) */
+        .post-top {
+            display: flex;
+            align-items: center;
+            padding: 15px 20px;
+            gap: 12px;
+        }
+        
+        .post-avatar {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.2rem;
+            color: white;
+        }
+
+        .post-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .post-author {
+            font-weight: 600;
+            font-size: 1.05rem;
+            color: var(--primary);
+        }
+        body.dark-mode .post-author {
+            color: var(--primary-lighter);
+        }
+
+        .post-date {
+            font-size: 0.8rem;
+            color: #666;
+        }
+        body.dark-mode .post-date {
+            color: #b0a8d6;
+        }
+
+        .post-text {
+            padding: 0 20px 15px;
+            font-size: 1rem;
+            line-height: 1.5;
+            color: #111;
+        }
+        body.dark-mode .post-text {
+            color: #e2dcff;
+        }
+        
+        .post-title-inline {
+            font-weight: bold;
+            display: block;
+            margin-bottom: 5px;
+            font-size: 1.1rem;
+            color: #000;
+        }
+        body.dark-mode .post-title-inline {
+            color: #fff;
+        }
+
+        .post-image-container {
+            width: 100%;
+            max-height: 500px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0,0,0,0.05);
+            border-top: 1px solid rgba(0,0,0,0.05);
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+        }
+        body.dark-mode .post-image-container {
+            background: rgba(0,0,0,0.2);
+            border-color: rgba(255,255,255,0.05);
+        }
+
+        .post-image-container img {
+            width: 100%;
+            height: auto;
+            max-height: 500px;
+            object-fit: cover;
+        }
+
+        .post-actions-bar {
+            display: flex;
+            padding: 10px 20px;
+            gap: 5px;
+            position: relative;
+        }
+
+        .action-btn {
+            flex: 1;
+            padding: 10px;
+            background: transparent;
+            border: none;
+            color: #555;
+            font-size: 0.95rem;
+            font-weight: 500;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            text-decoration: none;
+        }
+        body.dark-mode .action-btn {
+            color: #b0a8d6;
+        }
+
+        .action-btn:hover {
+            background: rgba(0, 0, 0, 0.05);
+        }
+        body.dark-mode .action-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .action-btn.liked-status {
+            color: #ff4757;
+        }
+
+        /* REACTION SYSTEM */
+        .reaction-container {
+            position: relative;
+            flex: 1;
+        }
+        .reactions-box {
+            position: absolute;
+            bottom: 45px;
+            left: 50%;
+            transform: translateX(-50%) scale(0);
+            background: white;
+            border-radius: 30px;
+            padding: 8px 12px;
+            display: flex;
+            gap: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            transition: transform 0.2s ease-out;
+            z-index: 10;
+        }
+        body.dark-mode .reactions-box {
+            background: #2a2a3c;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+        }
+        .reaction-container:hover .reactions-box {
+            transform: translateX(-50%) scale(1);
+        }
+        .reaction-emoji {
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .reaction-emoji:hover {
+            transform: scale(1.3) translateY(-5px);
+        }
+
+        /* Modal for Create Post */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(5px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal.active {
+            display: flex;
+        }
+        .modal-content {
+            background: #fff;
+            border: 1px solid var(--primary);
+            padding: 30px;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 500px;
+            position: relative;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        body.dark-mode .modal-content {
+            background: #1e1e2d;
+        }
+        /* Translate button on feed cards */
+        .feed-translate-container {
+            position: relative;
+            flex: 1;
+        }
+        .feed-translate-btn {
+            width: 100%;
+            background: transparent;
+            border: none;
+            color: #6c5ce7;
+            font-size: 0.95rem;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 10px;
+        }
+        body.dark-mode .feed-translate-btn { color: #a29bfe; }
+        .feed-translate-btn:hover {
+            background: rgba(108,92,231,0.1);
+        }
+        .feed-lang-dropdown {
+            position: absolute;
+            bottom: 48px;
+            left: 50%;
+            transform: translateX(-50%) scale(0.9);
+            opacity: 0;
+            pointer-events: none;
+            background: #fff;
+            border-radius: 14px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.18);
+            padding: 10px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 5px;
+            min-width: 260px;
+            transition: all 0.25s cubic-bezier(.34,1.56,.64,1);
+            z-index: 100;
+        }
+        body.dark-mode .feed-lang-dropdown {
+            background: #1e1e2e;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+        }
+        .feed-translate-container.open .feed-lang-dropdown {
+            opacity: 1;
+            pointer-events: all;
+            transform: translateX(-50%) scale(1);
+        }
+        .feed-lang-option {
+            background: rgba(108,92,231,0.07);
+            border: 1px solid rgba(108,92,231,0.15);
+            border-radius: 8px;
+            padding: 6px 10px;
+            cursor: pointer;
+            font-size: 0.83rem;
+            text-align: left;
+            transition: all 0.2s;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        body.dark-mode .feed-lang-option { color: #ccc; }
+        .feed-lang-option:hover {
+            background: rgba(108,92,231,0.2);
+            border-color: #6c5ce7;
+            color: #6c5ce7;
+        }
+        /* Inline translation panel per card */
+        .card-translation-panel {
+            display: none;
+            border-top: 2px solid rgba(108,92,231,0.25);
+            background: rgba(108,92,231,0.04);
+            animation: fadeInUp 0.35s ease;
+        }
+        body.dark-mode .card-translation-panel {
+            background: rgba(108,92,231,0.1);
+        }
+        @keyframes fadeInUp {
+            from { opacity:0; transform:translateY(8px); }
+            to   { opacity:1; transform:translateY(0); }
+        }
+        .card-translation-header {
+            background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+            color: #fff;
+            padding: 8px 16px;
+            font-size: 0.83rem;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .card-translation-body {
+            padding: 14px 18px;
+        }
+        .card-translated-title {
+            font-weight: 700;
+            font-size: 1rem;
+            color: #6c5ce7;
+            margin-bottom: 8px;
+        }
+        body.dark-mode .card-translated-title { color: #a29bfe; }
+        .card-translated-content {
+            font-size: 0.9rem;
+            line-height: 1.6;
+            color: #333;
+        }
+        body.dark-mode .card-translated-content { color: #ccc; }
+        .card-close-translation {
+            background: rgba(255,255,255,0.25);
+            border: none; color: #fff;
+            border-radius: 50%;
+            width: 22px; height: 22px;
+            cursor: pointer; font-size: 0.9rem;
+            display: flex; align-items: center; justify-content: center;
+            transition: background 0.2s;
+        }
+        .card-close-translation:hover { background: rgba(255,255,255,0.45); }
+        .feed-translate-spinner {
+            width: 14px; height: 14px;
+            border: 2px solid rgba(108,92,231,0.3);
+            border-top-color: #6c5ce7;
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+            display: none;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        
+        /* Custom File Upload Button */
+        input[type="file"]::file-selector-button {
+            background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+            color: #fff;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            margin-right: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        input[type="file"]::file-selector-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(108,92,231,0.3);
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+
+    <div class="forum-header">
+        <h1 class="glow-text" style="font-size: 2.5rem; margin-bottom: 5px;">Community Feed</h1>
+        {% if isLoggedIn %}
+            <div class="create-post-btn-wrap" style="display: flex; gap: 15px; justify-content: center; margin-top: 15px;">
+                <a href="{{ path('app_forum_profile', {'id': app.session.get('user_id')}) }}" class="btn-pill" style="border: 2px solid var(--primary); background: transparent; padding: 12px 30px; text-decoration: none; color: var(--primary); font-weight: bold;">View My Profile</a>
+                <button onclick="document.getElementById('createPostModal').classList.add('active')" class="btn-pill glow-btn" style="font-size: 1.1rem; padding: 12px 30px;">+ Create New Post</button>
+            </div>
+        {% else %}
+            <div class="create-post-btn-wrap">
+                <a href="{{ path('app_login') }}" class="btn-pill" style="border: 1px solid var(--primary); padding: 12px 30px;">Log in to post</a>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Analytics Dashboard Widget -->
+    <div style="max-width: 900px; margin: 0 auto 30px; display: flex; gap: 20px; flex-wrap: wrap; padding: 0 20px;">
+        <!-- Stats Card -->
+        <div style="flex: 1; min-width: 250px; background: rgba(255,255,255,0.05); padding: 20px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 4px 15px rgba(0,0,0,0.1); backdrop-filter: blur(10px);">
+            <h3 style="margin-bottom: 15px; font-size: 1.2rem; color: var(--primary-lighter);">📊 Global Engagement</h3>
+            <div style="display:flex; justify-content: space-around; text-align: center;">
+                <div>
+                    <div style="font-size: 1.8rem; font-weight: bold; color: var(--primary);">{{ totalPostsCount|default(0) }}</div>
+                    <div style="font-size: 0.85rem; color: #888;">Total Posts</div>
+                </div>
+                <div>
+                    <div style="font-size: 1.8rem; font-weight: bold; color: #ff9d9d;">{{ totalCommentsCount|default(0) }}</div>
+                    <div style="font-size: 0.85rem; color: #888;">Total Comments</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Trending Card -->
+        <div style="flex: 2; min-width: 300px; background: rgba(255,255,255,0.05); padding: 20px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 4px 15px rgba(0,0,0,0.1); backdrop-filter: blur(10px);">
+            <h3 style="margin-bottom: 15px; font-size: 1.2rem; color: #ff9f43;">🔥 Trending Topics</h3>
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+                {% for tPost in trendingPosts|default([]) %}
+                    <a href="{{ path('app_forum_show', {'id': tPost.id}) }}" style="text-decoration: none; display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.1); padding: 10px 15px; border-radius: 8px; transition: all 0.2s; border: 1px solid transparent; color: inherit;" onmouseover="this.style.background='rgba(0,0,0,0.2)';" onmouseout="this.style.background='rgba(0,0,0,0.1)';">
+                        <span style="font-weight: 500;">
+                            {{ tPost.title|length > 50 ? tPost.title|slice(0, 50) ~ '...' : tPost.title }}
+                        </span>
+                        <span style="font-size: 0.8rem; color: #888; background: rgba(255,255,255,0.1); padding: 3px 8px; border-radius: 12px; margin-left: 10px; white-space:nowrap;">
+                            👁️ {{ tPost.views }} Views
+                        </span>
+                    </a>
+                {% else %}
+                    <div style="color: #888; font-size: 0.9rem;">No trending topics yet!</div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div class="forum-feed">
+        <!-- Posts Feed -->
+        {% for pd in postsData %}
+            <div class="forum-card">
+                
+                <div class="post-top">
+                    <div class="post-avatar">
+                        <a href="{{ path('app_forum_profile', {'id': pd.post.userId}) }}" style="color: inherit; text-decoration: none; display:block; width:100%; height:100%;">
+                            {% if pd.author and pd.author.forumImage %}
+                                <img src="{{ asset('uploads/forum_profiles/' ~ pd.author.forumImage) }}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">
+                            {% else %}
+                                {{ pd.post.authorName|first|upper ?: 'U' }}
+                            {% endif %}
+                        </a>
+                    </div>
+                    <div class="post-info" style="flex:1;">
+                        <span class="post-author">
+                            <a href="{{ path('app_forum_profile', {'id': pd.post.userId}) }}" style="color: inherit; text-decoration: none;" onmouseover="this.style.textDecoration='underline';" onmouseout="this.style.textDecoration='none';">{{ pd.post.authorName ?: 'Anonymous' }}</a>
+                            {% if pd.post.isPinned %}
+                                <span style="font-size: 0.75rem; background: #6c5ce7; color: white; padding: 2px 6px; border-radius: 12px; margin-left: 5px;" title="Pinned Post">📌 Pinned</span>
+                            {% endif %}
+                            {% if pd.author and pd.author.gamificationPoints > 0 %}
+                                <span style="font-size: 0.75rem; background: gold; color: #b8860b; padding: 2px 6px; border-radius: 12px; margin-left: 5px;" title="Activity Points">★ {{ pd.author.gamificationPoints }} pts</span>
+                            {% endif %}
+                            {% if not pd.post.isActive %}
+                                <span style="font-size: 0.75rem; background: #e74c3c; color: white; padding: 2px 6px; border-radius: 12px; margin-left: 5px;">Deactivated</span>
+                            {% endif %}
+                        </span>
+                        <span class="post-date">{{ pd.post.createdAt|date('F j, Y \\a\\t g:i a') }}</span>
+                    </div>
+
+                    {% if isLoggedIn and pd.post.userId == app.session.get('user_id') %}
+                    <div>
+                        <form action="{{ path('app_forum_toggle_active', {'id': pd.post.id}) }}" method="post" style="display:inline;">
+                            <button type="submit" class="action-btn" style="padding: 5px 10px; font-size: 0.8rem; background: rgba(0,0,0,0.05);">
+                                {{ pd.post.isActive ? '👁️ Deactivate' : '👁️ Activate' }}
+                            </button>
+                        </form>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="post-text">
+                    <span class="post-title-inline">{{ pd.post.title }}</span>
+                    {{ pd.post.content|length > 250 ? pd.post.content|slice(0, 250) ~ '...' : pd.post.content }}
+                </div>
+
+                {% if pd.post.imageUrl and pd.post.imageUrl != 'default_post.png' %}
+                    <div class="post-image-container">
+                        {% if 'http' in pd.post.imageUrl %}
+                            <img src="{{ pd.post.imageUrl }}" alt="Post Attachment">
+                        {% else %}
+                            <img src="{{ asset('uploads/forum/' ~ pd.post.imageUrl) }}" alt="Post Attachment">
+                        {% endif %}
+                    </div>
+                {% endif %}
+                
+                <div style="padding: 10px 20px; border-bottom: 1px solid rgba(150,150,150,0.2); font-size: 0.85rem; color: #888; display: flex; justify-content: space-between;">
+                    <span id="likeCountDisplay_{{ pd.post.id }}">{{ pd.likeCount }} Interactions</span>
+                    <span>{{ pd.commentCount }} Comments</span>
+                    <span>👁️ {{ pd.post.views|default(0) }} Views</span>
+                </div>
+
+                <div class="post-actions-bar">
+                    <div class="reaction-container">
+                        <div class="reactions-box">
+                            <span class="reaction-emoji" onclick="toggleFeedLike({{ pd.post.id }}, 'LIKE', '👍')">👍</span>
+                            <span class="reaction-emoji" onclick="toggleFeedLike({{ pd.post.id }}, 'LOVE', '❤️')">❤️</span>
+                            <span class="reaction-emoji" onclick="toggleFeedLike({{ pd.post.id }}, 'HAHA', '😆')">😆</span>
+                            <span class="reaction-emoji" onclick="toggleFeedLike({{ pd.post.id }}, 'WOW', '😲')">😲</span>
+                            <span class="reaction-emoji" onclick="toggleFeedLike({{ pd.post.id }}, 'SAD', '😢')">😢</span>
+                            <span class="reaction-emoji" onclick="toggleFeedLike({{ pd.post.id }}, 'ANGRY', '😡')">😡</span>
+                        </div>
+                        <button id="likeBtn_{{ pd.post.id }}" class="action-btn {% if pd.userLiked %}liked-status{% endif %}" onclick="toggleFeedLike({{ pd.post.id }}, 'LIKE', '👍')">
+                            <span id="likeIcon_{{ pd.post.id }}">{{ pd.userLiked ? '❤️' : '🤍' }}</span> <span id="likeText_{{ pd.post.id }}">React</span>
+                        </button>
+                    </div>
+
+                    <a href="{{ path('app_forum_show', {'id': pd.post.id}) }}" class="action-btn" style="color:var(--primary);">
+                        💬 Comment
+                    </a>
+
+                    {% if isLoggedIn %}
+                        <button class="action-btn" onclick="openReport('post', {{ pd.post.id }})" style="color:#e74c3c;">🚩 Report</button>
+                        
+                        {% if pd.post.userId == app.session.get('user_id') and not pd.post.isPinned %}
+                            <form action="{{ path('app_forum_pin_post', {'id': pd.post.id}) }}" method="post" style="display:inline; flex:1;" onsubmit="promptConfirm(event, 'Pin this post for 50 points?', this);">
+                                <button type="submit" class="action-btn" style="color:#b8860b; width:100%;">📌 Pin (50 pts)</button>
+                            </form>
+                        {% endif %}
+                    {% endif %}
+
+                    {# ── Translate button ────────────────────────────────────── #}
+                    <div class="feed-translate-container" id="ftc_{{ pd.post.id }}">
+                        <button class="feed-translate-btn" onclick="toggleFeedLangPicker(event, {{ pd.post.id }})" id="ftBtn_{{ pd.post.id }}">
+                            🌐 <span id="ftLabel_{{ pd.post.id }}">Translate</span>
+                            <div class="feed-translate-spinner" id="ftSpinner_{{ pd.post.id }}"></div>
+                        </button>
+                        <div class="feed-lang-dropdown" id="ftDropdown_{{ pd.post.id }}">
+                            {% for code, lang in languages %}
+                                <button class="feed-lang-option" onclick="doFeedTranslate({{ pd.post.id }}, '{{ code }}', '{{ lang.name }}')">
+                                    {{ lang.flag }} {{ lang.name }}
+                                </button>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                {# ── Inline translation result panel (hidden until translate is clicked) ── #}
+                <div class="card-translation-panel" id="ctp_{{ pd.post.id }}">
+                    <div class="card-translation-header">
+                        <span id="ctpLabel_{{ pd.post.id }}">🌐 Translation</span>
+                        <button class="card-close-translation" onclick="closeFeedTranslation({{ pd.post.id }})">✕</button>
+                    </div>
+                    <div class="card-translation-body">
+                        <div class="card-translated-title" id="ctpTitle_{{ pd.post.id }}"></div>
+                        <div class="card-translated-content" id="ctpContent_{{ pd.post.id }}"></div>
+                    </div>
+                </div>
+            </div>
+        {% else %}
+            <p style="text-align: center; color: #b0a8d6;">No posts right now.</p>
+        {% endfor %}
+    </div>
+
+    <!-- Create Post Modal -->
+    {% if isLoggedIn %}
+    <div id="createPostModal" class="modal">
+        <div class="modal-content auth-card">
+            <span style="position: absolute; top: 15px; right: 20px; font-size: 24px; cursor: pointer; color: var(--text-main);" onclick="document.getElementById('createPostModal').classList.remove('active')">&times;</span>
+            <h2 class="welcome-title" style="margin-bottom: 20px; font-size: 1.8rem; color: var(--text-main);">Create Post</h2>
+            
+            <form method="post" action="{{ path('app_forum_create') }}" enctype="multipart/form-data" novalidate>
+                <label class="field-label" style="color: var(--text-main);" for="title">Title</label>
+                <input type="text" id="title" name="title" class="pillField" style="color: #000;">
+                
+                <!-- AI Assistant Module -->
+                <div style="background: rgba(111, 86, 255, 0.05); border: 1px solid rgba(111, 86, 255, 0.2); border-radius: 12px; padding: 15px; margin: 15px 0;">
+                    <label class="field-label" style="color: var(--primary); display: flex; align-items: center; gap: 8px;">
+                        <span>✨</span> AI Assistant
+                    </label>
+                    <p style="font-size: 0.8rem; color: #888; margin-bottom: 10px;">Not sure what to write? Give me a topic and I'll draft it for you!</p>
+                    <div style="display: flex; gap: 10px;">
+                        <input type="text" id="aiPromptInput" class="pillField" placeholder="e.g. Benefits of using AI in startups" style="border: 1px solid rgba(111, 86, 255, 0.3); color: #000; flex: 1;">
+                        <button type="button" id="aiGenerateBtn" class="btn-pill glow-btn" style="padding: 10px 15px; font-size: 0.9rem;" onclick="generateAiDraft()">Draft</button>
+                    </div>
+                    <div id="aiLoadingIndicator" style="display: none; margin-top: 10px; font-size: 0.85rem; color: var(--primary); font-weight: bold; align-items: center; gap: 8px;">
+                        <span style="display: inline-block; animation: spin 1s linear infinite;">⏳</span> AI is generating your draft...
+                    </div>
+                </div>
+
+                <label class="field-label" style="color: var(--text-main);" for="content">Content</label>
+                <textarea id="content" name="content" class="pillField" rows="5" style="border-radius: 12px; resize: vertical; color: #000;"></textarea>
+                
+                <label class="field-label" style="color: var(--text-main);" for="image">Upload Image (Optional)</label>
+                <input type="file" id="image" name="image" class="pillField" style="padding: 10px; color: var(--text-main);" accept="image/*">
+                
+                <button type="submit" class="signBtn" style="margin-top: 15px;">Publish Post</button>
+            </form>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Report Modal -->
+    <div id="reportModal" class="modal">
+        <div class="modal-content auth-card">
+            <span onclick="document.getElementById('reportModal').classList.remove('active')" style="position:absolute; top:15px; right:20px; font-size:24px; cursor:pointer;">&times;</span>
+            <h2 style="margin-bottom:20px;">Report Content</h2>
+            <form method="post" action="{{ path('app_forum_report') }}" novalidate>
+                <input type="hidden" id="reportType" name="type" value="">
+                <input type="hidden" id="reportTargetId" name="target_id" value="">
+                
+                <label class="field-label" for="reportReason">Reason for reporting</label>
+                <textarea id="reportReason" name="reason" class="pillField" rows="4" style="width:100%; box-sizing:border-box; color:black;" placeholder="Why are you reporting this?"></textarea>
+                
+                <button type="submit" class="signBtn" style="margin-top:15px; background: #e74c3c;">Submit Report</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Custom Confirm Modal -->
+    <div id="customConfirmModal" class="modal">
+        <div class="modal-content auth-card" style="text-align: center; max-width: 400px;">
+            <h3 id="confirmModalText" style="margin-bottom: 25px; color: var(--text-main);">Are you sure?</h3>
+            <div style="display: flex; gap: 15px; justify-content: center;">
+                <button onclick="confirmCustomAction()" class="signBtn" style="flex: 1; background: #6c5ce7;">Yes</button>
+                <button type="button" onclick="closeCustomConfirm()" class="signBtn" style="flex: 1; background: transparent; border: 1px solid var(--text-main); color: var(--text-main);">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Voice Nav Button & Toast -->
+    <button id="voiceNavToggle" title="Click to activate Voice Navigation" onclick="toggleVoiceNav(event)">🎙️</button>
+    <div id="voiceStatusToast">Listening...</div>
+
+    <style>
+        /* Voice Nav UI */
+        #voiceNavToggle {
+            position: fixed; bottom: 40px; left: 40px; width: 60px; height: 60px; border-radius: 50%;
+            background: linear-gradient(135deg, #6c5ce7, #a29bfe); color: white; font-size: 24px;
+            border: none; box-shadow: 0 5px 15px rgba(108, 92, 231, 0.4); cursor: pointer;
+            z-index: 9999; display: flex; align-items: center; justify-content: center;
+            transition: all 0.3s ease;
+        }
+        #voiceNavToggle:hover { transform: scale(1.1); }
+        #voiceNavToggle.listening {
+            animation: pulse-ring 1.5s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+            background: linear-gradient(135deg, #e74c3c, #ff7979); box-shadow: 0 5px 15px rgba(231, 76, 60, 0.4);
+        }
+        @keyframes pulse-ring {
+            0% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.7); }
+            70% { box-shadow: 0 0 0 20px rgba(231, 76, 60, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0); }
+        }
+        #voiceStatusToast {
+            position: fixed; bottom: 110px; left: 40px; background: rgba(0,0,0,0.8);
+            color: white; padding: 10px 20px; border-radius: 8px; font-size: 0.9rem;
+            pointer-events: none; opacity: 0; transition: opacity 0.3s; z-index: 9999;
+        }
+    </style>
+
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <style>
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+    </style>
+    <script>
+        async function generateAiDraft() {
+            const promptInput = document.getElementById('aiPromptInput');
+            const targetTextArea = document.getElementById('content');
+            const generateBtn = document.getElementById('aiGenerateBtn');
+            const loadingIndicator = document.getElementById('aiLoadingIndicator');
+            
+            const prompt = promptInput.value.trim();
+            if(!prompt) {
+                if(typeof window.showCustomToast === 'function') {
+                    window.showCustomToast('error', 'Please enter a topic for the AI to draft.');
+                } else {
+                    alert('Please enter a topic for the AI.');
+                }
+                return;
+            }
+
+            generateBtn.disabled = true;
+            generateBtn.style.opacity = '0.5';
+            document.addEventListener("DOMContentLoaded", function() {
+            // Wait for DOM to handle dark mode if needed
+        });
+
+        /* Custom Confirm Logic */
+        let pendingForm = null;
+        function promptConfirm(event, message, formElement) {
+            event.preventDefault();
+            document.getElementById('confirmModalText').textContent = message;
+            pendingForm = formElement;
+            document.getElementById('customConfirmModal').classList.add('active');
+        }
+        function closeCustomConfirm() {
+            document.getElementById('customConfirmModal').classList.remove('active');
+            pendingForm = null;
+        }
+        function confirmCustomAction() {
+            if (pendingForm) {
+                pendingForm.submit();
+            }
+        }
+
+        const AI_GENERATE_URL = '{{ path('app_forum_ai_generate') }}';
+            loadingIndicator.style.display = 'flex';
+
+            try {
+                const response = await fetch(AI_GENERATE_URL, {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest' 
+                    },
+                    body: JSON.stringify({ prompt: prompt })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    targetTextArea.value = data.content;
+                    
+                    if(typeof window.showCustomToast === 'function') {
+                        window.showCustomToast('success', 'AI draft generated! Feel free to edit the text below.');
+                    }
+                } else {
+                    if(response.status === 401) {
+                        window.location.href = "{{ path('app_login') }}";
+                    } else {
+                        throw new Error("Failed to generate content");
+                    }
+                }
+            } catch (e) {
+                if(typeof window.showCustomToast === 'function') {
+                    window.showCustomToast('error', 'Error reaching AI Assistant. Try again.');
+                }
+            } finally {
+                generateBtn.disabled = false;
+                generateBtn.style.opacity = '1';
+                loadingIndicator.style.display = 'none';
+            }
+        }
+
+        async function toggleFeedLike(postId, typeStr, emojiChar) {
+            const button = document.getElementById('likeBtn_' + postId);
+            const icon = document.getElementById('likeIcon_' + postId);
+            const text = document.getElementById('likeText_' + postId);
+            const countDisplay = document.getElementById('likeCountDisplay_' + postId);
+            
+            try {
+                const response = await fetch(`{{ path('app_forum_react', {'id': 'POST_ID_PLACEHOLDER'}) }}`.replace('POST_ID_PLACEHOLDER', postId) + `?type=${typeStr}`, {
+                    method: 'POST',
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.reacted) {
+                        button.classList.add('liked-status');
+                        icon.innerText = emojiChar;
+                        text.innerText = data.type.charAt(0) + data.type.slice(1).toLowerCase();
+                    } else {
+                        button.classList.remove('liked-status');
+                        icon.innerText = '🤍';
+                        text.innerText = 'React';
+                    }
+                    if(countDisplay) {
+                        countDisplay.innerText = data.count + " Interactions";
+                    }
+                } else if (response.status === 401) {
+                    window.location.href = "{{ path('app_login') }}";
+                }
+            } catch (e) {}
+        }
+
+        /* ── Feed Card Translation ────────────────────────────────────────── */
+        const TRANSLATE_BASE = '{{ path('app_forum_translate', {'id': 'POST_ID_PLACEHOLDER'}) }}';
+
+        function toggleFeedLangPicker(e, postId) {
+            e.stopPropagation();
+            // Close all other open pickers first
+            document.querySelectorAll('.feed-translate-container.open').forEach(function(el) {
+                if (el.id !== 'ftc_' + postId) el.classList.remove('open');
+            });
+            document.getElementById('ftc_' + postId).classList.toggle('open');
+        }
+
+        // Close all dropdowns when clicking outside
+        document.addEventListener('click', function() {
+            document.querySelectorAll('.feed-translate-container.open').forEach(function(el) {
+                el.classList.remove('open');
+            });
+        });
+
+        async function doFeedTranslate(postId, langCode, langName) {
+            document.getElementById('ftc_' + postId).classList.remove('open');
+
+            const btn     = document.getElementById('ftBtn_' + postId);
+            const label   = document.getElementById('ftLabel_' + postId);
+            const spinner = document.getElementById('ftSpinner_' + postId);
+
+            label.textContent = 'Translating…';
+            spinner.style.display = 'block';
+            btn.disabled = true;
+
+            try {
+                const url = TRANSLATE_BASE.replace('POST_ID_PLACEHOLDER', postId);
+                const fd  = new FormData();
+                fd.append('lang', langCode);
+
+                const res  = await fetch(url, { method: 'POST', body: fd });
+                const data = await res.json();
+
+                if (data.error) {
+                    alert('Translation failed: ' + data.error);
+                    return;
+                }
+
+                document.getElementById('ctpTitle_' + postId).textContent   = data.title;
+                document.getElementById('ctpContent_' + postId).textContent = data.content;
+                document.getElementById('ctpLabel_' + postId).textContent   = '🌐 Translated to ' + data.langName;
+
+                const panel = document.getElementById('ctp_' + postId);
+                panel.style.display = 'block';
+                panel.style.animation = 'none';
+                panel.offsetHeight;
+                panel.style.animation = '';
+
+                label.textContent = '🌐 ' + langName;
+            } catch (err) {
+                alert('Network error — could not reach translation service.');
+            } finally {
+                spinner.style.display = 'none';
+                btn.disabled = false;
+            }
+        }
+
+        function closeFeedTranslation(postId) {
+            const panel = document.getElementById('ctp_' + postId);
+            panel.style.transition = 'opacity 0.3s';
+            panel.style.opacity = '0';
+            setTimeout(function() {
+                panel.style.display = 'none';
+                panel.style.opacity = '1';
+                document.getElementById('ftLabel_' + postId).textContent = 'Translate';
+            }, 300);
+        }
+
+        function openReport(type, id) {
+            document.getElementById('reportType').value = type;
+            document.getElementById('reportTargetId').value = id;
+            document.getElementById('reportModal').classList.add('active');
+        }
+
+        /* --- Hands-Free Voice Navigation --- */
+        const voiceBtn = document.getElementById('voiceNavToggle');
+        const voiceToast = document.getElementById('voiceStatusToast');
+        let recognition = null;
+        let isListening = false;
+
+        if (window.SpeechRecognition || window.webkitSpeechRecognition) {
+            try {
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                recognition = new SpeechRecognition();
+                recognition.continuous = true;
+                recognition.interimResults = false;
+                recognition.lang = 'en-US';
+
+                recognition.onstart = function() {
+                    isListening = true;
+                    if(voiceBtn) voiceBtn.classList.add('listening');
+                    showToast("Voice Nav Activated! Try saying 'scroll down' or 'next post'");
+                };
+
+                recognition.onend = function() {
+                    // Keep listening if didn't manually stop
+                    if (isListening) {
+                        try { recognition.start(); } catch(e) {}
+                    } else {
+                        if(voiceBtn) voiceBtn.classList.remove('listening');
+                        showToast("Voice Nav Deactivated");
+                    }
+                };
+
+                recognition.onerror = function(event) {
+                    console.error("Speech error", event.error);
+                    if(event.error === 'not-allowed') {
+                        isListening = false;
+                        if(voiceBtn) voiceBtn.classList.remove('listening');
+                        showToast("Microphone access denied");
+                    }
+                };
+
+                recognition.onresult = function(event) {
+                    const results = event.results;
+                    const latestResult = results[results.length - 1][0].transcript.toLowerCase().trim();
+                    showToast("Heard: " + latestResult);
+                    handleVoiceCommand(latestResult);
+                };
+            } catch (err) {
+                console.error("Speech init failed", err);
+            }
+        } else {
+            if(voiceBtn) voiceBtn.style.display = 'none';
+        }
+
+        window.toggleVoiceNav = function(e) {
+            if (e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            if (!window.SpeechRecognition && !window.webkitSpeechRecognition) {
+                alert("Your browser does not support the Web Speech API. Please use Google Chrome or Edge.");
+                return;
+            }
+            if (!recognition) {
+                alert("The Voice engine failed to initialize. Please check console errors.");
+                return;
+            }
+            if (isListening) {
+                isListening = false;
+                recognition.stop();
+            } else {
+                try {
+                    showToast("Requesting Microphone...");
+                    recognition.start();
+                } catch(err) {
+                    console.error("Could not start recognition:", err);
+                    alert("Browser blocked the microphone request! Check if you accidentally clicked 'Block' previously by looking for the Mic icon in your URL bar.");
+                }
+            }
+        };
+
+        function showToast(msg) {
+            if(!voiceToast) return;
+            voiceToast.textContent = msg;
+            voiceToast.style.opacity = '1';
+            setTimeout(() => { voiceToast.style.opacity = '0'; }, 3000);
+        }
+
+        function handleVoiceCommand(cmd) {
+            if (cmd.includes('scroll down') || cmd.includes('go down')) {
+                window.scrollBy({ top: window.innerHeight / 1.5, behavior: 'smooth' });
+            } 
+            else if (cmd.includes('scroll up') || cmd.includes('go up')) {
+                window.scrollBy({ top: -window.innerHeight / 1.5, behavior: 'smooth' });
+            }
+            else if (cmd.includes('next post') || cmd.includes('next')) {
+                scrollToPost('next');
+            }
+            else if (cmd.includes('previous post') || cmd.includes('previous') || cmd.includes('go back')) {
+                scrollToPost('prev');
+            }
+            else if (cmd.includes('stop listening') || cmd.includes('stop navigation')) {
+                isListening = false;
+                recognition.stop();
+            }
+        }
+
+        function scrollToPost(direction) {
+            const posts = Array.from(document.querySelectorAll('.forum-card'));
+            if (posts.length === 0) return;
+
+            let targetPost = null;
+            const offset = 100; // navbar offset
+
+            if (direction === 'next') {
+                targetPost = posts.find(p => p.getBoundingClientRect().top > offset + 50);
+                if (!targetPost) targetPost = posts[posts.length - 1]; // bottom
+            } else {
+                const reversed = [...posts].reverse();
+                targetPost = reversed.find(p => p.getBoundingClientRect().top < -50);
+                if (!targetPost) targetPost = posts[0];
+            }
+
+            if (targetPost) {
+                const topPos = targetPost.getBoundingClientRect().top + window.scrollY - offset;
+                window.scrollTo({ top: topPos, behavior: 'smooth' });
+            }
+        }
+    </script>
+{% endblock %}

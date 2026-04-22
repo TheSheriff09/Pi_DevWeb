@@ -1,0 +1,197 @@
+{% extends 'FrontOffice/base.html.twig' %}
+
+{% block title %}My Profile - StartupFlow Tunisia{% endblock %}
+
+{% block body %}
+
+
+    <main class="hero-container" style="justify-content: center; align-items: flex-start; padding-top: 60px;">
+        <div class="auth-card" style="max-width: 500px; width: 100%; border-radius: 20px; background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(15px); box-shadow: 0 10px 30px rgba(122, 92, 255, 0.2);">
+            <h2 class="welcome-title">My Profile</h2>
+            
+            {% if message %}
+                <div style="background: #e2f5ec; color: #1f7d54; padding: 12px; border-radius: 8px; margin-bottom: 20px; font-weight: 500; font-size: 14px; text-align: center;">
+                    {{ message }}
+                </div>
+            {% endif %}
+
+            <form action="{{ path('app_profile') }}" method="POST">
+                <label class="field-label">Full Name</label>
+                <input type="text" name="name" class="pillField" value="{{ user.fullName }}">
+                
+                <label class="field-label">Email Address</label>
+                <input type="email" name="email" class="pillField" value="{{ user.email }}">
+                
+                <label class="field-label">Role (Non-editable)</label>
+                <input type="text" class="pillField" value="{{ user.role }}" disabled style="background:#f0f0f0; border-color:#e0e0e0; color:#888;">
+                
+                <label class="field-label">New Password (Leave blank to keep current)</label>
+                <input type="password" name="password" class="pillField" placeholder="Enter new password">
+
+                <button type="submit" class="signBtn glow-btn">Save Changes</button>
+            </form>
+
+            <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; text-align:center;">
+                <h3 style="margin-bottom: 10px; color:#333;">🔒 Email Two-Factor Authentication</h3>
+                <p style="font-size: 13px; color:#666; margin-bottom:15px;">Add an extra layer of security. We will send a 6-digit code to your email when you log in.</p>
+                <div style="display: flex; justify-content: center; align-items: center; gap: 10px;">
+                    <label class="switch" style="position: relative; display: inline-block; width: 50px; height: 24px;">
+                        <input type="checkbox" id="email2fa-toggle" {% if user.isTwoFactorEmailEnabled %}checked{% endif %} style="opacity: 0; width: 0; height: 0;">
+                        <span class="slider round" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 34px;"></span>
+                    </label>
+                    <span id="email2fa-status" style="font-weight: bold; color: {% if user.isTwoFactorEmailEnabled %}#2ecc71{% else %}#e74c3c{% endif %};">
+                        {% if user.isTwoFactorEmailEnabled %}Enabled{% else %}Disabled{% endif %}
+                    </span>
+                </div>
+            </div>
+
+            <style>
+                .switch input:checked + .slider { background-color: #4facfe; }
+                .switch input:focus + .slider { box-shadow: 0 0 1px #4facfe; }
+                .switch input:checked + .slider:before { transform: translateX(26px); }
+                .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
+            </style>
+
+            <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee; text-align:center;">
+                <h3 style="margin-bottom: 10px; color:#333;">Biometric Authentication</h3>
+                <p style="font-size: 13px; color:#666; margin-bottom:15px;">Add your face to securely log in without a password.</p>
+                <button type="button" class="signBtn" id="start-face-btn" style="background:#4a3f9e;">Register Face ID</button>
+            </div>
+            
+            <!-- Webcam Modal -->
+            <div id="face-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:9999; justify-content:center; align-items:center;">
+                <div style="background:#fff; padding:20px; border-radius:15px; width:400px; text-align:center;">
+                    <h3 style="margin-top:0;">Position your face</h3>
+                    <div style="width:100%; height:300px; background:#000; border-radius:10px; overflow:hidden; margin-bottom:15px; position:relative;">
+                        <video id="webcam-video" autoplay playsinline style="width:100%; height:100%; object-fit:cover;"></video>
+                    </div>
+                    <p id="face-status" style="font-size:14px; color:#555; height:20px; margin-bottom:10px;">Waiting for camera...</p>
+                    <button type="button" id="capture-face-btn" class="signBtn glow-btn" style="width:100%; margin-top:10px;" disabled>Snapshot & Verify</button>
+                    <button type="button" id="close-modal-btn" style="background:transparent; border:none; color:#888; margin-top:15px; cursor:pointer; text-decoration:underline;">Cancel</button>
+                </div>
+            </div>
+            
+        </div>
+    </main>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const btnStart = document.getElementById('start-face-btn');
+        const modal = document.getElementById('face-modal');
+        const video = document.getElementById('webcam-video');
+        const btnCapture = document.getElementById('capture-face-btn');
+        const btnClose = document.getElementById('close-modal-btn');
+        const statusText = document.getElementById('face-status');
+        
+        let stream = null;
+
+        btnStart.addEventListener('click', async () => {
+            modal.style.display = 'flex';
+            statusText.innerText = 'Requesting camera access...';
+            statusText.style.color = '#555';
+            btnCapture.disabled = false;
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
+                video.srcObject = stream;
+                statusText.innerText = 'Look directly at the camera.';
+            } catch (err) {
+                statusText.innerText = 'Camera access denied or unavailable.';
+                statusText.style.color = 'red';
+                btnCapture.disabled = true;
+            }
+        });
+
+        const stopCamera = () => {
+            modal.style.display = 'none';
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                stream = null;
+            }
+        };
+
+        btnClose.addEventListener('click', stopCamera);
+
+        btnCapture.addEventListener('click', async () => {
+            btnCapture.disabled = true;
+            statusText.innerText = 'Scanning face...';
+            statusText.style.color = '#7a5cff';
+            
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            
+            // Extract base64
+            const base64Image = canvas.toDataURL('image/jpeg', 0.85);
+
+            try {
+                const response = await fetch('/profile/register-face', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ image: base64Image })
+                });
+
+                const data = await response.json();
+
+                if (data.status === 'success') {
+                    statusText.innerText = '✅ Face successfully registered!';
+                    statusText.style.color = 'green';
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 2000);
+                } else {
+                    statusText.innerText = '❌ ' + (data.message || 'Face is not recognized.');
+                    statusText.style.color = 'red';
+                    btnCapture.disabled = false;
+                }
+
+            } catch (e) {
+                statusText.innerText = '❌ Backend connection error.';
+                statusText.style.color = 'red';
+                btnCapture.disabled = false;
+            }
+        });
+
+        // 2FA Toggle logic
+        const toggle2fa = document.getElementById('email2fa-toggle');
+        const status2fa = document.getElementById('email2fa-status');
+        
+        if (toggle2fa) {
+            toggle2fa.addEventListener('change', async (e) => {
+                const isEnabled = e.target.checked;
+                status2fa.innerText = isEnabled ? 'Enabling...' : 'Disabling...';
+                status2fa.style.color = '#f39c12';
+                
+                try {
+                    const response = await fetch('/profile/2fa/toggle', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ enable: isEnabled })
+                    });
+                    const data = await response.json();
+                    
+                    if (data.status === 'success') {
+                        status2fa.innerText = isEnabled ? 'Enabled' : 'Disabled';
+                        status2fa.style.color = isEnabled ? '#2ecc71' : '#e74c3c';
+                    } else {
+                        // Revert 
+                        e.target.checked = !isEnabled;
+                        status2fa.innerText = 'Error';
+                        status2fa.style.color = '#e74c3c';
+                        alert(data.message);
+                    }
+                } catch(err) {
+                    e.target.checked = !isEnabled;
+                    status2fa.innerText = 'Error';
+                    status2fa.style.color = '#e74c3c';
+                }
+            });
+        }
+    });
+    </script>
+
+
+{% endblock %}
+
+

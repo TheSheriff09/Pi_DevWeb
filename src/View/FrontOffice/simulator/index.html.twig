@@ -1,0 +1,177 @@
+{% extends "FrontOffice/base.html.twig" %}
+
+{% block title %}Funding Sandbox Simulator{% endblock %}
+
+{% block body %}
+<div class="auth-container" style="min-height: 100vh; padding: 40px 20px;">
+    <div class="auth-card" style="max-width: 1000px; margin: 0 auto; border-radius: 20px; background: rgba(30, 30, 46, 0.9);">
+        
+        <!-- Header -->
+        <div style="display: flex; gap: 20px; align-items: flex-start; margin-bottom: 30px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 20px;">
+            <div style="font-size: 3.5rem; background: rgba(229, 57, 53, 0.1); width: 80px; height: 80px; display: flex; align-items: center; justify-content: center; border-radius: 20px; border: 1px solid rgba(229, 57, 53, 0.2);">
+                ⚡
+            </div>
+            <div>
+                <h1 style="margin: 0 0 10px 0; font-size: 2.2em; color: #fff;">Counterfactual Simulator</h1>
+                <p style="color: rgba(255,255,255,0.6); margin: 0; font-size: 1.1em; max-width: 600px;">
+                    Your recent application for <strong style="color: #64b5f6;">${{ application.amount|number_format(0, '.', ',') }}</strong> was rejected. Adjust the metrics below to simulate how different parameters might have altered your evaluation probability.
+                </p>
+                <div style="margin-top: 10px; font-size: 0.9em;">
+                    <strong style="color: #64b5f6;">Evaluation Feedback:</strong>
+                    <span style="color: rgba(255,255,255,0.7); font-style: italic;">"{{ evaluation.evaluationComments }}"</span>
+                </div>
+            </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px;">
+            <!-- Left Side: Interactive Controls -->
+            <div style="background: rgba(0,0,0,0.1); padding: 25px; border-radius: 15px; border: 1px dashed rgba(255,255,255,0.1);">
+                <h3 style="margin-top: 0; margin-bottom: 25px; color: #64b5f6; font-size: 1.3em;">Adjust Parameters</h3>
+                
+                <div style="margin-bottom: 25px;">
+                    <label style="display: flex; justify-content: space-between; margin-bottom: 10px; font-weight: bold; color: rgba(255,255,255,0.9);">
+                        Requested Capital
+                        <span id="amountDisplay" style="color: #64b5f6;">${{ application.amount|number_format(0) }}</span>
+                    </label>
+                    <input type="range" id="simAmount" min="0" max="{{ application.amount }}" step="{{ application.amount / 100 }}" value="{{ application.amount }}" style="width: 100%; accent-color: #64b5f6;">
+                </div>
+
+                <div style="margin-bottom: 25px;">
+                    <label style="display: block; margin-bottom: 10px; font-weight: bold; color: rgba(255,255,255,0.9);">Payment Schedule Matrix</label>
+                    <select id="simSchedule" class="form-input" style="width: 100%; padding: 12px; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: white;">
+                        <option value="Lump Sum" {% if application.paymentSchedule == 'Lump Sum' %}selected{% endif %}>Lump Sum (Maximum Stringency)</option>
+                        <option value="Tranches" {% if application.paymentSchedule == 'Tranches' %}selected{% endif %}>Tranches Format (Medium Stringency)</option>
+                        <option value="Milestones" {% if application.paymentSchedule == 'Milestones' %}selected{% endif %}>Milestone-Based (Low Stringency)</option>
+                    </select>
+                </div>
+
+                <div style="margin-bottom: 25px;">
+                    <label style="display: block; margin-bottom: 10px; font-weight: bold; color: rgba(255,255,255,0.9);">Assumed Risk Mitigation Level</label>
+                    <select id="simRisk" class="form-input" style="width: 100%; padding: 12px; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: white;">
+                        <option value="Critical" {% if evaluation and evaluation.riskLevel == 'Critical' %}selected{% endif %}>Critical</option>
+                        <option value="High" {% if evaluation and evaluation.riskLevel == 'High' %}selected{% endif %}>High</option>
+                        <option value="Medium" {% if evaluation and evaluation.riskLevel == 'Medium' %}selected{% endif %}>Medium</option>
+                        <option value="Low" {% if evaluation and evaluation.riskLevel == 'Low' %}selected{% endif %}>Low</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Right Side: Visualization & Explanation -->
+            <div style="display: flex; flex-direction: column; gap: 20px;">
+                <div style="background: rgba(255,255,255,0.03); padding: 25px; border-radius: 15px; border: 1px solid rgba(255, 255, 255, 0.05); flex: 1;">
+                    <h3 style="margin-top: 0; text-align: center; color: rgba(255,255,255,0.8);">Predicted Approval Probability</h3>
+                    
+                    <div style="position: relative; height: 180px; display: flex; align-items: flex-end; justify-content: center; margin-top: 20px;">
+                        <div style="width: 150px; height: 150px; border-radius: 50%; display: flex; align-items: center; justify-content: center; position: relative;" id="probGauge">
+                            <!-- Circular background gradient controlled by JS -->
+                            <div style="position: absolute; width: 130px; height: 130px; background: #1e1e2e; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                                <span id="probPercent" style="font-size: 2.5em; font-weight: bold; color: white;">{{ evaluation ? evaluation.score : 0 }}%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="insightBox" style="background: rgba(76, 175, 80, 0.1); padding: 20px; border-radius: 15px; border-left: 4px solid #4CAF50;">
+                    <p style="margin: 0; color: #A5D6A7; font-size: 0.95em; line-height: 1.5;" id="insightText">
+                        Adjust parameters to see how your specific approval rating shifts based on StartupFlow historical evaluation models.
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <div style="text-align: center; margin-top: 40px;">
+            <a href="{{ path('app_entrepreneur_startup_show', {'id': application.projectId}) }}" class="pill-btn glow-btn" style="background: rgba(255,255,255,0.1); padding: 10px 20px; color: white; text-decoration: none; border-radius: 20px;">
+                &larr; Back to Startup Dashboard
+            </a>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const originalAmount = {{ application.amount|default(1) }};
+        const origScore = {{ evaluation ? evaluation.score|default(0) : 0 }};
+        const origRisk = '{{ evaluation ? evaluation.riskLevel : "Medium" }}';
+        
+        const simAmount = document.getElementById('simAmount');
+        const simSchedule = document.getElementById('simSchedule');
+        const simRisk = document.getElementById('simRisk');
+        const amountDisplay = document.getElementById('amountDisplay');
+        const probPercent = document.getElementById('probPercent');
+        const insightText = document.getElementById('insightText');
+        const probGauge = document.getElementById('probGauge');
+        const insightBox = document.getElementById('insightBox');
+        
+        function calculateNewProbability() {
+            let baseScore = origScore;
+            let currentAmount = parseFloat(simAmount.value);
+            
+            // Amount offset: Asking for less money mathematically increases approval ease
+            let reductionRatio = 0;
+            if (originalAmount > 0) {
+                reductionRatio = (originalAmount - currentAmount) / originalAmount;
+            }
+            if (reductionRatio < 0) reductionRatio = 0;
+            let amountBonus = reductionRatio * 35; // Up to 35% bonus for dropping request
+
+            // Schedule offset
+            let scheduleBonus = 0;
+            if (simSchedule.value === 'Milestones') scheduleBonus += 15; 
+            else if (simSchedule.value === 'Tranches') scheduleBonus += 8;
+
+            // Risk offset 
+            const riskMap = {'Critical':0, 'High':1, 'Medium':2, 'Low':3};
+            let origRiskLvl = riskMap[origRisk] || 0;
+            let simRiskLvl = riskMap[simRisk.value] || 0;
+            let riskBonus = (simRiskLvl - origRiskLvl) * 15;
+
+            // Compute Final probability natively bounding to [5, 98] constraints
+            let finalScore = Math.round(baseScore + amountBonus + scheduleBonus + riskBonus);
+            if (finalScore > 98) finalScore = 98;
+            if (finalScore < 5) finalScore = 5;
+
+            // Visual Rendering
+            amountDisplay.innerText = '$' + new Intl.NumberFormat().format(currentAmount);
+            probPercent.innerText = finalScore + '%';
+
+            // Gauge Styling
+            let color = '#f44336'; // Red
+            if (finalScore >= 50) color = '#ff9800'; // Orange
+            if (finalScore >= 75) color = '#4caf50'; // Green
+            
+            probGauge.style.background = `conic-gradient(${color} ${finalScore}%, #333 0)`;
+
+            // Insight Mapping Textual Heuristic Generation
+            let reductionText = (reductionRatio * 100).toFixed(0);
+            if (finalScore >= 75) {
+                insightBox.style.borderLeftColor = '#4caf50';
+                insightBox.style.background = 'rgba(76, 175, 80, 0.1)';
+                insightText.style.color = '#A5D6A7';
+                let txt = `Excellent structure! By decreasing capital requested by ${reductionText}%`;
+                if(simSchedule.value === 'Milestones') txt += ` and leveraging Milestone payouts, `;
+                else if(simSchedule.value === 'Tranches') txt += ` and spreading Tranches, `;
+                else txt += `, `;
+                txt += `your application shifts heavily into an Approved probability range (${finalScore}%).`;
+                insightText.innerText = txt;
+            } else if (finalScore >= 50) {
+                insightBox.style.borderLeftColor = '#ff9800';
+                insightBox.style.background = 'rgba(255, 152, 0, 0.1)';
+                insightText.style.color = '#ffcc80';
+                insightText.innerText = `Borderline environment! Further mitigating perceived risk or stretching capital dependencies might bridge the gap to a robust 75% approval threshold.`;
+            } else {
+                insightBox.style.borderLeftColor = '#f44336';
+                insightBox.style.background = 'rgba(244, 67, 54, 0.1)';
+                insightText.style.color = '#ef9a9a';
+                insightText.innerText = `Warning: The fundamentals of this application configuration strongly align with historical Rejection protocols. Your baseline context might be fundamentally flawed.`;
+            }
+        }
+
+        simAmount.addEventListener('input', calculateNewProbability);
+        simSchedule.addEventListener('change', calculateNewProbability);
+        simRisk.addEventListener('change', calculateNewProbability);
+
+        // Init calculation map
+        calculateNewProbability();
+    });
+</script>
+{% endblock %}

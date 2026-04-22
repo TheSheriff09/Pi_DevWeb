@@ -1,0 +1,54 @@
+{% extends 'FrontOffice/base.html.twig' %}
+
+{% block title %}Dashboard - Entrepreneur{% endblock %}
+
+{% block body %}
+<div class="split-layout" style="display: flex; flex-direction: column; background: #0f0a1e; min-height: 100vh;">
+    <!-- Topbar -->
+    <header style="display: flex; justify-content: space-between; align-items: center; padding: 20px 40px; background: rgba(30, 20, 60, 0.4); backdrop-filter: blur(10px); border-bottom: 1px solid rgba(255,255,255,0.05);">
+        <div class="brand" style="margin: 0; padding: 0; display: block;">
+            <h1 class="brand-title" style="font-size: 24px; line-height: 1; margin-bottom: 2px;">StartupFlow</h1>
+            <p class="brand-sub" style="font-size: 14px; margin: 0;">Tunisia</p>
+        </div>
+
+        <nav style="display: flex; gap: 30px;">
+            <a href="#" style="color: #cdb5ff; font-weight: 600; text-decoration: none; border-bottom: 2px solid #8d79ff; padding-bottom: 5px;">DashBoard</a>
+            <a href="{{ path('app_entrepreneur_startups') }}" style="color: #a8a0d4; text-decoration: none; transition: 0.3s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#a8a0d4'">Startup</a>
+            <a href="#" style="color: #a8a0d4; text-decoration: none; transition: 0.3s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#a8a0d4'">Mentorship</a>
+            <a href="#" style="color: #a8a0d4; text-decoration: none; transition: 0.3s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#a8a0d4'">Forum</a>
+        </nav>
+
+        <div style="font-weight: 600; color: #fff; background: rgba(141, 121, 255, 0.15); padding: 8px 15px; border-radius: 8px; border: 1px solid rgba(141, 121, 255, 0.3);">
+            {{ user.fullName }}
+            <a href="{{ path('app_login') }}" style="color: #ff5c5c; text-decoration: none; margin-left: 15px; font-size: 14px;">Logout</a>
+        </div>
+    </header>
+
+    <!-- Main Card View -->
+    <div style="flex-grow: 1; display: flex; align-items: center; justify-content: center; padding: 40px;">
+        <div style="position: relative; width: 100%; max-width: 900px; padding: 60px 40px; background: rgba(25, 20, 45, 0.6); backdrop-filter: blur(20px); border-radius: 24px; border: 1px solid rgba(255,255,255,0.08); text-align: center; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.4);">
+            
+            <!-- Status Badge -->
+            <div style="position: absolute; top: 30px; left: 30px; display: flex; align-items: center; gap: 10px;">
+                <span style="color: #a8a0d4; font-size: 14px;">Status:</span>
+                <span style="background: rgba(100, 200, 150, 0.2); color: #64c896; padding: 6px 12px; border-radius: 20px; font-size: 14px; font-weight: 600; border: 1px solid rgba(100, 200, 150, 0.5);">{{ user.status|capitalize }}</span>
+            </div>
+
+            <!-- Welcome Text -->
+            <h3 style="color: #cdb5ff; font-weight: 500; font-size: 18px; margin-bottom: 5px; letter-spacing: 2px; text-transform: uppercase;">Welcome</h3>
+            <h2 style="font-size: 42px; font-weight: 700; color: #fff; margin: 0 0 20px 0; background: linear-gradient(135deg, #cdb5ff, #fff); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Entrepreneur</h2>
+            <div style="width: 80px; height: 3px; background: #8d79ff; margin: 0 auto 50px auto; border-radius: 2px;"></div>
+
+            <!-- Action Buttons -->
+            <div style="display: flex; flex-direction: column; gap: 20px; max-width: 350px; margin: 0 auto;">
+                <a href="{{ path('app_entrepreneur_startups') }}" class="signBtn" style="justify-content: flex-start; gap: 15px; font-size: 16px; text-decoration: none; display: flex; align-items: center;"><span style="font-size: 20px;">🚀</span> Manage Startups</a>
+                <button class="signBtn" style="justify-content: flex-start; gap: 15px; font-size: 16px;"><span style="font-size: 20px;">👨‍🏫</span> Find Mentor</button>
+                <button class="signBtn" style="justify-content: flex-start; gap: 15px; font-size: 16px; background: rgba(141, 121, 255, 0.1); color: #fff; border: 1px solid rgba(141, 121, 255, 0.3);"><span style="font-size: 20px;">🤖</span> AI SWOT Generator</button>
+                <button class="signBtn" style="justify-content: flex-start; gap: 15px; font-size: 16px; background: rgba(255, 255, 255, 0.05); color: #fff; border: 1px solid rgba(255, 255, 255, 0.1);"><span style="font-size: 20px;">📌</span> Contact Support</button>
+            </div>
+            
+            <img src="{{ asset('Front/images/ChatGPT Image Jan 28, 2026, 08_10_30 PM.png') }}" style="position: absolute; right: -150px; bottom: -150px; width: 400px; opacity: 0.15; pointer-events: none; border-radius: 50%; filter: blur(2px);">
+        </div>
+    </div>
+</div>
+{% endblock %}

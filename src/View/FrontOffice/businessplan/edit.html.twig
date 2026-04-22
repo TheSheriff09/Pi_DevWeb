@@ -1,0 +1,187 @@
+{% extends "FrontOffice/base.html.twig" %}
+
+{% block title %}Edit Business Plan - {{ startup.name }}{% endblock %}
+
+{% block body %}
+<div class="auth-container" style="min-height: 100vh; padding: 40px 20px;">
+    <div class="auth-card" style="max-width: 900px; margin: 0 auto; border-radius: 20px; background: rgba(20, 20, 40, 0.95); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); padding: 40px;">
+        
+        <div style="margin-bottom: 30px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 20px;">
+            <a href="{{ path('app_entrepreneur_startup_show', {'id': startup.startupID}) }}" style="color: var(--primary-light, #9d88ff); text-decoration: none; font-size: 0.9em; display: inline-block; margin-bottom: 15px; transition: all 0.3s;" onmouseover="this.style.transform='translateX(-5px)'" onmouseout="this.style.transform='none'">
+                <i class="fas fa-arrow-left"></i> Back to Startup Details
+            </a>
+            <h1 style="color: #fff; margin: 0; font-size: 2.2em; font-weight: 700;">Refine <span style="color: var(--primary, #6f56ff);">Business Plan</span></h1>
+            <p style="margin: 10px 0 0 0; opacity: 0.7; font-size: 1.1em;">Updating the strategic roadmap for <strong>{{ startup.name }}</strong></p>
+        </div>
+
+        <!-- AI Assistant Box -->
+        <div style="background: linear-gradient(135deg, rgba(111,86,255,0.15) 0%, rgba(181,139,255,0.05) 100%); border: 1px solid rgba(111,86,255,0.3); border-radius: 15px; padding: 25px; margin-bottom: 35px; display: flex; align-items: center; justify-content: space-between; gap: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
+            <div style="flex: 1;">
+                <h4 style="margin: 0; color: #fff; font-size: 1.2em; display: flex; align-items: center; gap: 10px;">
+                    <span style="font-size: 1.4em;">✨</span> AI Plan Enhancer
+                </h4>
+                <p style="margin: 8px 0 0 0; font-size: 0.9em; opacity: 0.8; line-height: 1.4;">
+                    Want to refresh your plan? Enter a new target market or focus area and let AI suggest improvements!
+                </p>
+            </div>
+            <div style="display: flex; gap: 12px; align-items: center; background: rgba(0,0,0,0.2); padding: 8px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
+                <input type="text" id="aiTargetMarket" placeholder="e.g. European tech startups" 
+                    style="background: transparent; border: none; padding: 10px; color: #fff; width: 220px; font-size: 0.95em; outline: none;">
+                <button id="aiGenerateBtn" class="pill-btn" 
+                    style="background: var(--primary, #6f56ff); padding: 10px 20px; border: none; cursor: pointer; color: white; border-radius: 8px; font-weight: 600; white-space: nowrap; transition: all 0.3s; box-shadow: 0 5px 15px rgba(111,86,255,0.4);">
+                    Update with AI
+                </button>
+            </div>
+        </div>
+
+        <div id="aiLoading" style="display: none; text-align: center; padding: 20px; color: var(--primary-light); background: rgba(111,86,255,0.05); border-radius: 10px; margin-bottom: 20px; border: 1px solid rgba(111,86,255,0.1);">
+             <div class="spinner-border spinner-border-sm text-primary" role="status" style="width: 20px; height: 20px; border: 2px solid rgba(111,86,255,0.3); border-radius: 50%; border-top-color: #6f56ff; animation: spin 1s linear infinite;"></div>
+             <span style="margin-left: 10px; font-weight: 500;">AI is analyzing your market data...</span>
+        </div>
+
+        <form method="post" action="{{ path('app_entrepreneur_businessplan_edit', {'id': businessplan.businessPlanID}) }}" class="modern-form" novalidate>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
+                <!-- Left Column -->
+                <div style="display: flex; flex-direction: column; gap: 25px;">
+                    <div>
+                        <label class="field-label" style="color: #fff; font-weight: 500; font-size: 0.9em; display: block; margin-bottom: 10px; opacity: 0.9;">PLAN TITLE <span style="color: #ff5e5e;">*</span></label>
+                        <input type="text" name="title" value="{{ businessplan.title }}" class="pillField" style="width: 100%; padding: 14px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: #fff;">
+                    </div>
+                    
+                    <div>
+                        <label class="field-label" style="color: #fff; font-weight: 500; font-size: 0.9em; display: block; margin-bottom: 10px; opacity: 0.9;">EXECUTIVE SUMMARY</label>
+                        <textarea name="description" rows="5" class="pillField" style="width: 100%; padding: 14px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: #fff; resize: vertical;">{{ businessplan.description }}</textarea>
+                    </div>
+
+                    <div>
+                        <label class="field-label" style="color: #fff; font-weight: 500; font-size: 0.9em; display: block; margin-bottom: 10px; opacity: 0.9;">VALUE PROPOSITION</label>
+                        <textarea name="valueProposition" rows="4" class="pillField" style="width: 100%; padding: 14px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: #fff; resize: vertical;">{{ businessplan.valueProposition }}</textarea>
+                    </div>
+
+                    <div>
+                        <label class="field-label" style="color: #fff; font-weight: 500; font-size: 0.9em; display: block; margin-bottom: 10px; opacity: 0.9;">BUSINESS MODEL</label>
+                        <textarea name="businessModel" rows="4" class="pillField" style="width: 100%; padding: 14px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: #fff; resize: vertical;">{{ businessplan.businessModel }}</textarea>
+                    </div>
+                </div>
+
+                <!-- Right Column -->
+                <div style="display: flex; flex-direction: column; gap: 25px;">
+                    <div>
+                        <label class="field-label" style="color: #fff; font-weight: 500; font-size: 0.9em; display: block; margin-bottom: 10px; opacity: 0.9;">MARKET ANALYSIS</label>
+                        <textarea name="marketAnalysis" rows="4" class="pillField" style="width: 100%; padding: 14px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: #fff; resize: vertical;">{{ businessplan.marketAnalysis }}</textarea>
+                    </div>
+
+                    <div>
+                        <label class="field-label" style="color: #fff; font-weight: 500; font-size: 0.9em; display: block; margin-bottom: 10px; opacity: 0.9;">MARKETING STRATEGY</label>
+                        <textarea name="marketingStrategy" rows="4" class="pillField" style="width: 100%; padding: 14px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: #fff; resize: vertical;">{{ businessplan.marketingStrategy }}</textarea>
+                    </div>
+
+                    <div>
+                        <label class="field-label" style="color: #fff; font-weight: 500; font-size: 0.9em; display: block; margin-bottom: 10px; opacity: 0.9;">FINANCIAL FORECAST</label>
+                        <textarea name="financialForecast" rows="4" class="pillField" style="width: 100%; padding: 14px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: #fff; resize: vertical;">{{ businessplan.financialForecast }}</textarea>
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                        <div>
+                            <label class="field-label" style="color: #fff; font-weight: 500; font-size: 0.9em; display: block; margin-bottom: 10px; opacity: 0.9;">FUNDING REQ ($)</label>
+                            <input type="number" step="1000" name="fundingRequired" value="{{ businessplan.fundingRequired }}" class="pillField" style="width: 100%; padding: 14px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: #fff;">
+                        </div>
+                        <div>
+                            <label class="field-label" style="color: #fff; font-weight: 500; font-size: 0.9em; display: block; margin-bottom: 10px; opacity: 0.9;">STATUS</label>
+                            <select name="status" class="pillField" style="width: 100%; padding: 14px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: #fff; outline: none;">
+                                <option value="Draft" {% if businessplan.status == 'Draft' %}selected{% endif %} style="background: #1a1a2e;">Draft</option>
+                                <option value="Published" {% if businessplan.status == 'Published' %}selected{% endif %} style="background: #1a1a2e;">Published</option>
+                                <option value="Seeking Feedback" {% if businessplan.status == 'Seeking Feedback' %}selected{% endif %} style="background: #1a1a2e;">Seeking Feedback</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="field-label" style="color: #fff; font-weight: 500; font-size: 0.9em; display: block; margin-bottom: 10px; opacity: 0.9;">TIMELINE HORIZON</label>
+                        <input type="text" name="timeline" value="{{ businessplan.timeline }}" class="pillField" style="width: 100%; padding: 14px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: #fff;">
+                    </div>
+                </div>
+            </div>
+
+            <div style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 30px; margin-top: 15px; text-align: right; display: flex; justify-content: flex-end; gap: 15px;">
+                <button type="button" onclick="window.history.back()" class="pill-btn gray-btn" style="background: rgba(255,255,255,0.05); padding: 15px 30px; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: #fff; cursor: pointer; transition: all 0.3s;">Cancel</button>
+                <button type="submit" class="pill-btn glow-btn" style="background: linear-gradient(135deg, var(--primary, #6f56ff), #b58bff); padding: 15px 45px; font-size: 1.1em; border: none; cursor: pointer; border-radius: 12px; font-weight: 600; box-shadow: 0 10px 20px rgba(111,86,255,0.3);">Update Business Plan</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+@keyframes spin { from {transform: rotate(0deg);} to {transform: rotate(360deg);} }
+.auth-card { animation: fadeIn 0.6s ease-out; }
+@keyframes fadeIn { from {opacity: 0; transform: translateY(20px);} to {opacity: 1; transform: translateY(0);} }
+.pillField:focus { border-color: var(--primary, #6f56ff) !important; outline: none; background: rgba(255,255,255,0.08) !important; }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const aiBtn = document.getElementById('aiGenerateBtn');
+    const loading = document.getElementById('aiLoading');
+    const targetInput = document.getElementById('aiTargetMarket');
+
+    if (aiBtn) {
+        aiBtn.addEventListener('click', function() {
+            const market = targetInput.value;
+            if (!market) {
+                alert('Please provide a target market for more accurate AI suggestions.');
+                return;
+            }
+
+            loading.style.display = 'block';
+            aiBtn.disabled = true;
+            aiBtn.style.opacity = '0.5';
+
+            const formData = new FormData();
+            formData.append('startupId', '{{ startup.startupID }}');
+            formData.append('targetMarket', market);
+
+            fetch('{{ path("app_entrepreneur_businessplan_ai_generate") }}', {
+                method: 'POST',
+                body: formData,
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            })
+            .then(res => {
+                if (!res.ok) {
+                    return res.json().then(err => { throw new Error(err.error || 'Server Error'); });
+                }
+                return res.json();
+            })
+            .then(data => {
+                loading.style.display = 'none';
+                aiBtn.disabled = false;
+                aiBtn.style.opacity = '1';
+
+                // Update form with AI content
+                if (data.title) document.querySelector('input[name="title"]').value = data.title;
+                if (data.description) document.querySelector('textarea[name="description"]').value = data.description;
+                if (data.valueProposition) document.querySelector('textarea[name="valueProposition"]').value = data.valueProposition;
+                if (data.businessModel) document.querySelector('textarea[name="businessModel"]').value = data.businessModel;
+                if (data.marketAnalysis) document.querySelector('textarea[name="marketAnalysis"]').value = data.marketAnalysis;
+                if (data.marketingStrategy) document.querySelector('textarea[name="marketingStrategy"]').value = data.marketingStrategy;
+                if (data.financialForecast) document.querySelector('textarea[name="financialForecast"]').value = data.financialForecast;
+                if (data.fundingRequired) document.querySelector('input[name="fundingRequired"]').value = data.fundingRequired;
+                if (data.timeline) document.querySelector('input[name="timeline"]').value = data.timeline;
+
+                if (window.showCustomToast) {
+                    window.showCustomToast('success', 'AI has updated your plan suggestions! Review and save your changes.');
+                } else {
+                    alert('AI has updated your plan suggestions! Review and save your changes.');
+                }
+            })
+            .catch(err => {
+                loading.style.display = 'none';
+                aiBtn.disabled = false;
+                aiBtn.style.opacity = '1';
+                console.error('Fetch Error:', err);
+                alert('AI Refinement Failed: ' + err.message);
+            });
+        });
+    }
+});
+</script>
+{% endblock %}

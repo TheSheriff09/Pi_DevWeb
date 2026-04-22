@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>StartupFlow Evaluators Insight</title>
+    <style>
+        body { font-family: 'Helvetica', 'Arial', sans-serif; color: #333; margin: 0; padding: 20px; }
+        .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #6f56ff; padding-bottom: 20px; }
+        .logo { width: 180px; margin-bottom: 15px; }
+        .title { color: #6f56ff; font-size: 24px; font-weight: bold; margin: 0; text-transform: uppercase; letter-spacing: 2px; }
+        .subtitle { color: #666; font-size: 14px; margin-top: 5px; }
+        .dashboard-grid { margin-bottom: 30px; border-collapse: collapse; width: 100%; }
+        .card { background: #f8f9ff; border: 1px solid #e0d9ff; padding: 15px; text-align: center; border-radius: 8px; }
+        .card h3 { margin: 0; color: #6f56ff; font-size: 28px; }
+        .card p { margin: 5px 0 0 0; font-size: 12px; color: #666; text-transform: uppercase; font-weight: bold; }
+        h2 { color: #1a1a2e; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-top: 40px; }
+        table.data-table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 13px; }
+        table.data-table th { background: #6f56ff; color: white; padding: 12px 10px; text-align: left; }
+        table.data-table td { padding: 10px; border-bottom: 1px solid #eee; color: #444; }
+        table.data-table tr:nth-child(even) { background-color: #fcfcfc; }
+        .status { padding: 4px 8px; border-radius: 10px; font-weight: bold; font-size: 11px; display: inline-block; }
+        .status-Approved { background: #e8f5e9; color: #2e7d32; }
+        .status-Pending { background: #fff3e0; color: #ef6c00; }
+        .status-Rejected { background: #ffebee; color: #c62828; }
+        .status-Needs { background: #e3f2fd; color: #0277bd; }
+        .footer { position: fixed; bottom: -20px; left: 0px; right: 0px; height: 30px; font-size: 10px; color: #999; text-align: center; border-top: 1px solid #eee; padding-top: 10px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        {% if logoBase64 %}
+            <img src="data:image/png;base64,{{ logoBase64 }}" class="logo" alt="StartupFlow Logo">
+        {% else %}
+            <h1 style="color: #6f56ff; margin:0; font-size:36px;">StartupFlow</h1>
+        {% endif %}
+        <p class="title">Comprehensive Evaluation & Funding Report</p>
+        <p class="subtitle">Generated dynamically on {{ date|date('F j, Y - H:i:s') }}</p>
+    </div>
+
+    <!-- Analytics Dashboard pseudo-grid -->
+    <table class="dashboard-grid">
+        <tr>
+            <td style="padding-right: 10px; width: 25%;">
+                <div class="card">
+                    <h3>{{ appCount }}</h3>
+                    <p>Applications</p>
+                </div>
+            </td>
+            <td style="padding-right: 10px; width: 25%;">
+                <div class="card">
+                    <h3>${{ totalRequested|number_format(0, '.', ',') }}</h3>
+                    <p>Requested</p>
+                </div>
+            </td>
+            <td style="padding-right: 10px; width: 25%;">
+                <div class="card">
+                    <h3>{{ evalCount }}</h3>
+                    <p>Evaluations</p>
+                </div>
+            </td>
+            <td style="width: 25%;">
+                <div class="card">
+                    <h3>{{ avgScore|number_format(1) }}</h3>
+                    <p>Average Score</p>
+                </div>
+            </td>
+        </tr>
+    </table>
+
+    <div style="margin-top: 20px;">
+        <table style="width:100%; border:none;">
+            <tr>
+                <td style="vertical-align: top; width: 50%; border:none; padding-right:10px;">
+                    <div style="background: #fdfdfd; border: 1px solid #eee; padding: 15px; border-radius: 8px;">
+                        <h4 style="margin-top:0; color: #6f56ff;">Request Status Distribution</h4>
+                        <ul style="list-style:none; padding:0; margin:0; font-size: 13px;">
+                            <li style="margin-bottom: 8px;"><strong style="display:inline-block; width:80px;">Approved:</strong> <span class="status status-Approved">{{ statusCounts['Approved']|default(0) }}</span></li>
+                            <li style="margin-bottom: 8px;"><strong style="display:inline-block; width:80px;">Pending:</strong> <span class="status status-Pending">{{ statusCounts['Pending']|default(0) }}</span></li>
+                            <li style="margin-bottom: 8px;"><strong style="display:inline-block; width:80px;">Rejected:</strong> <span class="status status-Rejected">{{ statusCounts['Rejected']|default(0) }}</span></li>
+                        </ul>
+                    </div>
+                </td>
+                <td style="vertical-align: top; width: 50%; border:none; padding-left:10px;">
+                    <div style="background: #fdfdfd; border: 1px solid #eee; padding: 15px; border-radius: 8px;">
+                        <h4 style="margin-top:0; color: #6f56ff;">Evaluation Risk Models</h4>
+                        <ul style="list-style:none; padding:0; margin:0; font-size: 13px;">
+                            <li style="margin-bottom: 8px;"><strong style="display:inline-block; width:80px;">Low:</strong> {{ riskCounts['Low']|default(0) }} occurrences</li>
+                            <li style="margin-bottom: 8px;"><strong style="display:inline-block; width:80px;">Medium:</strong> {{ riskCounts['Medium']|default(0) }} occurrences</li>
+                            <li style="margin-bottom: 8px;"><strong style="display:inline-block; width:80px;">High:</strong> {{ riskCounts['High']|default(0) }} occurrences</li>
+                            <li style="margin-bottom: 8px;"><strong style="display:inline-block; width:80px;">Critical:</strong> {{ riskCounts['Critical']|default(0) }} occurrences</li>
+                        </ul>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <h2>Recent Funding Applications Log</h2>
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>App ID</th>
+                <th>Request Amount</th>
+                <th>Application Date</th>
+                <th>Schedule Mode</th>
+                <th>Current Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for app in applications|slice(0, 50) %}
+                <tr>
+                    <td>#{{ app.id }}</td>
+                    <td style="color:#2e7d32; font-weight:bold;">${{ app.amount|number_format(2, '.', ',') }}</td>
+                    <td>{{ app.submissionDate|date('Y-m-d') }}</td>
+                    <td>{{ app.paymentSchedule }}</td>
+                    <td><span class="status status-{{ app.status }}">{{ app.status|upper }}</span></td>
+                </tr>
+            {% else %}
+                <tr><td colspan="5" style="text-align: center;">No applications on record.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div style="page-break-before: always;"></div>
+
+    <h2>Detailed Grading Ledger</h2>
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>App Ref</th>
+                <th>Risk Matrix</th>
+                <th>Score (/100)</th>
+                <th>Evaluator Judgment</th>
+                <th>Funding Line</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for ev in evaluations|slice(0, 50) %}
+                <tr>
+                    <td>#{{ ev.fundingApplicationId }}</td>
+                    <td>{{ ev.riskLevel }}</td>
+                    <td><b style="color:#6f56ff;">{{ ev.score }}</b></td>
+                    <td>
+                        <span class="status {% if ev.decision == 'Approved' %}status-Approved{% elseif ev.decision == 'Rejected' %}status-Rejected{% else %}status-Needs{% endif %}">
+                            {{ ev.decision }}
+                        </span>
+                    </td>
+                    <td>{{ ev.fundingCategory }}</td>
+                </tr>
+            {% else %}
+                <tr><td colspan="5" style="text-align: center;">No graded evaluations on record.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="footer">
+        StartupFlow Official Documents Generated Programmatically &copy; {{ date|date('Y') }}
+    </div>
+</body>
+</html>

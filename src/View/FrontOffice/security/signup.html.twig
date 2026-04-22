@@ -1,0 +1,179 @@
+{% extends 'FrontOffice/base.html.twig' %}
+
+{% block title %}StartupFlow Tunisia - Sign Up{% endblock %}
+
+{% block body %}
+    <div class="split-layout">
+        <div class="split-left">
+            
+            
+            
+
+            <!-- Left signup card -->
+            <div class="auth-card" style="margin-top: 50px;">
+                <h2 class="welcome-title">Create Account</h2>
+
+                <form method="post" action="">
+                    <label class="field-label" for="signup-name">Full Name</label>
+                    <input type="text" id="signup-name" name="name" class="pillField" placeholder="Full Name" value="{{ app.session.get('google_name') ?? '' }}" {{ app.session.get('google_name') ? 'readonly' : 'autofocus' }}>
+
+                    <label class="field-label" for="signup-email">Email</label>
+                    <input type="email" id="signup-email" name="email" class="pillField" placeholder="Entrepreneur@startupflow.in" value="{{ app.session.get('google_email') ?? '' }}" {{ app.session.get('google_email') ? 'readonly' : '' }}>
+
+                    {% if not app.session.get('google_email') %}
+                        <label class="field-label" for="signup-password">Password</label>
+                        <div class="password-wrap">
+                            <input type="password" id="signup-password" name="password" class="pillField" placeholder="**************" required>
+                            <button type="button" class="eyeBtn" onclick="togglePass('signup-password')">👁</button>
+                        </div>
+                    {% endif %}
+
+                    <label class="field-label" for="signup-role">Role</label>
+                    <select id="signup-role" name="role" class="pillField" onchange="handleRoleChange(this.value)">
+                        <option value="" disabled selected>Select your role</option>
+                        <option value="entrepreneur">Entrepreneur</option>
+                        <option value="mentor">Mentor</option>
+                        <option value="evaluator">Evaluator</option>
+                    </select>
+
+                    <div id="mentor-fields" style="display: none;">
+                        <label class="field-label" for="mentor-expertise">Mentor Expertise</label>
+                        <input type="text" id="mentor-expertise" name="mentorExpertise" class="pillField" placeholder="e.g., Marketing, Tech, Finance">
+                    </div>
+
+                    <div id="evaluator-fields" style="display: none;">
+                        <label class="field-label" for="evaluator-level">Evaluator Level</label>
+                        <input type="text" id="evaluator-level" name="evaluatorLevel" class="pillField" placeholder="e.g., Senior, Junior">
+                    </div>
+
+                    <button type="submit" class="signBtn">sign up</button>
+                </form>
+
+                <a href="{{ path('app_google_login') }}" class="socialBtn" style="display:inline-flex; align-items:center; justify-content:center; text-decoration:none;">
+                    <img src="{{ asset('Front/images/google-lens-icon-logo-symbol-free-png.png') }}" alt="Google Login">
+                </a>
+
+                <div class="auth-bottom">
+                    <span>already have an account ?</span>
+                    <a href="{{ path('app_login') }}" class="link-alt">log in</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="split-right">
+            <!-- 3D Cube Container replacing static image -->
+            <div id="threed-cube-container" style="width: 100%; height: 100%; position: absolute; top: 0; left: 0; z-index: 1;"></div>
+            <div class="right-overlay" style="z-index: 2;">
+                <h2 class="rightTitle">Join the Ecosystem</h2>
+                <p class="rightSub">Create an account to start tracking, mentoring, and accelerating<br>startup success alongside leading experts.</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        function togglePass(id) {
+            const el = document.getElementById(id);
+            if (el.type === "password") {
+                el.type = "text";
+            } else {
+                el.type = "password";
+            }
+        }
+
+        function handleRoleChange(role) {
+            const mentorFields = document.getElementById('mentor-fields');
+            const evaluatorFields = document.getElementById('evaluator-fields');
+
+            mentorFields.style.display = 'none';
+            evaluatorFields.style.display = 'none';
+
+            if (role === 'mentor') {
+                mentorFields.style.display = 'block';
+            } else if (role === 'evaluator') {
+                evaluatorFields.style.display = 'block';
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", function() {
+            const container = document.getElementById('threed-cube-container');
+            if (!container) return;
+
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
+            const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+            
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            container.appendChild(renderer.domElement);
+
+            const geometry = new THREE.BoxGeometry(3, 3, 3);
+            const material = new THREE.MeshStandardMaterial({  
+                color: 0x7a5cff,
+                wireframe: true,
+                emissive: 0x6f56ff,
+                emissiveIntensity: 0.8,
+                transparent: true,
+                opacity: 0.9
+            });
+            const cube = new THREE.Mesh(geometry, material);
+            scene.add(cube);
+
+            const coreGeometry = new THREE.BoxGeometry(2.1, 2.1, 2.1);
+            const coreMaterial = new THREE.MeshPhongMaterial({
+                color: 0xcdb5ff,
+                shininess: 150,
+                transparent: true,
+                opacity: 0.8
+            });
+            const core = new THREE.Mesh(coreGeometry, coreMaterial);
+            scene.add(core);
+
+            const particleGeo = new THREE.BufferGeometry();
+            const particleCount = 200;
+            const posArray = new Float32Array(particleCount * 3);
+            for(let i=0; i<particleCount*3; i++) {
+                posArray[i] = (Math.random() - 0.5) * 15;
+            }
+            particleGeo.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+            const particleMat = new THREE.PointsMaterial({
+                size: 0.05,
+                color: 0xcdb5ff,
+                transparent: true,
+                opacity: 0.6
+            });
+            const particles = new THREE.Points(particleGeo, particleMat);
+            scene.add(particles);
+
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            scene.add(ambientLight);
+
+            const pointLight = new THREE.PointLight(0xffffff, 2);
+            pointLight.position.set(5, 5, 5);
+            scene.add(pointLight);
+
+            camera.position.z = 6;
+
+            function animate() {
+                requestAnimationFrame(animate);
+                
+                cube.rotation.x += 0.005;
+                cube.rotation.y += 0.01;
+                core.rotation.x -= 0.008;
+                core.rotation.y -= 0.008;
+                particles.rotation.y += 0.002;
+
+                renderer.render(scene, camera);
+            }
+            animate();
+
+            window.addEventListener('resize', () => {
+                if (container) {
+                    camera.aspect = container.clientWidth / container.clientHeight;
+                    camera.updateProjectionMatrix();
+                    renderer.setSize(container.clientWidth, container.clientHeight);
+                }
+            });
+        });
+    </script>
+{% endblock %}

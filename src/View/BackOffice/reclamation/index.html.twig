@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Reclamations</title>
+    <link rel="stylesheet" href="{{ asset('Back/css/styles.css') }}?v=2">
+</head>
+<body>
+    <script>
+        if (localStorage.getItem('admin_theme') === 'dark') {
+            document.body.classList.add('dark-mode');
+        }
+    </script>
+
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            Admin<span>Panel</span>
+        </div>
+        <ul class="sidebar-menu">
+            <li><a href="{{ path('app_admin_panel') }}">Dashboard</a></li>
+            <li><a href="{{ path('app_admin_forum_dashboard') }}">Forum</a></li>
+            <li><a href="{{ path('app_admin_startup_dashboard') }}">Startup</a></li>
+            <li><a href="{{ path('app_admin_evaluation_dashboard') }}">Evaluation</a></li>
+            <li><a href="{{ path('app_admin_users') }}">Users</a></li>
+            <li><a href="{{ path('app_admin_mentorship') }}">Mentorship</a></li>
+            <li><a href="{{ path('app_admin_reclamations') }}" class="active">Reclamation & Response</a></li>
+            <li><a href="{{ path('app_admin_risk_dashboard') }}" style="color: #ff5c5c; font-weight: bold;">🚨 Risk Engine</a></li>
+        </ul>
+        <div class="sidebar-footer">
+            <a href="{{ path('app_logout') }}" class="logout-btn glow-btn">Sign Out</a>
+        </div>
+    </aside>
+
+    <div class="main-content">
+        <header class="topbar">
+            <div class="topbar-left">
+                <h2>Reclamations</h2>
+            </div>
+            <div class="topbar-right">
+                <button id="themeToggleBtn" class="btn-pill" style="border: 2px solid var(--primary-light); background: transparent; color: var(--primary-light);">🌓</button>
+                <div class="user-profile">
+                    <div class="avatar" style="background-color: var(--primary);">
+                        <span style="color: white; font-weight: bold;">A</span>
+                    </div>
+                    <span>Admin</span>
+                </div>
+            </div>
+        </header>
+
+        <main class="dashboard-content" style="position: relative; z-index: 2;">
+            
+            <div class="card" style="width: 100%;">
+                <h3 style="margin-bottom: 20px; color: var(--primary-lighter);">All Reclamations</h3>
+                <div style="overflow-x: auto;">
+                    <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                        <thead>
+                            <tr style="border-bottom: 1px solid rgba(128,128,128,0.2);">
+                                <th style="padding: 15px; color: var(--text-main); opacity: 0.8;">ID</th>
+                                <th style="padding: 15px; color: var(--text-main); opacity: 0.8;">Type</th>
+                                <th style="padding: 15px; color: var(--text-main); opacity: 0.8;">Description</th>
+                                <th style="padding: 15px; color: var(--text-main); opacity: 0.8;">Requested By</th>
+                                <th style="padding: 15px; color: var(--text-main); opacity: 0.8;">Target User</th>
+                                <th style="padding: 15px; color: var(--text-main); opacity: 0.8;">Date</th>
+                                <th style="padding: 15px; color: var(--text-main); opacity: 0.8;">Status</th>
+                                <th style="padding: 15px; color: var(--text-main); opacity: 0.8;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for recItem in reclamations %}
+                                {% set rec = recItem.entity %}
+                                <tr style="border-bottom: 1px solid rgba(128,128,128,0.1);">
+                                    <td style="padding: 15px;">{{ rec.id }}</td>
+                                    <td style="padding: 15px; font-weight: 500;">
+                                        <span style="background: rgba(111, 86, 255, 0.2); color: var(--primary); padding: 5px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: bold;">
+                                            {{ rec.title }}
+                                        </span>
+                                    </td>
+                                    <td style="padding: 15px; max-width: 250px; overflow-wrap: break-word;">{{ rec.description }}</td>
+                                    <td style="padding: 15px;">{{ usersMap[rec.requestedId] ?? 'Unknown' }}</td>
+                                    <td style="padding: 15px;">{{ (rec.title == 'User problem' or rec.title == 'AI Bias Alert') ? (usersMap[rec.targetId] ?? 'Unknown') : '-' }}</td>
+                                    <td style="padding: 15px; color: var(--text-main); opacity: 0.8;">{{ rec.createdAt|date('Y-m-d H:i') }}</td>
+                                    <td style="padding: 15px;">
+                                        <form action="{{ path('app_admin_reclamation_status', {id: rec.id}) }}" method="POST" style="display: inline-block;">
+                                            <select name="status" onchange="this.form.submit()" style="padding: 5px; border-radius: 4px; border: 1px solid rgba(128,128,128,0.3); background: transparent; color: var(--text-main);">
+                                                <option value="OPEN" {% if rec.status == 'OPEN' %}selected{% endif %}>Open</option>
+                                                <option value="IN_PROGRESS" {% if rec.status == 'IN_PROGRESS' %}selected{% endif %}>In Progress</option>
+                                                <option value="RESOLVED" {% if rec.status == 'RESOLVED' %}selected{% endif %}>Resolved</option>
+                                                <option value="REJECTED" {% if rec.status == 'REJECTED' %}selected{% endif %}>Rejected</option>
+                                            </select>
+                                        </form>
+                                    </td>
+                                    <td style="padding: 15px; display: flex; flex-wrap: wrap; gap: 8px;">
+                                        <div style="display: none;" id="responses-data-{{ rec.id }}">
+                                            {% for res in recItem.responsesList %}
+                                                <div style="background: rgba(128,128,128,0.05); padding: 10px; margin-bottom: 8px; border-radius: 6px; border-left: 3px solid var(--primary);">
+                                                    <strong style="color: #2e7d32;">{{ res.adminName }}:</strong>
+                                                    <p style="margin: 5px 0 0 0; font-size: 0.9em; overflow-wrap: break-word; color: var(--text-main);">{{ res.content }}</p>
+                                                    <small style="color: var(--text-main); opacity: 0.6; font-size: 0.8em;">{{ res.date }}</small>
+                                                </div>
+                                            {% endfor %}
+                                        </div>
+                                        <button onclick="openRespondModal({{ rec.id }})" style="padding: 6px 12px; background: rgba(111, 86, 255, 0.2); color: #b58bff; border: 1px solid rgba(111, 86, 255, 0.4); border-radius: 4px; cursor: pointer;">Respond</button>
+                                        
+                                        {% if rec.title == 'User problem' %}
+                                            <a href="{{ path('app_admin_risk_dashboard') }}" style="padding: 6px 12px; text-decoration: none; background: rgba(255, 92, 92, 0.2); color: #ff5c5c; border: 1px solid rgba(255, 92, 92, 0.4); border-radius: 4px; font-size: 13px;">View Risk</a>
+                                        {% endif %}
+
+                                        <form action="{{ path('app_admin_reclamation_delete', {id: rec.id}) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this reclamation?');" style="display: inline-block;">
+                                            <button type="submit" style="padding: 6px 12px; background: rgba(255, 50, 50, 0.2); color: #ff9d9d; border: 1px solid rgba(255, 50, 50, 0.4); border-radius: 4px; cursor: pointer;">Delete</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            {% else %}
+                                <tr>
+                                    <td colspan="8" style="padding: 15px; text-align: center; color: var(--text-main); opacity: 0.8;">No reclamations found.</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+        </main>
+        
+        <footer class="futuristic-footer" style="padding: 20px; text-align: center; border-top: 1px solid rgba(128, 128, 128, 0.2);">
+            <p style="color: var(--text-main); opacity: 0.8;">&copy; {{ 'now'|date('Y') }} StartupFlow Admin.</p>
+        </footer>
+    </div>
+
+    <!-- Respond Modal -->
+    <div id="respondModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1001; align-items: center; justify-content: center; backdrop-filter: blur(5px);">
+        <div class="auth-card" style="width: 450px; max-width: 90%; max-height: 90vh; overflow-y: auto; padding: 25px; box-sizing: border-box;">
+            <h3 style="margin-top: 0; color: var(--primary); font-family: 'Inter', sans-serif;">Manage Responses</h3>
+            
+            <!-- Previous Responses Container -->
+            <div id="previousResponsesContainer" style="margin-bottom: 20px; max-height: 200px; overflow-y: auto; color: var(--text-main);">
+                <!-- Filled via JS -->
+            </div>
+
+            <!-- New Response Form -->
+            <form id="respondForm" method="POST">
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: bold; color: var(--primary-light);">Add New Response</label>
+                    <textarea name="response_content" required rows="4" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid rgba(122, 92, 255, 0.3); background: rgba(122, 92, 255, 0.05); color: var(--text-main); font-family: inherit; resize: vertical; margin-bottom: 0;"></textarea>
+                </div>
+                <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                    <button type="button" onclick="closeRespondModal()" style="padding: 10px 15px; background: transparent; border: 1px solid var(--primary-light); color: var(--text-main); border-radius: 999px; cursor: pointer; font-weight: bold;">Cancel</button>
+                    <button type="submit" class="btn-pill" style="width: auto; margin-top: 0;">Send Response</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const toggleBtn = document.getElementById('themeToggleBtn');
+            if (toggleBtn) {
+                toggleBtn.addEventListener('click', () => {
+                    const isDark = document.body.classList.contains('dark-mode');
+                    if (isDark) {
+                        document.body.classList.remove('dark-mode');
+                        localStorage.setItem('admin_theme', 'light');
+                    } else {
+                        document.body.classList.add('dark-mode');
+                        localStorage.setItem('admin_theme', 'dark');
+                    }
+                });
+            }
+        });
+
+        function openRespondModal(id) {
+            const modal = document.getElementById('respondModal');
+            const form = document.getElementById('respondForm');
+            const container = document.getElementById('previousResponsesContainer');
+            
+            form.action = '/admin/reclamation/respond/' + id;
+            
+            // Render previous responses
+            const sourceDiv = document.getElementById('responses-data-' + id);
+            if (sourceDiv && sourceDiv.innerHTML.trim() !== '') {
+                container.innerHTML = '<strong style="display:block; margin-bottom:10px; color:var(--text-main); opacity:0.8;">History:</strong>' + sourceDiv.innerHTML;
+            } else {
+                container.innerHTML = '<p style="color: #666; font-style: italic;">No previous responses.</p>';
+            }
+
+            modal.style.display = 'flex';
+        }
+
+        function closeRespondModal() {
+            const modal = document.getElementById('respondModal');
+            const form = document.getElementById('respondForm');
+            modal.style.display = 'none';
+            form.reset();
+        }
+    </script>
+</body>
+</html>

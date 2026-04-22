@@ -1,0 +1,129 @@
+{% extends 'BackOffice/evaluation/base_evaluation.html.twig' %}
+
+{% block title %}Evaluation Dashboard{% endblock %}
+{% block header_title %}Grading & Analytics{% endblock %}
+
+{% block body %}
+    <div style="display: flex; justify-content: flex-end; margin-bottom: 20px;">
+        <a href="{{ path('app_admin_evaluation_pdf') }}" class="pill-btn glow-btn" style="background: linear-gradient(135deg, #a18bff, #8256ff); padding: 10px 20px; color: white; text-decoration: none; display: inline-flex; align-items: center; gap: 10px; font-weight: bold; border-radius: 20px;">
+            📄 Download Complete PDF Report
+        </a>
+    </div>
+
+    <div class="dashboard-cards" style="margin-bottom: 40px; display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 25px;">
+        <div class="card glass-card" style="position: relative; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); background: rgba(255, 157, 157, 0.05); padding: 25px;">
+            <div style="position: absolute; top: -10px; right: -10px; font-size: 5rem; opacity: 0.1; color: #ff9d9d;">📁</div>
+            <h3 style="font-size: 3rem; margin: 0; color: #ff9d9d; text-shadow: 0 0 20px rgba(255, 157, 157, 0.4);">{{ applicationsCount }}</h3>
+            <p style="text-transform: uppercase; font-size: 0.85rem; letter-spacing: 2px; color: #b0a8d6; margin-top: 5px; font-weight: 600;">Funding Applications</p>
+        </div>
+        
+        <div class="card glass-card" style="position: relative; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); background: rgba(161, 139, 255, 0.05); padding: 25px;">
+            <div style="position: absolute; top: -10px; right: -10px; font-size: 5rem; opacity: 0.1; color: #a18bff;">⚖️</div>
+            <h3 style="font-size: 3rem; margin: 0; color: #a18bff; text-shadow: 0 0 20px rgba(161, 139, 255, 0.4);">{{ evaluationsCount }}</h3>
+            <p style="text-transform: uppercase; font-size: 0.85rem; letter-spacing: 2px; color: #b0a8d6; margin-top: 5px; font-weight: 600;">Total Evaluations</p>
+        </div>
+
+        <div class="card glass-card" style="position: relative; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); background: rgba(139, 255, 161, 0.05); padding: 25px;">
+            <div style="position: absolute; top: -10px; right: -10px; font-size: 5rem; opacity: 0.1; color: #8bffb0;">📈</div>
+            <h3 style="font-size: 3rem; margin: 0; color: #8bffb0; text-shadow: 0 0 20px rgba(139, 255, 161, 0.4);">{{ avgScore|number_format(1) }}%</h3>
+            <p style="text-transform: uppercase; font-size: 0.85rem; letter-spacing: 2px; color: #b0a8d6; margin-top: 5px; font-weight: 600;">Average Score</p>
+        </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 25px; margin-bottom: 40px;">
+        <!-- Decision Breakdown -->
+        <div class="card" style="padding: 35px; background: rgba(255,255,255,0.02); border-radius: 15px;">
+            <h3 style="margin-bottom: 25px; color: var(--text-main);">Decision Breakdown</h3>
+            <div style="display: flex; flex-direction: column; gap: 20px;">
+                {% set totalDecisions = 0 %}
+                {% for count in decisionCounts %}
+                    {% set totalDecisions = totalDecisions + count %}
+                {% endfor %}
+                {% set totalDecisions = totalDecisions == 0 ? 1 : totalDecisions %}
+
+                {% for decision, count in decisionCounts %}
+                    {% set pct = (count / totalDecisions) * 100 %}
+                    {% set color = decision == 'Approved' ? '#8bffb0' : (decision == 'Rejected' ? '#ff9d9d' : '#a18bff') %}
+                    <div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                            <span style="color: var(--text-main); font-weight: 600;">{{ decision }}</span>
+                            <span style="color: {{ color }}; font-weight: bold;">{{ count }} ({{ pct|number_format(0) }}%)</span>
+                        </div>
+                        <div style="width: 100%; height: 12px; background: rgba(255,255,255,0.05); border-radius: 10px; overflow: hidden;">
+                            <div style="width: {{ pct }}%; height: 100%; background: {{ color }}; box-shadow: 0 0 10px {{ color }}; border-radius: 10px;"></div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Latest Applications (existing, moved here) -->
+        <div class="card" style="padding: 35px; background: rgba(255,255,255,0.02); border-radius: 15px;">
+            <h3 style="margin-bottom: 25px; color: var(--text-main);">Latest Applications</h3>
+            <div style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: separate; border-spacing: 0 10px; text-align: left;">
+                    <thead>
+                        <tr>
+                            <th style="padding: 10px; color: #ff9d9d; font-size: 0.75rem; text-transform: uppercase;">ID</th>
+                            <th style="padding: 10px; color: #ff9d9d; font-size: 0.75rem; text-transform: uppercase;">Amount</th>
+                            <th style="padding: 10px; color: #ff9d9d; font-size: 0.75rem; text-transform: uppercase;">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for app in latestApplications %}
+                            <tr style="background: rgba(255,255,255,0.03);">
+                                <td style="padding: 15px; border-radius: 10px 0 0 10px;">#{{ app.id }}</td>
+                                <td style="padding: 15px; font-weight: 600; color: var(--text-main);">${{ app.amount|number_format(2) }}</td>
+                                <td style="padding: 15px; border-radius: 0 10px 10px 0;">
+                                    <span style="padding: 5px 12px; border-radius: 15px; font-size: 0.75rem; font-weight: 700; background: rgba(255,255,255,0.1); color: #fff;">
+                                        {{ app.status|upper }}
+                                    </span>
+                                </td>
+                            </tr>
+                        {% else %}
+                            <tr><td colspan="3" style="padding: 20px; text-align: center;">No applications found.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Evaluated Applications -->
+    <div class="card" style="width: 100%; padding: 35px; background: rgba(255,255,255,0.02); border-radius: 15px; margin-bottom: 40px;">
+        <h3 style="margin-bottom: 25px; color: var(--text-main);">Top Evaluations (Highest Scores)</h3>
+        <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: separate; border-spacing: 0 10px; text-align: left;">
+                <thead>
+                    <tr>
+                        <th style="padding: 15px; color: #a18bff; font-size: 0.75rem; text-transform: uppercase;">Eval ID</th>
+                        <th style="padding: 15px; color: #a18bff; font-size: 0.75rem; text-transform: uppercase;">App ID</th>
+                        <th style="padding: 15px; color: #a18bff; font-size: 0.75rem; text-transform: uppercase;">Score</th>
+                        <th style="padding: 15px; color: #a18bff; font-size: 0.75rem; text-transform: uppercase;">Decision</th>
+                        <th style="padding: 15px; color: #a18bff; font-size: 0.75rem; text-transform: uppercase;">Risk</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for eval in topEvaluations %}
+                        <tr style="background: rgba(255,255,255,0.03); transition: all 0.3s;" onmouseover="this.style.background='rgba(161,139,255,0.08)'" onmouseout="this.style.background='rgba(255,255,255,0.03)'">
+                            <td style="padding: 20px; border-radius: 10px 0 0 10px;">#{{ eval.id }}</td>
+                            <td style="padding: 20px;">#{{ eval.fundingApplicationId }}</td>
+                            <td style="padding: 20px; font-weight: 600; color: #8bffb0; font-size: 1.2rem;">{{ eval.score }}%</td>
+                            <td style="padding: 20px;">
+                                <span style="padding: 5px 12px; border-radius: 15px; font-size: 0.75rem; font-weight: 700; background: rgba(255,255,255,0.1); color: {{ eval.decision == 'Approved' ? '#8bffb0' : '#ff9d9d' }};">
+                                    {{ eval.decision|upper }}
+                                </span>
+                            </td>
+                            <td style="padding: 20px; border-radius: 0 10px 10px 0;">
+                                {% set riskColor = eval.riskLevel == 'Low' ? '#8bffb0' : (eval.riskLevel == 'Medium' ? '#ffd166' : '#ff9d9d') %}
+                                <span style="color: {{ riskColor }}; font-weight: bold;">{{ eval.riskLevel }}</span>
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr><td colspan="5" style="padding: 30px; text-align: center;">No evaluations found.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endblock %}

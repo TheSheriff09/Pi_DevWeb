@@ -1,0 +1,65 @@
+{% extends 'BackOffice/evaluation/base_evaluation.html.twig' %}
+
+{% block title %}Edit Evaluation #{{ evaluation.id }}{% endblock %}
+{% block header_title %}Modify Funding Evaluation{% endblock %}
+
+{% block stylesheets %}
+    <style>
+        .edit-form-container { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 30px; margin-top: 20px; }
+        .form-group { margin-bottom: 25px; }
+        .form-group label { display: block; margin-bottom: 10px; color: #b0a8d6; font-weight: 600; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 12px 15px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.3); color: white; font-size: 1rem; transition: all 0.3s; }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: #a18bff; box-shadow: 0 0 10px rgba(161,139,255,0.2); }
+    </style>
+{% endblock %}
+
+{% block body %}
+    <div class="card glass-card" style="width: 100%; max-width: 800px; margin: 0 auto; padding: 40px;">
+        <h3 style="color: #a18bff; margin-bottom: 30px;">Evaluation Breakdown</h3>
+        
+        <div class="edit-form-container">
+            <form method="post">
+                <div class="form-group">
+                    <label for="score">Assigned Score (0-100)</label>
+                    <input type="number" id="score" name="score" min="0" max="100" value="{{ evaluation.score }}">
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div class="form-group">
+                        <label for="decision">Decision</label>
+                        <select id="decision" name="decision" style="background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23b0a8d6%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22/%3E%3C/svg%3E'); background-repeat: no-repeat; background-position: right%20.7em%20top%2050%25; background-size: .65em%20auto; appearance: none;">
+                            <option value="Approved" {% if evaluation.decision == 'Approved' %}selected{% endif %}>Approved</option>
+                            <option value="Rejected" {% if evaluation.decision == 'Rejected' %}selected{% endif %}>Rejected</option>
+                            <option value="Needs Revision" {% if evaluation.decision == 'Needs Revision' %}selected{% endif %}>Needs Revision</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="riskLevel">Risk Level</label>
+                        <select id="riskLevel" name="riskLevel" style="background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23b0a8d6%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22/%3E%3C/svg%3E'); background-repeat: no-repeat; background-position: right%20.7em%20top%2050%25; background-size: .65em%20auto; appearance: none;">
+                            <option value="Low" {% if evaluation.riskLevel == 'Low' %}selected{% endif %}>Low</option>
+                            <option value="Medium" {% if evaluation.riskLevel == 'Medium' %}selected{% endif %}>Medium</option>
+                            <option value="High" {% if evaluation.riskLevel == 'High' %}selected{% endif %}>High</option>
+                            <option value="Critical" {% if evaluation.riskLevel == 'Critical' %}selected{% endif %}>Critical</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="fundingCategory">Funding Category</label>
+                    <input type="text" id="fundingCategory" name="fundingCategory" value="{{ evaluation.fundingCategory }}">
+                </div>
+
+                <div class="form-group">
+                    <label for="evaluationComments">Evaluation Comments</label>
+                    <textarea id="evaluationComments" name="evaluationComments" rows="5">{{ evaluation.evaluationComments }}</textarea>
+                </div>
+                
+                <div style="margin-top: 40px; display: flex; justify-content: flex-end; gap: 15px; align-items: center;">
+                    <a href="{{ path('app_admin_evaluation_evaluations') }}" style="color: #b0a8d6; text-decoration: none; font-weight: 600;">Discard Changes</a>
+                    <button type="submit" class="btn-pill" style="background: linear-gradient(135deg, #a18bff, #8256ff); color: white; border: none; padding: 12px 30px; font-weight: 700; cursor: pointer; box-shadow: 0 4px 15px rgba(130, 86, 255, 0.3);">Commit Updates</button>
+                </div>
+            </form>
+        </div>
+    </div>
+{% endblock %}

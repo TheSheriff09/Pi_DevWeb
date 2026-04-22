@@ -1,0 +1,122 @@
+{% extends "FrontOffice/base.html.twig" %}
+
+{% block title %}Funding Evaluations Pipeline - StartupFlow{% endblock %}
+
+{% block body %}
+<div class="auth-container" style="min-height: 100vh; padding: 40px 20px;">
+    <div class="auth-card" style="max-width: 1200px; margin: 0 auto; border-radius: 20px;">
+        
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; border-bottom: 2px solid rgba(111,86,255,0.2); padding-bottom: 20px;">
+            <div>
+                <h1 style="color: var(--primary, #6f56ff); margin: 0; font-size: 2.5em;">Evaluation Dashboard</h1>
+                <p style="margin: 10px 0 0 0; opacity: 0.8;">Assess capital requests injected securely by startups.</p>
+            </div>
+            <div style="background: rgba(111,86,255,0.1); padding: 10px 20px; border-radius: 25px; color: var(--primary);">
+                <strong>Role:</strong> Evaluator Terminal
+            </div>
+        </div>
+
+        {% if applications is empty %}
+            <div style="text-align: center; padding: 60px 20px; background: rgba(111,86,255,0.05); border-radius: 12px; border: 2px dashed rgba(111,86,255,0.2);">
+                <div style="font-size: 4em; margin-bottom: 20px; opacity: 0.6;">📭</div>
+                <h3 style="margin-bottom: 15px;">No active applications found</h3>
+                <p style="margin-bottom: 25px; opacity: 0.8;">The funding queue is completely clear. Applications sent by entrepreneurs will safely appear here.</p>
+            </div>
+        {% else %}
+            <div style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
+                    <thead>
+                        <tr style="background: rgba(111,86,255,0.05);">
+                            <th style="padding: 15px; text-align: left; border-bottom: 2px solid var(--primary); color: var(--primary); font-weight: 600; border-radius: 10px 0 0 0;">Startup Project</th>
+                            <th style="padding: 15px; text-align: left; border-bottom: 2px solid var(--primary); color: var(--primary); font-weight: 600;">Requested Amount</th>
+                            <th style="padding: 15px; text-align: left; border-bottom: 2px solid var(--primary); color: var(--primary); font-weight: 600;">Schedule</th>
+                            <th style="padding: 15px; text-align: left; border-bottom: 2px solid var(--primary); color: var(--primary); font-weight: 600;">Submitted</th>
+                            <th style="padding: 15px; text-align: left; border-bottom: 2px solid var(--primary); color: var(--primary); font-weight: 600;">Status</th>
+                            <th style="padding: 15px; text-align: center; border-bottom: 2px solid var(--primary); color: var(--primary); font-weight: 600; border-radius: 0 10px 0 0;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for app in applications %}
+                            {% set project = startupsMap[app.id] ?? null %}
+                            <tr style="border-bottom: 1px solid rgba(111,86,255,0.1); transition: background 0.2s;" onmouseover="this.style.background='rgba(111,86,255,0.03)'" onmouseout="this.style.background='transparent'">
+                                <td style="padding: 15px;">
+                                    <div style="font-weight: bold; font-size: 1.1em;">{{ project ? project.name : 'Unknown Project' }}</div>
+                                    <div style="font-size: 0.8em; opacity: 0.7; margin-top: 5px;">ID: #{{ app.id }}</div>
+                                </td>
+                                <td style="padding: 15px; font-weight: 600; color: #34d399;">
+                                    ${{ app.amount|number_format(0, '.', ',') }}
+                                </td>
+                                <td style="padding: 15px; font-size: 0.9em;">
+                                    {{ app.paymentSchedule }}
+                                </td>
+                                <td style="padding: 15px; font-size: 0.9em; opacity: 0.8;">
+                                    {{ app.submissionDate|date('M d, Y') }}
+                                </td>
+                                <td style="padding: 15px;">
+                                    <span style="background: {% if app.status == 'Accepted' %}rgba(76,175,80,0.2); color: #81c784;{% elseif app.status == 'Pending' %}rgba(255,152,0,0.2); color: #ffb74d;{% else %}rgba(244,67,54,0.2); color: #e57373;{% endif %} padding: 5px 12px; border-radius: 12px; font-size: 0.85em; font-weight: 500;">
+                                        {{ app.status }}
+                                    </span>
+                                </td>
+                                <td style="padding: 15px; text-align: center;">
+                                    {% if app.status == 'Pending' %}
+                                        <div style="display: flex; gap: 8px; justify-content: center; align-items: center; flex-wrap: wrap;">
+                                            <a href="{{ path('app_evaluator_funding_evaluate', {'id': app.id}) }}" class="pill-btn glow-btn" style="background: rgba(111,86,255,0.1); color: var(--primary); padding: 8px 18px; font-size: 0.9em; text-decoration: none; border-radius: 20px;">Manual Evaluate</a>
+                                            
+                                            <form method="post" action="{{ path('app_evaluator_funding_autoevaluate', {'id': app.id}) }}" style="margin: 0;">
+                                                <button type="submit" class="pill-btn glow-btn" style="background: linear-gradient(135deg, #2196f3, #64b5f6); color: white; border: none; cursor: pointer; padding: 8px 18px; font-size: 0.9em; border-radius: 20px;">
+                                                    🤖 Auto Evaluate
+                                                </button>
+                                            </form>
+                                        </div>
+                                        <div id="prob-{{ app.id }}" style="margin-top: 10px; font-weight: 600; font-size: 0.85em; opacity: 0.7;"
+                                             data-fetch-url="{{ path('app_entrepreneur_funding_predict', {'id': app.id}) }}">
+                                            Scanning likelihood... <span style="display:inline-block; animation: pulse 1.5s infinite;">⏳</span>
+                                        </div>
+                                    {% else %}
+                                        <span style="padding: 8px 18px; font-size: 0.9em; opacity: 0.5; background: rgba(0,0,0,0.1); border-radius: 20px;">Closed</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const probDivs = document.querySelectorAll('div[id^="prob-"]');
+        probDivs.forEach(div => {
+            const fetchUrl = div.getAttribute('data-fetch-url');
+            if (fetchUrl) {
+                fetch(fetchUrl, {
+                    method: 'POST',
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.probability !== undefined) {
+                        const prob = (data.probability * 100).toFixed(1);
+                        const color = data.probability > 0.50 ? '#34d399' : '#e57373';
+                        div.innerHTML = 'AI Estimate: <span style="color:' + color + ';">' + prob + '%</span>';
+                    } else {
+                        div.innerHTML = '<span style="color:red;">Scan failed</span>';
+                    }
+                })
+                .catch(err => {
+                    div.innerHTML = '<span style="color:red;">Error connecting API</span>';
+                });
+            }
+        });
+    });
+</script>
+<style>
+@keyframes pulse {
+    0% { opacity: 0.5; }
+    50% { opacity: 1; }
+    100% { opacity: 0.5; }
+}
+</style>
+{% endblock %}

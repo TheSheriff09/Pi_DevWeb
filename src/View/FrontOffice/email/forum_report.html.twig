@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #0f0c29;
+            color: #ffffff;
+        }
+        .email-container {
+            max-width: 600px;
+            margin: 20px auto;
+            background: linear-gradient(135deg, #1e1e2f, #2a2a40);
+            border: 1px solid rgba(108, 92, 231, 0.3);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+        .header {
+            background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+            padding: 30px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+        }
+        .content {
+            padding: 30px;
+        }
+        .section-title {
+            color: #a29bfe;
+            font-size: 14px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+            border-bottom: 1px solid rgba(162, 155, 254, 0.2);
+            padding-bottom: 4px;
+        }
+        .info-box {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+        }
+        .info-text {
+            font-size: 16px;
+            line-height: 1.6;
+            color: #e2dcff;
+        }
+        .reported-content {
+            font-style: italic;
+            border-left: 4px solid #6c5ce7;
+            padding-left: 15px;
+            margin: 10px 0;
+            color: #ddd;
+        }
+        .footer {
+            padding: 20px;
+            text-align: center;
+            font-size: 12px;
+            color: #888;
+            background: rgba(0, 0, 0, 0.3);
+        }
+        .btn {
+            display: inline-block;
+            padding: 12px 25px;
+            background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+            color: white !important;
+            text-decoration: none;
+            border-radius: 30px;
+            font-weight: bold;
+            margin-top: 10px;
+            box-shadow: 0 4px 15px rgba(108, 92, 231, 0.4);
+        }
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            background: rgba(231, 76, 60, 0.2);
+            color: #e74c3c;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="header">
+            <h1>🚨 Report Alert</h1>
+        </div>
+        <div class="content">
+            <div class="badge">URGENT REVIEW REQUIRED</div>
+            
+            <div class="section-title">Reporter Details</div>
+            <div class="info-box">
+                <div class="info-text">
+                    <strong>Name:</strong> {{ reporter.fullName }}<br>
+                    <strong>Email:</strong> {{ reporter.email }}<br>
+                    <strong>Date:</strong> {{ report.createdAt|date('F j, Y, g:i a') }}
+                </div>
+            </div>
+
+            <div class="section-title">Reported Content Details</div>
+            <div class="info-box">
+                <div class="info-text">
+                    <strong>Type:</strong> {{ report.targetType|upper }}<br>
+                    <strong>Author:</strong> {{ targetAuthor }}<br>
+                    <div class="reported-content">
+                        "{{ targetContent|length > 200 ? targetContent|slice(0, 200) ~ '...' : targetContent }}"
+                    </div>
+                </div>
+            </div>
+
+            <div class="section-title">Reason for Report</div>
+            <div class="info-box">
+                <div class="info-text">
+                    {{ report.reason }}
+                </div>
+            </div>
+
+            <div style="text-align: center;">
+                <a href="{{ actionUrl }}" class="btn">View on Site</a>
+            </div>
+        </div>
+        <div class="footer">
+            &copy; {{ "now"|date("Y") }} StartupFlow Tunisia • Secure Forum Moderation System
+        </div>
+    </div>
+</body>
+</html>
