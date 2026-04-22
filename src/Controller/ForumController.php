@@ -14,6 +14,7 @@ use App\Service\TranslationService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Bridge\Twig\Mime\TemplatedEmail;
+use Symfony\Component\Mime\Address;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -678,7 +679,7 @@ class ForumController extends AbstractController
 
             try {
                 $email = (new TemplatedEmail())
-                    ->from('startupflow@esprit.tn')
+                    ->from(new Address('linafadhel09@gmail.com', 'StartupFlow Forum'))
                     ->to('spankyzaiem@gmail.com')
                     ->subject('🚨 Forum Report: ' . strtoupper($type) . ' #' . $targetId)
                     ->htmlTemplate('FrontOffice/email/forum_report.html.twig')
@@ -692,7 +693,7 @@ class ForumController extends AbstractController
                 
                 $mailer->send($email);
             } catch (\Exception $e) {
-                // Silently log or handle mail failure if needed, don't break the user flow
+                $this->addFlash('error', '⚠️ Report saved but email notification failed: ' . $e->getMessage());
             }
 
             $this->addFlash('success', 'Content reported successfully. The administration has been notified.');
