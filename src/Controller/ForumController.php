@@ -12,6 +12,9 @@ use App\Entity\Report;
 use App\Service\BadWordsFilter;
 use App\Service\TranslationService;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\Mailer\MailerInterface;
+use Symfony\Bridge\Twig\Mime\TemplatedEmail;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -631,7 +634,7 @@ class ForumController extends AbstractController
     }
 
     #[Route('/report', name: 'app_forum_report', methods: ['POST'])]
-    public function reportContent(Request $request, EntityManagerInterface $em): Response
+    public function reportContent(Request $request, EntityManagerInterface $em, MailerInterface $mailer): Response
     {
         $userId = $request->getSession()->get('user_id');
         if (!$userId) return $this->redirectToRoute('app_login');
@@ -641,6 +644,8 @@ class ForumController extends AbstractController
         $reason = trim($request->request->get('reason', ''));
 
         if ($type && $targetId && $reason !== '') {
+            $reporter = $em->getRepository(Users::class)->find($userId);
+            
             $report = new Report();
             $report->setReporterId($userId);
             $report->setTargetType($type);
@@ -649,7 +654,48 @@ class ForumController extends AbstractController
             $report->setCreatedAt(new \DateTime());
             $em->persist($report);
             $em->flush();
-            $this->addFlash('success', 'Content reported successfully.');
+
+            // ── Prepare Email Data ──
+            $targetContent = 'Content not found';
+            $targetAuthor = 'Unknown';
+            $actionUrl = $this->generateUrl('app_forum_index', [], UrlGeneratorInterface::ABSOLUTE_URL);
+
+            if ($type === 'post') {
+                $post = $em->getRepository(ForumPosts::class)->find($targetId);
+                if ($post) {
+                    $targetContent = "[TITLE: " . $post->getTitle() . "] " . $post->getContent();
+                    $targetAuthor = $post->getAuthorName();
+                    $actionUrl = $this->generateUrl('app_forum_show', ['id' => $post->getId()], UrlGeneratorInterface::ABSOLUTE_URL);
+                }
+            } else {
+                $comment = $em->getRepository(Comments::class)->find($targetId);
+                if ($comment) {
+                    $targetContent = $comment->getContent();
+                    $targetAuthor = $comment->getAuthorName();
+                    $actionUrl = $this->generateUrl('app_forum_show', ['id' => $comment->getPostId()], UrlGeneratorInterface::ABSOLUTE_URL);
+                }
+            }
+
+            try {
+                $email = (new TemplatedEmail())
+                    ->from('startupflow@esprit.tn')
+                    ->to('spankyzaiem@gmail.com')
+                    ->subject('🚨 Forum Report: ' . strtoupper($type) . ' #' . $targetId)
+                    ->htmlTemplate('FrontOffice/email/forum_report.html.twig')
+                    ->context([
+                        'report'        => $report,
+                        'reporter'      => $reporter,
+                        'targetContent' => $targetContent,
+                        'targetAuthor'  => $targetAuthor,
+                        'actionUrl'     => $actionUrl
+                    ]);
+                
+                $mailer->send($email);
+            } catch (\Exception $e) {
+                // Silently log or handle mail failure if needed, don't break the user flow
+            }
+
+            $this->addFlash('success', 'Content reported successfully. The administration has been notified.');
         } else {
             $this->addFlash('error', 'Invalid report submission.');
         }
