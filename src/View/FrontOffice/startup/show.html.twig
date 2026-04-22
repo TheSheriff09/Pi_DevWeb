@@ -2,6 +2,11 @@
 
 {% block title %}{{ startup.name }} - Startup Details{% endblock %}
 
+{% block stylesheets %}
+    {{ parent() }}
+    <link rel="stylesheet" href="{{ asset('css/ai_chat.css') }}">
+{% endblock %}
+
 {% block body %}
 <div class="auth-container" style="min-height: 100vh; padding: 40px 20px;">
     <div class="auth-card" style="max-width: 1000px; margin: 0 auto; border-radius: 20px;">
@@ -363,6 +368,32 @@
             </div>
         </div>
 
+        </div>
+
+    </div>
+</div>
+
+<!-- AI Chat Advisor Widget -->
+<div class="ai-chat-widget minimized" id="aiChatWidget">
+    <div class="ai-chat-header" id="aiChatHeader">
+        <h3 style="margin: 0; display: flex; align-items: center; gap: 8px;">
+            <span class="status-dot"></span>
+            AI Advisor
+        </h3>
+        <span id="aiChatToggleIcon" style="font-size: 0.8rem; opacity: 0.8;">▲</span>
+    </div>
+    <div class="ai-chat-messages" id="aiChatMessages">
+        <div class="message ai">
+            Hello! I am your AI Startup Advisor. I've analyzed <strong>{{ startup.name }}</strong> and I'm ready to help. What would you like to know?
+        </div>
+    </div>
+    <div class="ai-chat-input-area">
+        <input type="text" class="ai-chat-input" id="aiChatInput" placeholder="Ask about investment, risks, growth..." autocomplete="off">
+        <button class="ai-chat-send" id="aiChatSend">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path>
+            </svg>
+        </button>
     </div>
 </div>
 
@@ -558,45 +589,125 @@ document.addEventListener('DOMContentLoaded', function() {
             listEl.appendChild(li);
         });
     }
-});
 
-function predictApproval(applicationId, btn) {
-    const url = btn.getAttribute('data-url');
-    const resultSpan = document.getElementById('pred-result-' + applicationId);
-    const originalText = btn.innerHTML;
-    
-    btn.innerHTML = '<div style="width:16px;height:16px;border:2px solid #fff;border-top:2px solid transparent;border-radius:50%;animation:spin 1s linear infinite;"></div> <span>Predicting...</span>';
-    btn.disabled = true;
-    btn.style.opacity = '0.7';
-    resultSpan.style.display = 'none';
-    
-    fetch(url, {
-        method: 'POST',
-        headers: {
-            'X-Requested-With': 'XMLHttpRequest'
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        btn.innerHTML = originalText;
-        btn.disabled = false;
-        btn.style.opacity = '1';
+    // Move predictApproval inside if it wasn't
+    window.predictApproval = function(applicationId, btn) {
+        const url = btn.getAttribute('data-url');
+        const resultSpan = document.getElementById('pred-result-' + applicationId);
+        const originalText = btn.innerHTML;
         
-        if (data.error) {
-            alert('Prediction Error: ' + data.error);
-        } else if (data.probability !== undefined) {
-            const prob = (data.probability * 100).toFixed(1);
-            resultSpan.innerHTML = prob + '% Likely';
-            resultSpan.style.color = data.probability > 0.5 ? '#81c784' : '#e57373';
-            resultSpan.style.display = 'block';
-        }
-    })
-    .catch(error => {
-        btn.innerHTML = originalText;
-        btn.disabled = false;
-        btn.style.opacity = '1';
-        alert('An error occurred predicting the application approval likelihood.');
-    });
-}
+        btn.innerHTML = '<div style="width:16px;height:16px;border:2px solid #fff;border-top:2px solid transparent;border-radius:50%;animation:spin 1s linear infinite;"></div> <span>Predicting...</span>';
+        btn.disabled = true;
+        btn.style.opacity = '0.7';
+        resultSpan.style.display = 'none';
+        
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+            btn.style.opacity = '1';
+            
+            if (data.error) {
+                alert('Prediction Error: ' + data.error);
+            } else if (data.probability !== undefined) {
+                const prob = (data.probability * 100).toFixed(1);
+                resultSpan.innerHTML = prob + '% Likely';
+                resultSpan.style.color = data.probability > 0.5 ? '#81c784' : '#e57373';
+                resultSpan.style.display = 'block';
+            }
+        })
+        .catch(error => {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+            btn.style.opacity = '1';
+            alert('An error occurred predicting the application approval likelihood.');
+        });
+    }
+
+    // AI Chat Advisor Logic
+    const chatWidget = document.getElementById('aiChatWidget');
+    const chatHeader = document.getElementById('aiChatHeader');
+    const chatInput = document.getElementById('aiChatInput');
+    const chatSend = document.getElementById('aiChatSend');
+    const chatMessages = document.getElementById('aiChatMessages');
+    const toggleIcon = document.getElementById('aiChatToggleIcon');
+
+    if (chatWidget) {
+        chatWidget.addEventListener('click', (e) => {
+            if (e.target.closest('#aiChatHeader') || chatWidget.classList.contains('minimized')) {
+                chatWidget.classList.toggle('minimized');
+                toggleIcon.innerText = chatWidget.classList.contains('minimized') ? '▲' : '▼';
+            }
+        });
+    }
+
+    function addMessage(text, isUser = false) {
+        const msgDiv = document.createElement('div');
+        msgDiv.className = `message ${isUser ? 'user' : 'ai'}`;
+        msgDiv.innerHTML = text.replace(/\n/g, '<br>');
+        chatMessages.appendChild(msgDiv);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    function addTypingIndicator() {
+        const indicator = document.createElement('div');
+        indicator.className = 'message ai typing-indicator';
+        indicator.id = 'aiTyping';
+        indicator.innerHTML = '<span></span><span></span><span></span>';
+        chatMessages.appendChild(indicator);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+        return indicator;
+    }
+
+    function sendMessage() {
+        const message = chatInput.value.trim();
+        if (!message) return;
+
+        chatInput.value = '';
+        addMessage(message, true);
+        
+        const indicator = addTypingIndicator();
+        chatSend.disabled = true;
+
+        fetch('{{ path("app_startup_ai_chat", {id: startup.startupID}) }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify({ message: message })
+        })
+        .then(res => res.json())
+        .then(data => {
+            indicator.remove();
+            chatSend.disabled = false;
+            if (data.response) {
+                addMessage(data.response);
+            } else if (data.error) {
+                addMessage("Sorry, I encountered an error: " + data.error);
+            }
+        })
+        .catch(err => {
+            indicator.remove();
+            chatSend.disabled = false;
+            addMessage("Error connecting to AI advisor.");
+        });
+    }
+
+    if (chatSend) {
+        chatSend.addEventListener('click', sendMessage);
+    }
+    if (chatInput) {
+        chatInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendMessage();
+        });
+    }
+});
 </script>
 {% endblock %}
