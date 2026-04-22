@@ -679,7 +679,7 @@ class ForumController extends AbstractController
 
             try {
                 $email = (new TemplatedEmail())
-                    ->from(new Address('linafadhel09@gmail.com', 'StartupFlow Forum'))
+                    ->from(new Address('spankyzaiem@gmail.com', 'StartupFlow Forum'))
                     ->to('spankyzaiem@gmail.com')
                     ->subject('🚨 Forum Report: ' . strtoupper($type) . ' #' . $targetId)
                     ->htmlTemplate('FrontOffice/email/forum_report.html.twig')

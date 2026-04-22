@@ -74,7 +74,7 @@ class SecurityController extends AbstractController
         $request->getSession()->set('pending_2fa_user_id', $user->getId());
 
         $emailMsg = (new TemplatedEmail())
-            ->from(new Address('linafadhel09@gmail.com', 'StartupFlow Security'))
+            ->from(new Address('spankyzaiem@gmail.com', 'StartupFlow Security'))
             ->to(new Address($user->getEmail(), $user->getFullName() ?: 'User'))
             ->subject('Your 2FA Verification Code 🔒')
             ->htmlTemplate('FrontOffice/email/two_factor.html.twig')
@@ -188,7 +188,7 @@ class SecurityController extends AbstractController
                 $loginUrl = $request->getSchemeAndHttpHost() . $this->generateUrl('app_login');
                 
                 $emailMsg = (new TemplatedEmail())
-                    ->from(new Address('linafadhel09@gmail.com', 'StartupFlow'))
+                    ->from(new Address('spankyzaiem@gmail.com', 'StartupFlow'))
                     ->to(new Address($user->getEmail(), $user->getFullName() ?: 'User'))
                     ->subject('Welcome to StartupFlow 🚀')
                     ->htmlTemplate('FrontOffice/email/welcome.html.twig')
