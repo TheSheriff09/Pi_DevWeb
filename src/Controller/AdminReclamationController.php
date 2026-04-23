@@ -11,6 +11,8 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 class AdminReclamationController extends AbstractController
 {
@@ -107,6 +109,7 @@ class AdminReclamationController extends AbstractController
         return $this->render('BackOffice/reclamation/index.html.twig', [
             'reclamations' => $reclamations,
             'usersMap' => $usersMap,
+            'current_module' => 'reclamations'
         ]);
     }
 
@@ -181,5 +184,55 @@ class AdminReclamationController extends AbstractController
         }
 
         return $this->redirectToRoute('app_admin_reclamations');
+    }
+
+    #[Route('/admin/reclamation/ai-respond/{id}', name: 'app_admin_reclamation_ai_respond', methods: ['POST'])]
+    public function aiRespond(int $id, EntityManagerInterface $em, HttpClientInterface $client, Request $request): JsonResponse
+    {
+        if (!$this->isAdmin($request)) {
+            return $this->json(['error' => 'Unauthorized'], Response::HTTP_UNAUTHORIZED);
+        }
+
+        $reclamation = $em->getRepository(Reclamations::class)->find($id);
+        if (!$reclamation) {
+            return $this->json(['error' => 'Reclamation not found'], Response::HTTP_NOT_FOUND);
+        }
+
+        $apiKey = $_ENV['GEMINI_API_KEY'] ?? null;
+        if (!$apiKey) {
+            return $this->json(['error' => 'AI API Key not configured'], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+
+        $prompt = sprintf(
+            "You are a customer support administrator for 'StartupFlow Tunisia'. 
+            You are responding to a user reclamation.
+            RECLAMATION TYPE: %s
+            DESCRIPTION: %s
+            
+            Write a professional, empathetic, and helpful response to this user. 
+            Keep it concise and official. 
+            If it's an 'AI Bias Alert', explain that our technical team will review the evaluation process immediately.
+            If it's a general problem, assure the user that we are looking into it.
+            Response:",
+            $reclamation->getTitle(),
+            $reclamation->getDescription()
+        );
+
+        try {
+            $response = $client->request('POST', 'https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash-lite:generateContent?key=' . $apiKey, [
+                'json' => [
+                    'contents' => [
+                        ['parts' => [['text' => $prompt]]]
+                    ]
+                ]
+            ]);
+
+            $result = $response->toArray();
+            $aiText = $result['candidates'][0]['content']['parts'][0]['text'] ?? 'Could not generate AI response.';
+
+            return $this->json(['response' => trim($aiText)]);
+        } catch (\Exception $e) {
+            return $this->json(['error' => 'AI Error: ' . $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
     }
 }

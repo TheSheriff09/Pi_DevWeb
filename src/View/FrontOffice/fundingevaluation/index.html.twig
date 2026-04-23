@@ -16,7 +16,7 @@
             </div>
         </div>
 
-        {% if applications is empty %}
+        {% if pagination is empty %}
             <div style="text-align: center; padding: 60px 20px; background: rgba(111,86,255,0.05); border-radius: 12px; border: 2px dashed rgba(111,86,255,0.2);">
                 <div style="font-size: 4em; margin-bottom: 20px; opacity: 0.6;">📭</div>
                 <h3 style="margin-bottom: 15px;">No active applications found</h3>
@@ -36,7 +36,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        {% for app in applications %}
+                        {% for app in pagination %}
                             {% set project = startupsMap[app.id] ?? null %}
                             <tr style="border-bottom: 1px solid rgba(111,86,255,0.1); transition: background 0.2s;" onmouseover="this.style.background='rgba(111,86,255,0.03)'" onmouseout="this.style.background='transparent'">
                                 <td style="padding: 15px;">
@@ -81,6 +81,33 @@
                     </tbody>
                 </table>
             </div>
+
+            {# Custom Pagination Navigation #}
+            <div class="pagination-nav" style="display: flex; justify-content: center; align-items: center; margin-top: 30px; gap: 20px;">
+                {% if pagination.currentPageNumber > 1 %}
+                    <a href="{{ path(app.request.attributes.get('_route'), app.request.query.all|merge({'page': pagination.currentPageNumber - 1})) }}" class="pill-btn arrow-btn" style="text-decoration: none;">
+                        <span style="font-size: 1.2em;">←</span> Previous
+                    </a>
+                {% else %}
+                    <span class="pill-btn arrow-btn disabled" style="opacity: 0.3; cursor: not-allowed;">
+                        <span style="font-size: 1.2em;">←</span> Previous
+                    </span>
+                {% endif %}
+                
+                <div style="font-weight: 600; color: var(--primary); background: rgba(111,86,255,0.1); padding: 8px 20px; border-radius: 20px; border: 1px solid rgba(111,86,255,0.2);">
+                    Page {{ pagination.currentPageNumber }} of {{ pagination.pageCount }}
+                </div>
+
+                {% if pagination.currentPageNumber < pagination.pageCount %}
+                    <a href="{{ path(app.request.attributes.get('_route'), app.request.query.all|merge({'page': pagination.currentPageNumber + 1})) }}" class="pill-btn arrow-btn" style="text-decoration: none;">
+                        Next <span style="font-size: 1.2em;">→</span>
+                    </a>
+                {% else %}
+                    <span class="pill-btn arrow-btn disabled" style="opacity: 0.3; cursor: not-allowed;">
+                        Next <span style="font-size: 1.2em;">→</span>
+                    </span>
+                {% endif %}
+            </div>
         {% endif %}
     </div>
 </div>
@@ -117,6 +144,24 @@
     0% { opacity: 0.5; }
     50% { opacity: 1; }
     100% { opacity: 0.5; }
+}
+.arrow-btn {
+    background: rgba(111,86,255,0.1);
+    color: var(--primary);
+    padding: 10px 25px;
+    border-radius: 25px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    border: 1px solid rgba(111,86,255,0.2);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.arrow-btn:hover:not(.disabled) {
+    background: var(--primary);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(111,86,255,0.3);
 }
 </style>
 {% endblock %}

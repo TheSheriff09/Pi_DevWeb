@@ -36,6 +36,7 @@ class AdminStartupController extends AbstractController
             'startupsCount' => $startupsCount,
             'businessPlansCount' => $businessPlansCount,
             'latestStartups' => $latestStartups,
+            'current_module' => 'startup',
             'current_menu' => 'dashboard'
         ]);
     }
@@ -71,6 +72,7 @@ class AdminStartupController extends AbstractController
 
         return $this->render('BackOffice/startup/startups.html.twig', [
             'startups' => $startups,
+            'current_module' => 'startup',
             'current_menu' => 'startups'
         ]);
     }
@@ -98,6 +100,7 @@ class AdminStartupController extends AbstractController
 
         return $this->render('BackOffice/startup/edit_startup.html.twig', [
             'startup' => $startup,
+            'current_module' => 'startup',
             'current_menu' => 'startups'
         ]);
     }
@@ -147,6 +150,7 @@ class AdminStartupController extends AbstractController
 
         return $this->render('BackOffice/startup/businessplans.html.twig', [
             'businessPlans' => $businessPlans,
+            'current_module' => 'startup',
             'current_menu' => 'businessplans'
         ]);
     }
@@ -173,6 +177,7 @@ class AdminStartupController extends AbstractController
 
         return $this->render('BackOffice/startup/edit_businessplan.html.twig', [
             'businessPlan' => $businessPlan,
+            'current_module' => 'startup',
             'current_menu' => 'businessplans'
         ]);
     }

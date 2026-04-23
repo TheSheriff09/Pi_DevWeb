@@ -24,6 +24,7 @@ class Fundingapplication
 
     #[ORM\Column(type: Types::FLOAT)]
     #[Assert\NotBlank]
+    #[Assert\Positive(message: "The requested amount must be a positive value.")]
     #[Assert\Type('float')]
     private ?float $amount = null;
 

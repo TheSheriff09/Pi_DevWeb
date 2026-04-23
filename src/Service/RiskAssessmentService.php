@@ -50,8 +50,14 @@ class RiskAssessmentService
 
         $pythonScript = $this->projectDir . '/bin/assess_user_risk.py';
         
+        // Resolve Python Executable (Windows/Unix aware)
+        $pythonExe = DIRECTORY_SEPARATOR === '\\' ? $this->projectDir . '\.venv\Scripts\python.exe' : $this->projectDir . '/.venv/bin/python';
+        if (!file_exists($pythonExe)) {
+            $pythonExe = DIRECTORY_SEPARATOR === '\\' ? 'python' : 'python3';
+        }
+
         // Pass JSON array directly via Process input (stdin)
-        $process = new Process(['python', $pythonScript]);
+        $process = new Process([$pythonExe, $pythonScript]);
         $process->setInput(json_encode($descriptions));
         $process->run();
 

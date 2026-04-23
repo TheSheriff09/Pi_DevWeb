@@ -54,7 +54,9 @@ class AdminRiskDashboardController extends AbstractController
         return $this->render('BackOffice/users/risk_dashboard.html.twig', [
             'dangerous_users' => $dangerousUsers,
             'pie_chart' => $pieChart,
-            'total_users' => count($allUsers)
+            'total_users' => count($allUsers),
+            'current_module' => 'users',
+            'current_menu' => 'risk'
         ]);
     }
     

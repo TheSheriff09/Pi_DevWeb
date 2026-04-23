@@ -1,157 +1,105 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin - User Risk Analytics</title>
-    <link rel="stylesheet" href="{{ asset('Back/css/styles.css') }}?v=2">
-    <style>
-        .danger-pulse {
-            animation: pulse-red 2s infinite;
-        }
-        @keyframes pulse-red {
-            0% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.7); }
-            70% { box-shadow: 0 0 0 10px rgba(231, 76, 60, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0); }
-        }
-        .user-risk-card {
-            background: rgba(0,0,0,0.1); border: 1px solid rgba(231, 76, 60, 0.3); border-radius: 12px; padding: 20px;
-            display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;
-        }
-        .risk-badge {
-            padding: 5px 12px; border-radius: 20px; font-weight: bold; font-size: 14px; letter-spacing: 1px;
-        }
-    </style>
-</head>
-<body>
-    <script>
-        if (localStorage.getItem('admin_theme') === 'dark') {
-            document.body.classList.add('dark-mode');
-        }
-    </script>
+{% extends 'BackOffice/base_back.html.twig' %}
 
-    <aside class="sidebar">
-        <div class="sidebar-header">
-            Users<span>Panel</span>
-        </div>
-        <ul class="sidebar-menu">
-            <li><a href="{{ path('app_admin_users') }}">👥 Users List</a></li>
-            <li><a href="{{ path('app_admin_activity') }}">⚡ User Activity</a></li>
-            <li><a href="{{ path('app_admin_risk_dashboard') }}" style="color: #ff5c5c; font-weight: bold;">🚨 Risk Engine</a></li>
-        </ul>
-        
-        <div style="margin-top: 30px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px;">
-            <p style="color: #666; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; margin-left: 20px;">Global Modules</p>
-            <ul class="sidebar-menu">
-                <li><a href="{{ path('app_admin_panel') }}">Dashboard</a></li>
-                <li><a href="{{ path('app_admin_forum_dashboard') }}">Forum</a></li>
-                <li><a href="{{ path('app_admin_startup_dashboard') }}">Startup</a></li>
-                <li><a href="{{ path('app_admin_evaluation_dashboard') }}">Evaluation</a></li>
-                <li><a href="{{ path('app_admin_mentorship') }}">Mentorship</a></li>
-                <li><a href="{{ path('app_admin_reclamations') }}">Reclamation & Response</a></li>
-            </ul>
-        </div>
-        
-        <div class="sidebar-footer">
-            <a href="{{ path('app_logout') }}" class="logout-btn glow-btn">Sign Out</a>
-        </div>
-    </aside>
+{% block title %}Admin - User Risk Analytics{% endblock %}
 
-    <div class="main-content">
-        <header class="topbar">
-            <div class="topbar-left">
-                <h2>User Risk & Threat Monitoring</h2>
-            </div>
-            <div class="topbar-right">
-                <button id="themeToggleBtn" class="btn-pill" style="border: 2px solid var(--primary-light); background: transparent; color: var(--primary-light);">🌓</button>
-                <div class="user-profile">
-                    <div class="avatar" style="background-color: var(--primary);">
-                        <span style="color: white; font-weight: bold;">A</span>
-                    </div>
-                    <span>Admin</span>
-                </div>
-            </div>
-        </header>
+{% block header_title %}Risk Engine & Threat Monitoring{% endblock %}
 
-        <main class="dashboard-content" style="position: relative; z-index: 2;">
+{% block body %}
+<style>
+    .danger-pulse {
+        animation: pulse-red 2s infinite;
+    }
+    @keyframes pulse-red {
+        0% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.4); }
+        70% { box-shadow: 0 0 0 10px rgba(231, 76, 60, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0); }
+    }
+    .user-risk-card {
+        background: rgba(128,128,128,0.05); 
+        border: 1px solid rgba(231, 76, 60, 0.2); 
+        border-radius: 12px; 
+        padding: 20px;
+        display: flex; 
+        justify-content: space-between; 
+        align-items: center; 
+        margin-bottom: 15px;
+        transition: all 0.3s ease;
+    }
+    .user-risk-card:hover {
+        background: rgba(231, 76, 60, 0.08);
+        transform: translateX(5px);
+    }
+    .risk-badge {
+        padding: 6px 15px; 
+        border-radius: 20px; 
+        font-weight: bold; 
+        font-size: 0.85rem; 
+        letter-spacing: 1px;
+    }
+</style>
+
+<div style="display: grid; grid-template-columns: 1fr 2fr; gap: 30px;">
+    
+    <!-- LEFT COLUMN: Charts & Controls -->
+    <div>
+        <div class="card" style="padding: 30px; text-align: center; height: 100%;">
+            <h3 style="color: var(--primary); margin-top: 0; font-size: 1.3rem;">AI Threat Classification</h3>
+            <p style="opacity: 0.7; font-size: 0.9rem; margin-bottom: 30px;">Analyzing reclamations via Machine Learning models to score users dynamically based on community threat levels.</p>
             
-            {% for message in app.flashes('success') %}
-                <div style="background: rgba(46, 204, 113, 0.1); border-left: 4px solid #2ecc71; color: #2ecc71; padding: 15px; margin-bottom: 20px; border-radius: 4px;">
-                    {{ message }}
-                </div>
-            {% endfor %}
-
-            <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 30px;">
-                
-                <!-- LEFT COLUMN: Charts & Controls -->
-                <div>
-                    <div class="card" style="padding: 30px; margin-bottom: 30px; background: rgba(0,0,0,0.1); border: 1px solid rgba(255,255,255,0.05); text-align: center;">
-                        <h3 style="color: var(--primary-lighter); margin-top: 0;">AI Threat Classification</h3>
-                        <p style="color: #888; font-size: 13px;">Analyzing reclamations via Machine Learning models to score users dynamically based on community threat levels.</p>
-                        
-                        <div id="div_pie_chart" style="width: 100%; height: 350px; display: flex; justify-content: center;"></div>
-                        
-                        <div style="margin-top: 20px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px;">
-                            <a href="{{ path('app_admin_risk_recalculate') }}" class="glow-btn" style="text-decoration:none; display:inline-block; background: linear-gradient(135deg, #7a5cff, #4facfe); border: none; border-radius: 30px; font-weight: bold; cursor: pointer; color: white; padding: 12px 25px;">
-                                🧠 Recalculate Risk Engine
-                            </a>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- RIGHT COLUMN: Dangerous Users -->
-                <div>
-                    <div class="card danger-pulse" style="padding: 30px; background: rgba(231, 76, 60, 0.05); border: 1px solid rgba(231, 76, 60, 0.3);">
-                        <h3 style="color: #e74c3c; margin-top: 0; display: flex; align-items: center; gap: 10px;">
-                            <span style="font-size: 24px;">🚨</span> DANGEROUS USERS DETECTED
-                        </h3>
-                        <p style="color: #888; font-size: 13px; margin-bottom: 25px;">The following users have surpassed an AI risk score of 80 points due to severe reclamations against them.</p>
-
-                        {% if dangerous_users|length > 0 %}
-                            {% for u in dangerous_users %}
-                                <div class="user-risk-card">
-                                    <div>
-                                        <div style="font-weight: bold; color: var(--text-color); font-size: 18px;">{{ u.fullName }}</div>
-                                        <div style="color: #888; font-size: 13px;">ID: {{ u.id }} | {{ u.email }} | Role: {{ u.role }}</div>
-                                    </div>
-                                    <div style="text-align: right;">
-                                        <span class="risk-badge" style="background: rgba(231, 76, 60, 0.2); color: #e74c3c;">{{ u.riskScore }} Points</span>
-                                        <button class="btn-pill" style="margin-top: 10px; border: 1px solid #e74c3c; background: transparent; color: #e74c3c; cursor: pointer;">Action Needed</button>
-                                    </div>
-                                </div>
-                            {% endfor %}
-                        {% else %}
-                            <div style="text-align: center; padding: 40px; background: rgba(0,0,0,0.1); border-radius: 12px; color: #2ecc71; font-weight: bold;">
-                                ✅ No dangerous users detected in the platform right now.
-                            </div>
-                        {% endif %}
-                    </div>
-                </div>
-
-            </div>
+            <div id="div_pie_chart" style="width: 100%; height: 350px; display: flex; justify-content: center;"></div>
             
-        </main>
+            <div style="margin-top: 30px; border-top: 1px solid rgba(128,128,128,0.1); padding-top: 30px;">
+                <a href="{{ path('app_admin_risk_recalculate') }}" class="btn-pill" style="text-decoration:none; display:inline-block; background: linear-gradient(135deg, #7a5cff, #4facfe); border: none; border-radius: 30px; font-weight: bold; cursor: pointer; color: white; padding: 15px 35px; box-shadow: 0 10px 20px rgba(122, 92, 255, 0.3);">
+                    🧠 Recalculate Risk Engine
+                </a>
+            </div>
+        </div>
     </div>
 
-    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
-    <script type="text/javascript">
-        {{ gc_draw(pie_chart, 'div_pie_chart') }}
+    <!-- RIGHT COLUMN: Dangerous Users -->
+    <div>
+        <div class="card danger-pulse" style="padding: 30px; border: 1px solid rgba(231, 76, 60, 0.3); background: rgba(231, 76, 60, 0.02);">
+            <h3 style="color: #e74c3c; margin-top: 0; display: flex; align-items: center; gap: 12px; font-size: 1.4rem;">
+                <span style="font-size: 1.8rem;">🚨</span> DANGEROUS USERS DETECTED
+            </h3>
+            <p style="opacity: 0.7; font-size: 0.9rem; margin-bottom: 25px;">The following users have surpassed an AI risk score of 80 points due to severe reclamations against them.</p>
 
-        document.addEventListener("DOMContentLoaded", function() {
-            const toggleBtn = document.getElementById('themeToggleBtn');
-            if (toggleBtn) {
-                toggleBtn.addEventListener('click', () => {
-                    const isDark = document.body.classList.contains('dark-mode');
-                    if (isDark) {
-                        document.body.classList.remove('dark-mode');
-                        localStorage.setItem('admin_theme', 'light');
-                    } else {
-                        document.body.classList.add('dark-mode');
-                        localStorage.setItem('admin_theme', 'dark');
-                    }
-                });
-            }
-        });
-    </script>
-</body>
-</html>
+            <div style="max-height: 500px; overflow-y: auto; padding-right: 10px;">
+                {% if dangerous_users|length > 0 %}
+                    {% for u in dangerous_users %}
+                        <div class="user-risk-card">
+                            <div>
+                                <div style="font-weight: bold; color: var(--text-main); font-size: 1.1rem;">{{ u.fullName }}</div>
+                                <div style="opacity: 0.6; font-size: 0.85rem; margin-top: 4px;">ID: {{ u.id }} | {{ u.email }} | Role: {{ u.role }}</div>
+                            </div>
+                            <div style="text-align: right;">
+                                <div class="risk-badge" style="background: rgba(231, 76, 60, 0.15); color: #e74c3c; margin-bottom: 10px;">{{ u.riskScore }} Points</div>
+                                <button class="btn-pill" style="padding: 6px 15px; border: 1px solid #e74c3c; background: transparent; color: #e74c3c; cursor: pointer; font-size: 0.8rem; font-weight: bold; border-radius: 20px;">Action Needed</button>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div style="text-align: center; padding: 60px; background: rgba(46, 204, 113, 0.05); border-radius: 12px; color: #2ecc71; border: 1px solid rgba(46, 204, 113, 0.2);">
+                        <div style="font-size: 3rem; margin-bottom: 15px;">✅</div>
+                        <div style="font-weight: bold; font-size: 1.1rem;">No dangerous users detected.</div>
+                        <div style="opacity: 0.7; font-size: 0.9rem; margin-top: 5px;">Platform safety levels are currently optimal.</div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block javascripts %}
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+<script type="text/javascript">
+    google.charts.load('current', {'packages':['corechart']});
+    google.charts.setOnLoadCallback(drawChart);
+
+    function drawChart() {
+        {{ gc_draw(pie_chart, 'div_pie_chart') }}
+    }
+</script>
+{% endblock %}

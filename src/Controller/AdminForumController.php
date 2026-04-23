@@ -42,6 +42,7 @@ class AdminForumController extends AbstractController
             'commentsCount' => $commentsCount,
             'interactionsCount' => $interactionsCount,
             'latestPosts' => $latestPosts,
+            'current_module' => 'forum',
             'current_menu' => 'dashboard'
         ]);
     }
@@ -73,6 +74,7 @@ class AdminForumController extends AbstractController
 
         return $this->render('BackOffice/forum/posts.html.twig', [
             'posts' => $posts,
+            'current_module' => 'forum',
             'current_menu' => 'posts',
             'searchQuery' => $query
         ]);
@@ -101,6 +103,7 @@ class AdminForumController extends AbstractController
 
         return $this->render('BackOffice/forum/comments.html.twig', [
             'comments' => $comments,
+            'current_module' => 'forum',
             'current_menu' => 'comments'
         ]);
     }
@@ -128,6 +131,7 @@ class AdminForumController extends AbstractController
 
         return $this->render('BackOffice/forum/interactions.html.twig', [
             'interactions' => $interactions,
+            'current_module' => 'forum',
             'current_menu' => 'interactions'
         ]);
     }
@@ -155,6 +159,7 @@ class AdminForumController extends AbstractController
 
         return $this->render('BackOffice/forum/banned_words.html.twig', [
             'words' => $words,
+            'current_module' => 'forum',
             'current_menu' => 'banned_words'
         ]);
     }
@@ -231,6 +236,7 @@ class AdminForumController extends AbstractController
 
         return $this->render('BackOffice/forum/reports.html.twig', [
             'reportsData' => $reportsData,
+            'current_module' => 'forum',
             'current_menu' => 'reports'
         ]);
     }

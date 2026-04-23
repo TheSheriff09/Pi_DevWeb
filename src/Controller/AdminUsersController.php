@@ -47,6 +47,8 @@ class AdminUsersController extends AbstractController
 
         return $this->render('BackOffice/users/index.html.twig', [
             'users' => $users,
+            'current_module' => 'users',
+            'current_menu' => 'list'
         ]);
     }
 

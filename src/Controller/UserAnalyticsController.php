@@ -128,6 +128,8 @@ class UserAnalyticsController extends AbstractController
             'barChart' => $barChart,
             'pieChart' => $pieChart,
             'usersChart' => $usersChart,
+            'current_module' => 'users',
+            'current_menu' => 'charts'
         ]);
     }
 }

@@ -39,7 +39,9 @@ class AdminController extends AbstractController
             'recentActivities' => $recentActivities,
             'mostActiveUsers' => $mostActiveUsers,
             'mostVisitedPages' => $mostVisitedPages,
-            'securityAlerts' => $securityAlerts
+            'securityAlerts' => $securityAlerts,
+            'current_module' => 'users',
+            'current_menu' => 'activity'
         ]);
     }
     #[Route('/admin/users/activity/export/pdf', name: 'app_admin_activity_export_pdf')]

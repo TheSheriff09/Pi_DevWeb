@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Evaluation Admin{% endblock %}</title>
+    <title>{% block title %}{% endblock %}</title>
     <!-- Same CSS for front and back where applicable, but we load Back CSS here -->
     <link rel="stylesheet" href="{{ asset('Back/css/styles.css') }}?v=2">
     {% block stylesheets %}{% endblock %}
@@ -18,7 +18,6 @@
     <!-- SIDEBAR FOR EVALUATION MODULE -->
     <aside class="sidebar">
         <div class="sidebar-header">
-            <h2>Evaluation Admin</h2>
         </div>
         <ul class="sidebar-menu">
             <li><a href="{{ path('app_admin_panel') }}" style="color: #ff9d9d;">&larr; Main Admin</a></li>

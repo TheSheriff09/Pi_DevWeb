@@ -15,11 +15,12 @@ use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Bridge\Twig\Mime\TemplatedEmail;
+use Knp\Component\Pager\PaginatorInterface;
 
 class FundingEvaluationController extends AbstractController
 {
     #[Route('/evaluator/funding', name: 'app_evaluator_funding_list')]
-    public function index(Request $request, EntityManagerInterface $em): Response
+    public function index(Request $request, EntityManagerInterface $em, PaginatorInterface $paginator): Response
     {
         $userId = $request->getSession()->get('user_id');
         $userRole = $request->getSession()->get('user_role');
@@ -34,12 +35,20 @@ class FundingEvaluationController extends AbstractController
             return $this->redirectToRoute('app_home');
         }
 
-        // Fetch all funding applications (potentially order by pending first)
-        $applications = $em->getRepository(Fundingapplication::class)->findBy([], ['submissionDate' => 'DESC']);
+        // Create query for pagination (descending order by submission date)
+        $queryBuilder = $em->getRepository(Fundingapplication::class)
+            ->createQueryBuilder('f')
+            ->orderBy('f.submissionDate', 'DESC');
+
+        $pagination = $paginator->paginate(
+            $queryBuilder,
+            $request->query->getInt('page', 1),
+            15
+        );
         
         // Map Startups dynamically to avoid joining loops in twig
         $startupsMap = [];
-        foreach ($applications as $app) {
+        foreach ($pagination as $app) {
             $startup = $em->getRepository(Startup::class)->find($app->getProjectId());
             if ($startup) {
                 $startupsMap[$app->getId()] = $startup;
@@ -47,7 +56,7 @@ class FundingEvaluationController extends AbstractController
         }
 
         return $this->render('FrontOffice/fundingevaluation/index.html.twig', [
-            'applications' => $applications,
+            'pagination' => $pagination,
             'startupsMap' => $startupsMap,
             'user' => $em->getRepository(Users::class)->find($userId)
         ]);
