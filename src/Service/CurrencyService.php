@@ -8,8 +8,8 @@ use Symfony\Contracts\Cache\ItemInterface;
 
 class CurrencyService
 {
-    private $httpClient;
-    private $cache;
+    private HttpClientInterface $httpClient;
+    private CacheInterface $cache;
     private const BASE_URL = 'https://api.exchangerate-api.com/v4/latest/';
 
     public function __construct(HttpClientInterface $httpClient, CacheInterface $cache)
@@ -20,6 +20,8 @@ class CurrencyService
 
     /**
      * Get all available exchange rates for a base currency
+     *
+     * @return array<string, mixed>
      */
     public function getLatestRates(string $base = 'USD'): array
     {
@@ -46,6 +48,8 @@ class CurrencyService
 
     /**
      * Convert an amount between currencies
+     *
+     * @return array<string, mixed>
      */
     public function convert(float $amount, string $from, string $to): array
     {

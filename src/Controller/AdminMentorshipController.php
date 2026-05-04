@@ -101,8 +101,8 @@ class AdminMentorshipController extends AbstractController
         $mentors = [];
 
         foreach ($mentorsRaw as $m) {
-            $sessionsCount = $em->getRepository(Session::class)->count(['mentorID' => $m->getId(), 'status' => 'completed']);
-            $evaluations = $em->getRepository(\App\Entity\MentorEvaluations::class)->findBy(['mentorID' => $m->getId()]);
+            $sessionsCount = $em->getRepository(Session::class)->count(['mentorID' => (int)$m->getId(), 'status' => 'completed']);
+            $evaluations = $em->getRepository(\App\Entity\MentorEvaluations::class)->findBy(['mentorID' => (int)$m->getId()]);
             
             $totalScore = 0;
             foreach ($evaluations as $e) { 
@@ -145,7 +145,8 @@ class AdminMentorshipController extends AbstractController
             if ($bookingId && $action) {
                 $booking = $em->getRepository(Booking::class)->find($bookingId);
                 if ($booking) {
-                    if (strtoupper($booking->getStatus()) === 'PENDING') {
+                    $status = $booking->getStatus();
+                    if ($status !== null && strtoupper((string)$status) === 'PENDING') {
                         if ($action === 'accept') {
                             $booking->setStatus('approved');
                             $this->addFlash('success', 'Booking #' . $bookingId . ' approved.');
@@ -167,8 +168,8 @@ class AdminMentorshipController extends AbstractController
         $bookings = [];
 
         foreach ($bookingsRaw as $b) {
-            $mentor = $em->getRepository(Users::class)->find($b->getMentorID());
-            $entrepreneur = $em->getRepository(Users::class)->find($b->getEntrepreneurID());
+            $mentor = $em->getRepository(Users::class)->find((int)$b->getMentorID());
+            $entrepreneur = $em->getRepository(Users::class)->find((int)$b->getEntrepreneurID());
             
             $bookings[] = [
                 'booking' => $b,
@@ -209,8 +210,8 @@ class AdminMentorshipController extends AbstractController
         $sessionsData = [];
 
         foreach ($sessionsRaw as $s) {
-            $mentor = $em->getRepository(Users::class)->find($s->getMentorID());
-            $entrepreneur = $em->getRepository(Users::class)->find($s->getEntrepreneurID());
+            $mentor = $em->getRepository(Users::class)->find((int)$s->getMentorID());
+            $entrepreneur = $em->getRepository(Users::class)->find((int)$s->getEntrepreneurID());
             $todosCount = $em->getRepository(\App\Entity\SessionTodos::class)->count(['sessionID' => $s->getSessionID()]);
             $notesCount = $em->getRepository(\App\Entity\SessionNotes::class)->count(['sessionID' => $s->getSessionID()]);
             
@@ -255,9 +256,9 @@ class AdminMentorshipController extends AbstractController
         $feedbacks = [];
 
         foreach ($evalsRaw as $e) {
-            $mentor = $em->getRepository(Users::class)->find($e->getMentorID());
-            $entrepreneur = $em->getRepository(Users::class)->find($e->getEntrepreneurID());
-            $session = $em->getRepository(Session::class)->find($e->getSessionID());
+            $mentor = $em->getRepository(Users::class)->find((int)$e->getMentorID());
+            $entrepreneur = $em->getRepository(Users::class)->find((int)$e->getEntrepreneurID());
+            $session = $em->getRepository(Session::class)->find((int)$e->getSessionID());
             
             $feedbacks[] = [
                 'evaluation' => $e,

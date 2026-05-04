@@ -61,14 +61,14 @@ class StartupController extends AbstractController
             $startup = new Startup();
             
             // Set basic fields
-            $startup->setName($request->request->get('name'));
-            $startup->setDescription($request->request->get('description'));
-            $startup->setSector($request->request->get('sector'));
-            $startup->setImageURL($request->request->get('imageURL'));
+            $startup->setName((string) $request->request->get('name'));
+            $startup->setDescription((string) $request->request->get('description'));
+            $startup->setSector((string) $request->request->get('sector'));
+            $startup->setImageURL((string) $request->request->get('imageURL'));
             
             // Set dates
             if ($request->request->get('creationDate')) {
-                $startup->setCreationDate(new \DateTime($request->request->get('creationDate')));
+                $startup->setCreationDate(new \DateTime((string) $request->request->get('creationDate')));
             }
             
             // Set numeric fields
@@ -81,13 +81,13 @@ class StartupController extends AbstractController
             }
             
             // Set other fields
-            $startup->setStage($request->request->get('stage'));
-            $startup->setStatus($request->request->get('status'));
-            $startup->setIncubatorProgram($request->request->get('incubatorProgram'));
+            $startup->setStage((string) $request->request->get('stage'));
+            $startup->setStatus((string) $request->request->get('status'));
+            $startup->setIncubatorProgram((string) $request->request->get('incubatorProgram'));
             
             // Set evaluation date if provided
             if ($request->request->get('lastEvaluationDate')) {
-                $startup->setLastEvaluationDate(new \DateTime($request->request->get('lastEvaluationDate')));
+                $startup->setLastEvaluationDate(new \DateTime((string) $request->request->get('lastEvaluationDate')));
             }
             
             // Set IDs if provided
@@ -190,13 +190,13 @@ class StartupController extends AbstractController
         
         if ($request->isMethod('POST')) {
             // Update all fields
-            $startup->setName($request->request->get('name'));
-            $startup->setDescription($request->request->get('description'));
-            $startup->setSector($request->request->get('sector'));
-            $startup->setImageURL($request->request->get('imageURL'));
+            $startup->setName((string) $request->request->get('name'));
+            $startup->setDescription((string) $request->request->get('description'));
+            $startup->setSector((string) $request->request->get('sector'));
+            $startup->setImageURL((string) $request->request->get('imageURL'));
             
             if ($request->request->get('creationDate')) {
-                $startup->setCreationDate(new \DateTime($request->request->get('creationDate')));
+                $startup->setCreationDate(new \DateTime((string) $request->request->get('creationDate')));
             }
             
             if ($request->request->get('kPIscore')) {
@@ -207,12 +207,12 @@ class StartupController extends AbstractController
                 $startup->setFundingAmount(floatval($request->request->get('fundingAmount')));
             }
             
-            $startup->setStage($request->request->get('stage'));
-            $startup->setStatus($request->request->get('status'));
-            $startup->setIncubatorProgram($request->request->get('incubatorProgram'));
+            $startup->setStage((string) $request->request->get('stage'));
+            $startup->setStatus((string) $request->request->get('status'));
+            $startup->setIncubatorProgram((string) $request->request->get('incubatorProgram'));
             
             if ($request->request->get('lastEvaluationDate')) {
-                $startup->setLastEvaluationDate(new \DateTime($request->request->get('lastEvaluationDate')));
+                $startup->setLastEvaluationDate(new \DateTime((string) $request->request->get('lastEvaluationDate')));
             }
             
             if ($request->request->get('mentorID')) {
@@ -309,7 +309,7 @@ class StartupController extends AbstractController
         }
 
         $projectDir = $this->getParameter('kernel.project_dir');
-        $pythonScript = $projectDir . '/bin/swot_generator.py';
+        $pythonScript = (is_string($projectDir) ? $projectDir : '') . '/bin/swot_generator.py';
 
         $name = $startup->getName() ?: '';
         $description = $startup->getDescription() ?: '';
@@ -357,7 +357,7 @@ class StartupController extends AbstractController
         }
 
         $projectDir = $this->getParameter('kernel.project_dir');
-        $pythonScript = $projectDir . '/bin/forecast_generator.py';
+        $pythonScript = (is_string($projectDir) ? $projectDir : '') . '/bin/forecast_generator.py';
         $pythonExe = DIRECTORY_SEPARATOR === '\\' ? 'py' : 'python3';
 
         $process = new Process([$pythonExe, $pythonScript, $revenue, $growth, $expenses]);

@@ -35,18 +35,19 @@ class ProfileController extends AbstractController
             $email = $request->request->get('email');
             $password = $request->request->get('password');
 
-            if ($name) $user->setFullName($name);
-            if ($email) $user->setEmail($email);
+            if ($name) $user->setFullName((string)$name);
+            if ($email) $user->setEmail((string)$email);
             
             if ($password) {
                 // Assuming legacy plain text wasn't fixed for them, we hash new passwords properly.
-                $user->setPasswordHash(password_hash($password, PASSWORD_BCRYPT));
+                $user->setPasswordHash(password_hash((string)$password, PASSWORD_BCRYPT));
             }
 
             $errors = $validator->validate($user);
             if (count($errors) > 0) {
-                $message = 'Validation Error: ' . $errors[0]->getPropertyPath() . ' - ' . $errors[0]->getMessage();
-                $this->addFlash('error', $message);
+                $firstError = $errors->get(0);
+                $message = 'Validation Error: ' . $firstError->getPropertyPath() . ' - ' . $firstError->getMessage();
+                $this->addFlash('error', (string)$message);
             } else {
                 try {
                     $em->flush();

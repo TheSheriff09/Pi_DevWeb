@@ -14,20 +14,20 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 class RiskAssessmentService
 {
-    private $em;
-    private $mailer;
-    private $projectDir;
+    private EntityManagerInterface $em;
+    private string $projectDir;
 
     public function __construct(
         EntityManagerInterface $em, 
-        MailerInterface $mailer, 
         #[Autowire('%kernel.project_dir%')] string $projectDir
     ) {
         $this->em = $em;
-        $this->mailer = $mailer;
         $this->projectDir = $projectDir;
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function assessUserRisk(Users $user): array
     {
         // 1. Fetch all reclamations where TargetId = User ID
@@ -58,7 +58,7 @@ class RiskAssessmentService
 
         // Pass JSON array directly via Process input (stdin)
         $process = new Process([$pythonExe, $pythonScript]);
-        $process->setInput(json_encode($descriptions));
+        $process->setInput((string) json_encode($descriptions));
         $process->run();
 
         if (!$process->isSuccessful()) {

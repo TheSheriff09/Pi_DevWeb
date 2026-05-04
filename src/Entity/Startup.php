@@ -15,6 +15,7 @@ class Startup
     #[ORM\GeneratedValue(strategy: 'IDENTITY')]
     #[ORM\Column(name: 'startupID', type: Types::INTEGER)]
     #[Assert\Type('integer')]
+    /** @phpstan-ignore-next-line */
     private ?int $startupID = null;
 
     #[ORM\Column(type: Types::STRING, length: 255, nullable: true)]

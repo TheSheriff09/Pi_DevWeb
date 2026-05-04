@@ -15,6 +15,7 @@ class Businessplan
     #[ORM\GeneratedValue(strategy: 'IDENTITY')]
     #[ORM\Column(name: 'businessPlanID', type: Types::INTEGER)]
     #[Assert\Type('integer')]
+    /** @phpstan-ignore-next-line */
     private ?int $businessPlanID = null;
 
     #[ORM\Column(type: Types::STRING, length: 255, nullable: true)]

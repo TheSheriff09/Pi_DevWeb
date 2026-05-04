@@ -14,7 +14,7 @@ class AdminUsersController extends AbstractController
     private function isAdmin(Request $request): bool
     {
         $role = $request->getSession()->get('user_role');
-        return $role && strtoupper($role) === 'ADMIN';
+        return $role !== null && strtoupper((string)$role) === 'ADMIN';
     }
 
     #[Route('/admin/users', name: 'app_admin_users')]
@@ -24,8 +24,8 @@ class AdminUsersController extends AbstractController
             return $this->redirectToRoute('app_login');
         }
 
-        $sort = $request->query->get('sort', 'id');
-        $direction = strtoupper($request->query->get('direction', 'ASC'));
+        $sort = (string)$request->query->get('sort', 'id');
+        $direction = strtoupper((string)$request->query->get('direction', 'ASC'));
         if (!in_array($direction, ['ASC', 'DESC'])) {
             $direction = 'ASC';
         }
@@ -59,7 +59,7 @@ class AdminUsersController extends AbstractController
             return $this->redirectToRoute('app_login');
         }
 
-        $status = strtoupper($request->request->get('status'));
+        $status = strtoupper((string)$request->request->get('status'));
         $user = $em->getRepository(Users::class)->find($id);
         
         $validStatuses = ['ACTIVE', 'BLOCKED'];
@@ -79,8 +79,8 @@ class AdminUsersController extends AbstractController
         }
 
         $searchQuery = $request->query->get('searchId');
-        $sort = $request->query->get('sort', 'id');
-        $direction = strtoupper($request->query->get('direction', 'ASC'));
+        $sort = (string)$request->query->get('sort', 'id');
+        $direction = strtoupper((string)$request->query->get('direction', 'ASC'));
         
         if (!in_array($direction, ['ASC', 'DESC'])) {
             $direction = 'ASC';

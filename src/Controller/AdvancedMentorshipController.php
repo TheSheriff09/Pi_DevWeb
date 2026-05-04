@@ -50,17 +50,25 @@ class AdvancedMentorshipController extends AbstractController
             $schedule = $this->em->getRepository(Schedule::class)->find($session->getScheduleID());
             if (!$schedule) continue;
 
-            $sessionDate = \DateTime::createFromFormat('Y-m-d', $schedule->getAvailableDate()->format('Y-m-d'));
-            $startTime = \DateTime::createFromFormat('H:i:s', $schedule->getStartTime()->format('H:i:s'));
+            $availableDate = $schedule->getAvailableDate();
+            $startTimeObj = $schedule->getStartTime();
+            
+            if (!$availableDate || !$startTimeObj) continue;
+
+            $sessionDate = \DateTime::createFromFormat('Y-m-d', $availableDate->format('Y-m-d'));
+            $startTime = \DateTime::createFromFormat('H:i:s', $startTimeObj->format('H:i:s'));
             
             // Combine date and time
-            $combinedStart = \DateTime::createFromFormat('Y-m-d H:i:s', $sessionDate->format('Y-m-d') . ' ' . $startTime->format('H:i:s'));
+            $combinedStart = null;
+            if ($sessionDate && $startTime) {
+                $combinedStart = \DateTime::createFromFormat('Y-m-d H:i:s', $sessionDate->format('Y-m-d') . ' ' . $startTime->format('H:i:s'));
+            }
             
-            if ($session->getStatus() === 'Scheduled' && $combinedStart <= $now) {
+            if ($combinedStart && $session->getStatus() === 'Scheduled' && $combinedStart <= $now) {
                 // If it is time, set to Ongoing
                 $session->setStatus('Ongoing');
                 $messages[] = "Session {$session->getSessionID()} marked as Ongoing.";
-            } elseif ($session->getStatus() === 'Scheduled') {
+            } else if ($combinedStart && $session->getStatus() === 'Scheduled' && $combinedStart > $now) {
                 // Reminder system: Detect session 1 hour before
                 $interval = $combinedStart->getTimestamp() - $now->getTimestamp();
                 if ($interval > 0 && $interval <= 3600) {
@@ -165,6 +173,7 @@ class AdvancedMentorshipController extends AbstractController
                         WHERE s.entrepreneurID = :id OR s.mentorID = :id
                         ORDER BY s.sessionDate DESC";
         $stmtSessions = $conn->prepare($sqlSessions);
+        /** @phpstan-ignore-next-line */
         $resultSetSessions = $stmtSessions->executeQuery(['id' => $userId]);
         $allSessions = $resultSetSessions->fetchAllAssociative();
 
@@ -174,6 +183,7 @@ class AdvancedMentorshipController extends AbstractController
                         WHERE b.entrepreneurID = :id OR b.mentorID = :id
                         ORDER BY b.creationDate DESC";
         $stmtBookings = $conn->prepare($sqlBookings);
+        /** @phpstan-ignore-next-line */
         $resultSetBookings = $stmtBookings->executeQuery(['id' => $userId]);
         $allBookings = $resultSetBookings->fetchAllAssociative();
 
@@ -189,7 +199,7 @@ class AdvancedMentorshipController extends AbstractController
             5
         );
 
-        return $this->render('BackOffice/mentorship/advanced/list_sessions.html.twig', [
+        return $this->render('BackOffice/mentorship/list_sessions.html.twig', [
             'sessions' => $paginationSessions,
             'bookings' => $paginationBookings
         ]);
@@ -200,9 +210,9 @@ class AdvancedMentorshipController extends AbstractController
     public function bookAction(Request $request): Response
     {
         $mentorId = $request->request->getInt('mentorID');
-        $dateStr = $request->request->get('date');
-        $timeStr = $request->request->get('time', '10:00:00');
-        $topic = $request->request->get('topic', 'General Mentorship');
+        $dateStr = (string)$request->request->get('date');
+        $timeStr = (string)$request->request->get('time', '10:00:00');
+        $topic = (string)$request->request->get('topic', 'General Mentorship');
         $entrepreneurId = 2; // Mock current user
 
         $conn = $this->em->getConnection();
@@ -229,8 +239,8 @@ class AdvancedMentorshipController extends AbstractController
             $booking->setBookingID(random_int(1000, 9999));
             $booking->setEntrepreneurID($entrepreneurId);
             $booking->setMentorID($mentorId);
-            $booking->setRequestedDate(\DateTime::createFromFormat('Y-m-d', $dateStr));
-            $booking->setRequestedTime(\DateTime::createFromFormat('H:i', $timeStr) ?: new \DateTime($timeStr));
+            $booking->setRequestedDate(\DateTime::createFromFormat('Y-m-d', $dateStr) ?: null);
+            $booking->setRequestedTime(\DateTime::createFromFormat('H:i:s', $timeStr) ?: (\DateTime::createFromFormat('H:i', $timeStr) ?: null));
             $booking->setTopic($topic);
             $booking->setStatus('Requested');
             $booking->setCreationDate(new \DateTime());
@@ -267,11 +277,17 @@ class AdvancedMentorshipController extends AbstractController
         $schedule->setScheduleID(random_int(1000, 9999));
         $schedule->setMentorID($booking->getMentorID());
         $schedule->setAvailableDate($booking->getRequestedDate());
-        $schedule->setStartTime($booking->getRequestedTime());
+        $requestedTime = $booking->getRequestedTime();
+        if ($requestedTime instanceof \DateTimeInterface) {
+            $schedule->setStartTime(new \DateTime($requestedTime->format('H:i:s')));
+        }
         
-        $endTime = clone $booking->getRequestedTime();
-        $endTime->modify('+1 hour');
-        $schedule->setEndTime($endTime);
+        $startTimeObj = $schedule->getStartTime();
+        if ($startTimeObj) {
+            $endTime = clone $startTimeObj;
+            $endTime->modify('+1 hour');
+            $schedule->setEndTime($endTime);
+        }
         $schedule->setIsBooked(true);
 
         $this->em->persist($schedule);

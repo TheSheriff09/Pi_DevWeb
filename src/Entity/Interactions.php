@@ -15,6 +15,8 @@ class Interactions
     #[ORM\GeneratedValue]
     #[ORM\Column(type: Types::INTEGER)]
     #[Assert\Type('integer')]
+    
+    /** @phpstan-ignore-next-line */
     private ?int $id = null;
 
     #[ORM\Column(type: Types::INTEGER)]

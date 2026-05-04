@@ -155,8 +155,11 @@ class ForumController extends AbstractController
         }
 
         $user = $em->getRepository(Users::class)->find($userId);
-        $title = $request->request->get('title');
-        $content = $request->request->get('content');
+        if (!$user) {
+            return $this->redirectToRoute('app_login');
+        }
+        $title = (string) $request->request->get('title');
+        $content = (string) $request->request->get('content');
         $imageFile = $request->files->get('image');
 
         // --- Bad words check on title and content ---
@@ -180,8 +183,9 @@ class ForumController extends AbstractController
             $newFilename = $originalFilename . '-' . uniqid() . '.' . $imageFile->guessExtension();
 
             try {
+                $projectDir = $this->getParameter('kernel.project_dir');
                 $imageFile->move(
-                    $this->getParameter('kernel.project_dir') . '/public/uploads/forum',
+                    (is_string($projectDir) ? $projectDir : '') . '/public/uploads/forum',
                     $newFilename
                 );
                 $imageName = $newFilename;
@@ -280,7 +284,7 @@ class ForumController extends AbstractController
                 return $this->redirectToRoute('app_forum_show', ['id' => $id]);
             }
 
-            $content = trim($request->request->get('content', ''));
+            $content = trim((string) $request->request->get('content', ''));
 
             // ── Validation 1: empty comment ───────────────────────────────
             if ($content === '') {
@@ -315,7 +319,9 @@ class ForumController extends AbstractController
 
             $errors = $validator->validate($comment);
             if (count($errors) > 0) {
-                $this->addFlash('error', 'Comment validation failed: ' . $errors[0]->getMessage());
+                $firstError = $errors->get(0);
+                $errorMessage = (string) $firstError->getMessage();
+                $this->addFlash('error', 'Comment validation failed: ' . $errorMessage);
                 return $this->redirectToRoute('app_forum_show', ['id' => $id]);
             }
 
@@ -342,7 +348,7 @@ class ForumController extends AbstractController
             return $this->json(['error' => 'Post not found'], 404);
         }
         
-        $type = $request->query->get('type', 'LIKE');
+        $type = (string) $request->query->get('type', 'LIKE');
         $validTypes = ['LIKE', 'LOVE', 'HAHA', 'WOW', 'SAD', 'ANGRY'];
         if (!in_array($type, $validTypes)) {
             $type = 'LIKE';
@@ -407,12 +413,13 @@ class ForumController extends AbstractController
     #[Route('/api/recommended-post', name: 'api_recommended_post', methods: ['GET'])]
     public function getRecommendedPost(Request $request): JsonResponse
     {
-        $jsonPath = $this->getParameter('kernel.project_dir') . '/var/recommended_post.json';
+        $projectDir = $this->getParameter('kernel.project_dir');
+        $jsonPath = (is_string($projectDir) ? $projectDir : '') . '/var/recommended_post.json';
         if (!file_exists($jsonPath)) {
             return $this->json(['error' => 'No recommendations yet.'], 404);
         }
         
-        $data = json_decode(file_get_contents($jsonPath), true);
+        $data = json_decode((string) file_get_contents($jsonPath), true);
         
         $notifiedPosts = $request->getSession()->get('notified_posts', []);
         
@@ -455,8 +462,8 @@ class ForumController extends AbstractController
         }
 
         try {
-            $translatedTitle   = $translator->translate($post->getTitle(),   $targetLang);
-            $translatedContent = $translator->translate($post->getContent(), $targetLang);
+            $translatedTitle   = $translator->translate((string) $post->getTitle(),   $targetLang);
+            $translatedContent = $translator->translate((string) $post->getContent(), $targetLang);
 
             return $this->json([
                 'title'    => $translatedTitle,
@@ -515,12 +522,13 @@ class ForumController extends AbstractController
         }
 
         // Time window check (15 minutes)
-        if ((new \DateTime())->diff($comment->getCreatedAt())->i >= 15) {
+        $createdAt = $comment->getCreatedAt() ?? new \DateTime();
+        if ((new \DateTime())->diff($createdAt)->i >= 15) {
             $this->addFlash('error', 'You can no longer edit this comment. The 15-minute window has passed.');
             return $this->redirectToRoute('app_forum_show', ['id' => $comment->getPostId()]);
         }
 
-        $content = trim($request->request->get('content', ''));
+        $content = trim((string) $request->request->get('content', ''));
         if ($content !== '') {
             $violation = $filter->findViolation($content);
             if ($violation !== null) {
@@ -550,7 +558,8 @@ class ForumController extends AbstractController
         }
 
         // Time window check (15 minutes)
-        if ((new \DateTime())->diff($comment->getCreatedAt())->i >= 15) {
+        $createdAt = $comment->getCreatedAt() ?? new \DateTime();
+        if ((new \DateTime())->diff($createdAt)->i >= 15) {
             $this->addFlash('error', 'You can no longer delete this comment. The 15-minute window has passed.');
             return $this->redirectToRoute('app_forum_show', ['id' => $comment->getPostId()]);
         }
@@ -572,7 +581,7 @@ class ForumController extends AbstractController
         $comment = $em->getRepository(Comments::class)->find($id);
         if (!$comment) return $this->json(['error' => 'Comment not found'], 404);
 
-        $type = $request->query->get('type', 'upvote'); // 'upvote' or 'downvote'
+        $type = (string) $request->query->get('type', 'upvote'); // 'upvote' or 'downvote'
         if (!in_array($type, ['upvote', 'downvote'])) $type = 'upvote';
 
         $reaction = $em->getRepository(CommentReaction::class)->findOneBy(['commentId' => $id, 'userId' => $userId]);
@@ -614,7 +623,7 @@ class ForumController extends AbstractController
     #[Route('/api/users/mention-search', name: 'app_forum_mention_search', methods: ['GET'])]
     public function mentionSearch(Request $request, EntityManagerInterface $em): JsonResponse
     {
-        $query = $request->query->get('q', '');
+        $query = (string) $request->query->get('q', '');
 
         $qb = $em->getRepository(Users::class)->createQueryBuilder('u');
         
@@ -640,9 +649,9 @@ class ForumController extends AbstractController
         $userId = $request->getSession()->get('user_id');
         if (!$userId) return $this->redirectToRoute('app_login');
 
-        $type = $request->request->get('type'); // 'post' or 'comment'
+        $type = (string) $request->request->get('type'); // 'post' or 'comment'
         $targetId = $request->request->get('target_id');
-        $reason = trim($request->request->get('reason', ''));
+        $reason = trim((string) $request->request->get('reason', ''));
 
         if ($type && $targetId && $reason !== '') {
             $reporter = $em->getRepository(Users::class)->find($userId);
@@ -681,7 +690,7 @@ class ForumController extends AbstractController
                 $email = (new TemplatedEmail())
                     ->from(new Address('spankyzaiem@gmail.com', 'StartupFlow Forum'))
                     ->to('spankyzaiem@gmail.com')
-                    ->subject('🚨 Forum Report: ' . strtoupper($type) . ' #' . $targetId)
+                    ->subject('🚨 Forum Report: ' . strtoupper((string) $type) . ' #' . $targetId)
                     ->htmlTemplate('FrontOffice/email/forum_report.html.twig')
                     ->context([
                         'report'        => $report,
@@ -742,12 +751,13 @@ class ForumController extends AbstractController
 
         if ($isLoggedIn && $currentUserId === $targetUser->getId() && $request->isMethod('POST')) {
             $bio = $request->request->get('forumBio');
-            if ($bio !== null) $targetUser->setForumBio($bio);
+            if (is_string($bio)) $targetUser->setForumBio($bio);
             
             $file = $request->files->get('forumImage');
             if ($file) {
                 $filename = uniqid() . '.' . $file->guessExtension();
-                $dir = $this->getParameter('kernel.project_dir') . '/public/uploads/forum_profiles';
+                $projectDir = $this->getParameter('kernel.project_dir');
+                $dir = (is_string($projectDir) ? $projectDir : '') . '/public/uploads/forum_profiles';
                 if (!is_dir($dir)) mkdir($dir, 0777, true);
                 $file->move($dir, $filename);
                 $targetUser->setForumImage($filename);

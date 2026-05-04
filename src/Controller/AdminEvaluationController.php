@@ -41,7 +41,7 @@ class AdminEvaluationController extends AbstractController
         $evaluationsAll = $em->getRepository(Fundingevaluation::class)->findAll();
         $decisionCounts = ['Approved' => 0, 'Rejected' => 0];
         foreach ($evaluationsAll as $ev) {
-            $dec = $ev->getDecision() ?: 'Pending';
+            $dec = (string)($ev->getDecision() ?: 'Pending');
             if (!isset($decisionCounts[$dec])) {
                 $decisionCounts[$dec] = 0;
             }
@@ -53,8 +53,8 @@ class AdminEvaluationController extends AbstractController
             'evaluationsCount' => $evaluationsCount,
             'latestApplications' => $latestApplications,
             'avgScore' => $avgScore,
-            'topEvaluations' => $topEvaluations,
             'decisionCounts' => $decisionCounts,
+            'topEvaluations' => $topEvaluations,
             'current_module' => 'evaluation',
             'current_menu' => 'dashboard'
         ]);
@@ -65,9 +65,9 @@ class AdminEvaluationController extends AbstractController
     {
         if ($redirect = $this->ensureAdmin($request)) return $redirect;
 
-        $search = $request->query->get('search', '');
-        $sortBy = $request->query->get('sortBy', 'submissionDate');
-        $sortDir = strtoupper($request->query->get('sortDir', 'DESC')) === 'ASC' ? 'ASC' : 'DESC';
+        $search = (string)$request->query->get('search', '');
+        $sortBy = (string)$request->query->get('sortBy', 'submissionDate');
+        $sortDir = strtoupper((string)$request->query->get('sortDir', 'DESC')) === 'ASC' ? 'ASC' : 'DESC';
 
         $qb = $em->getRepository(Fundingapplication::class)->createQueryBuilder('a');
 
@@ -108,14 +108,14 @@ class AdminEvaluationController extends AbstractController
 
         if ($request->isMethod('POST')) {
             $application->setAmount((float) $request->request->get('amount'));
-            $application->setApplicationReason($request->request->get('applicationReason'));
-            $application->setPaymentSchedule($request->request->get('paymentSchedule'));
-            $application->setStatus($request->request->get('status'));
+            $application->setApplicationReason((string)$request->request->get('applicationReason'));
+            $application->setPaymentSchedule((string)$request->request->get('paymentSchedule'));
+            $application->setStatus((string)$request->request->get('status'));
             
             $errors = $validator->validate($application);
             if (count($errors) > 0) {
                 foreach ($errors as $error) {
-                    $this->addFlash('error', ucfirst($error->getPropertyPath()) . ': ' . $error->getMessage());
+                    $this->addFlash('error', ucfirst((string)$error->getPropertyPath()) . ': ' . (string)$error->getMessage());
                 }
                 return $this->redirectToRoute('app_admin_evaluation_application_edit', ['id' => $id]);
             }
@@ -149,9 +149,9 @@ class AdminEvaluationController extends AbstractController
     {
         if ($redirect = $this->ensureAdmin($request)) return $redirect;
 
-        $search = $request->query->get('search', '');
-        $sortBy = $request->query->get('sortBy', 'createdAt');
-        $sortDir = strtoupper($request->query->get('sortDir', 'DESC')) === 'ASC' ? 'ASC' : 'DESC';
+        $search = (string)$request->query->get('search', '');
+        $sortBy = (string)$request->query->get('sortBy', 'createdAt');
+        $sortDir = strtoupper((string)$request->query->get('sortDir', 'DESC')) === 'ASC' ? 'ASC' : 'DESC';
 
         $qb = $em->getRepository(Fundingevaluation::class)->createQueryBuilder('e');
 
@@ -194,15 +194,15 @@ class AdminEvaluationController extends AbstractController
 
         if ($request->isMethod('POST')) {
             $evaluation->setScore((int) $request->request->get('score'));
-            $evaluation->setDecision($request->request->get('decision'));
-            $evaluation->setRiskLevel($request->request->get('riskLevel'));
-            $evaluation->setFundingCategory($request->request->get('fundingCategory'));
-            $evaluation->setEvaluationComments($request->request->get('evaluationComments'));
+            $evaluation->setDecision((string)$request->request->get('decision'));
+            $evaluation->setRiskLevel((string)$request->request->get('riskLevel'));
+            $evaluation->setFundingCategory((string)$request->request->get('fundingCategory'));
+            $evaluation->setEvaluationComments((string)$request->request->get('evaluationComments'));
             
             $errors = $validator->validate($evaluation);
             if (count($errors) > 0) {
                 foreach ($errors as $error) {
-                    $this->addFlash('error', ucfirst($error->getPropertyPath()) . ': ' . $error->getMessage());
+                    $this->addFlash('error', ucfirst((string)$error->getPropertyPath()) . ': ' . (string)$error->getMessage());
                 }
                 return $this->redirectToRoute('app_admin_evaluation_evaluation_edit', ['id' => $id]);
             }
@@ -239,17 +239,19 @@ class AdminEvaluationController extends AbstractController
         $applications = $em->getRepository(Fundingapplication::class)->findAll();
         $evaluations = $em->getRepository(Fundingevaluation::class)->findAll();
 
-        $logoPath = $this->getParameter('kernel.project_dir') . '/public/Front/images/email/logo.png';
+        $projectDir = $this->getParameter('kernel.project_dir');
+        $logoPath = (is_string($projectDir) ? $projectDir : '') . '/public/Front/images/email/logo.png';
         $logoBase64 = '';
         if (file_exists($logoPath)) {
-            $logoBase64 = base64_encode(file_get_contents($logoPath));
+            $content = file_get_contents($logoPath);
+            $logoBase64 = base64_encode($content ?: '');
         }
 
         $totalRequested = 0;
         $statusCounts = ['Pending' => 0, 'Approved' => 0, 'Rejected' => 0];
         foreach ($applications as $app) {
             $totalRequested += (float) $app->getAmount();
-            $status = $app->getStatus();
+            $status = (string)$app->getStatus();
             if (isset($statusCounts[$status])) $statusCounts[$status]++;
             else $statusCounts[$status] = 1;
         }
@@ -260,7 +262,7 @@ class AdminEvaluationController extends AbstractController
             $sum = 0;
             foreach ($evaluations as $ev) {
                 $sum += (int) $ev->getScore();
-                $r = $ev->getRiskLevel();
+                $r = (string)$ev->getRiskLevel();
                 if(!isset($riskCounts[$r])) $riskCounts[$r] = 0;
                 $riskCounts[$r]++;
             }

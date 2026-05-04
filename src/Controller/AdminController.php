@@ -84,22 +84,27 @@ class AdminController extends AbstractController
         $activities = $activityRepo->findRecentActivities(1000);
 
         $fp = fopen('php://temp', 'w');
-        fputcsv($fp, ['Date & Time', 'User ID', 'Action', 'Page', 'Description', 'Status']);
+        if ($fp) {
+            fputcsv($fp, ['Date & Time', 'User ID', 'Action', 'Page', 'Description', 'Status']);
 
-        foreach ($activities as $log) {
-            fputcsv($fp, [
-                $log->getCreatedAt()->format('Y-m-d H:i:s'),
-                $log->getUser() ? $log->getUser()->getId() : 'Guest',
-                $log->getActionType(),
-                $log->getPage() ?? '',
-                $log->getDescription() ?? '',
-                $log->getStatus()
-            ]);
+            foreach ($activities as $log) {
+                $createdAt = $log->getCreatedAt();
+                fputcsv($fp, [
+                    $createdAt ? $createdAt->format('Y-m-d H:i:s') : '',
+                    $log->getUser() ? $log->getUser()->getId() : 'Guest',
+                    $log->getActionType(),
+                    $log->getPage() ?? '',
+                    $log->getDescription() ?? '',
+                    $log->getStatus()
+                ]);
+            }
+
+            rewind($fp);
+            $csvContent = (string)stream_get_contents($fp);
+            fclose($fp);
+        } else {
+            $csvContent = '';
         }
-
-        rewind($fp);
-        $csvContent = stream_get_contents($fp);
-        fclose($fp);
 
         return new Response(
             $csvContent,

@@ -61,7 +61,8 @@ class ReclamationController extends AbstractController
 
         $errors = $validator->validate($reclamation);
         if (count($errors) > 0) {
-            return new JsonResponse(['status' => 'error', 'message' => $errors[0]->getMessage()]);
+            $violation = $errors->get(0);
+            return new JsonResponse(['status' => 'error', 'message' => $violation->getMessage()]);
         }
 
         $em->persist($reclamation);
@@ -100,10 +101,11 @@ class ReclamationController extends AbstractController
                 $admin = $usersRepo->find($res->getResponderUserId());
                 $adminName = $admin ? $admin->getFullName() : 'Admin';
                 
+                $createdAt = $res->getCreatedAt();
                 $resList[] = [
                     'id' => $res->getId(),
                     'content' => $res->getContent(),
-                    'date' => $res->getCreatedAt()->format('Y-m-d H:i'),
+                    'date' => $createdAt ? $createdAt->format('Y-m-d H:i') : '',
                     'admin_name' => $adminName
                 ];
             }

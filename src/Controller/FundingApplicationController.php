@@ -45,15 +45,16 @@ class FundingApplicationController extends AbstractController
             
             // Core constraints manually extracted from UI
             $application->setAmount((float) $request->request->get('amount'));
-            $application->setApplicationReason($request->request->get('applicationReason'));
-            $application->setPaymentSchedule($request->request->get('paymentSchedule'));
+            $application->setApplicationReason((string) $request->request->get('applicationReason'));
+            $application->setPaymentSchedule((string) $request->request->get('paymentSchedule'));
             
             // Handle File Upload
             $file = $request->files->get('attachment');
             if ($file) {
                 $fileName = md5(uniqid()) . '.' . $file->getClientOriginalExtension();
                 try {
-                    $uploadDir = $this->getParameter('kernel.project_dir') . '/public/uploads/attachments';
+                    $projectDir = $this->getParameter('kernel.project_dir');
+                    $uploadDir = (is_string($projectDir) ? $projectDir : '') . '/public/uploads/attachments';
                     // Ensure directory exists
                     if (!is_dir($uploadDir)) {
                         mkdir($uploadDir, 0777, true);
@@ -66,9 +67,10 @@ class FundingApplicationController extends AbstractController
             } else {
                 $previous = $request->request->get('previousAttachment');
                 if ($previous) {
-                    $application->setAttachment($previous);
+                    $application->setAttachment((string) $previous);
                 } else {
-                    $application->setAttachment($request->request->get('attachment') ?: 'No Attachment');
+                    $attachment = $request->request->get('attachment');
+                    $application->setAttachment($attachment ? (string) $attachment : 'No Attachment');
                 }
             }
 
@@ -132,11 +134,12 @@ class FundingApplicationController extends AbstractController
             return new JsonResponse(['error' => 'Unauthorized or startup not found'], Response::HTTP_UNAUTHORIZED);
         }
 
-        $projectDir = $this->getParameter('kernel.project_dir');
+        $projectDirParam = $this->getParameter('kernel.project_dir');
+        $projectDir = is_string($projectDirParam) ? $projectDirParam : '';
         $pythonScript = $projectDir . '/train_funding_model.py';
 
-        $schedule = $application->getPaymentSchedule() ?: '';
-        $amount = $application->getAmount() ?: 0;
+        $schedule = (string) ($application->getPaymentSchedule() ?: '');
+        $amount = (string) ($application->getAmount() ?: 0);
 
         $pythonExe = DIRECTORY_SEPARATOR === '\\' ? $projectDir . '\.venv\Scripts\python.exe' : $projectDir . '/.venv/bin/python';
         if (!file_exists($pythonExe)) {

@@ -10,22 +10,23 @@ class MentorshipMessage
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
-    private $id;
+    /** @phpstan-ignore-next-line */
+    private ?int $id = null;
 
     #[ORM\Column(type: 'integer')]
-    private $senderId;
+    private ?int $senderId = null;
 
     #[ORM\Column(type: 'integer')]
-    private $receiverId;
+    private ?int $receiverId = null;
 
     #[ORM\Column(type: 'text')]
-    private $content;
+    private ?string $content = null;
 
     #[ORM\Column(type: 'datetime')]
-    private $timestamp;
+    private ?\DateTimeInterface $timestamp = null;
 
     #[ORM\Column(type: 'boolean')]
-    private $isRead = false;
+    private bool $isRead = false;
 
     public function getId(): ?int
     {

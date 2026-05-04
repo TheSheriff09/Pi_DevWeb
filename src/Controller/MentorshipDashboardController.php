@@ -83,7 +83,8 @@ class MentorshipDashboardController extends AbstractController
         // --- Upcoming Sessions Logic ---
         $now = new \DateTime();
         $upcomingSessions = array_filter($sessions, function($s) use ($now) {
-            return $s->getSessionDate()->format('Y-m-d') >= $now->format('Y-m-d');
+            $sessionDate = $s->getSessionDate();
+            return $sessionDate && $sessionDate->format('Y-m-d') >= $now->format('Y-m-d');
         });
         
         // Sort by closest date
@@ -94,10 +95,11 @@ class MentorshipDashboardController extends AbstractController
         foreach ($upcomingSessions as $s) {
             $otherId = ($role === 'MENTOR') ? $s->getEntrepreneurID() : $s->getMentorID();
             $otherUser = $userRepo->find($otherId);
+            $sessionDate = $s->getSessionDate();
             $upcomingSessionsData[] = [
                 'session' => $s,
                 'partnerName' => $otherUser ? $otherUser->getFullName() : 'Unknown',
-                'isToday' => $s->getSessionDate()->format('Y-m-d') === $now->format('Y-m-d')
+                'isToday' => $sessionDate && $sessionDate->format('Y-m-d') === $now->format('Y-m-d')
             ];
         }
 

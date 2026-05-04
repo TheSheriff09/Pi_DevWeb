@@ -13,12 +13,9 @@ use Symfony\Bridge\Twig\Mime\TemplatedEmail;
 class MentorshipMailerService
 {
     private MailerInterface $mailer;
-    private EntityManagerInterface $em;
-
-    public function __construct(MailerInterface $mailer, EntityManagerInterface $em)
+    public function __construct(MailerInterface $mailer)
     {
         $this->mailer = $mailer;
-        $this->em = $em;
     }
 
     public function sendBookingCreationEmail(Booking $booking, Users $entrepreneur, Users $mentor): void
@@ -27,7 +24,7 @@ class MentorshipMailerService
         
         $email = (new TemplatedEmail())
             ->from('no-reply@startupflow.com')
-            ->to($mentor->getEmail())
+            ->to((string) $mentor->getEmail())
             ->subject('New Mentorship Booking Request: ' . $booking->getTopic())
             ->htmlTemplate('BackOffice/mentorship/emails/booking_created.html.twig')
             ->context([
@@ -43,7 +40,7 @@ class MentorshipMailerService
     {
         $email = (new TemplatedEmail())
             ->from('no-reply@startupflow.com')
-            ->to($entrepreneur->getEmail())
+            ->to((string) $entrepreneur->getEmail())
             ->subject('Mentorship Booking Approved: ' . $booking->getTopic())
             ->htmlTemplate('BackOffice/mentorship/emails/booking_approved.html.twig')
             ->context([
@@ -61,7 +58,7 @@ class MentorshipMailerService
         // Send to Entrepreneur
         $emailEnt = (new TemplatedEmail())
             ->from('no-reply@startupflow.com')
-            ->to($entrepreneur->getEmail())
+            ->to((string) $entrepreneur->getEmail())
             ->subject('Reminder: Your Upcoming Session with ' . $mentor->getFullName())
             ->htmlTemplate('BackOffice/mentorship/emails/session_reminder.html.twig')
             ->context([
@@ -74,7 +71,7 @@ class MentorshipMailerService
         // Send to Mentor
         $emailMentor = (new TemplatedEmail())
             ->from('no-reply@startupflow.com')
-            ->to($mentor->getEmail())
+            ->to((string) $mentor->getEmail())
             ->subject('Reminder: Upcoming Session with ' . $entrepreneur->getFullName())
             ->htmlTemplate('BackOffice/mentorship/emails/session_reminder.html.twig')
             ->context([

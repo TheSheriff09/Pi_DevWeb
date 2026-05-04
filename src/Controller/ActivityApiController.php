@@ -28,7 +28,7 @@ class ActivityApiController extends AbstractController
                 'description' => $log->getDescription(),
                 'status' => $log->getStatus(),
                 'ip_address' => $log->getIpAddress(),
-                'created_at' => $log->getCreatedAt()->format(\DateTimeInterface::ATOM)
+                'created_at' => $log->getCreatedAt() ? $log->getCreatedAt()->format(\DateTimeInterface::ATOM) : null
             ];
         }, $activities);
 
@@ -47,7 +47,7 @@ class ActivityApiController extends AbstractController
                 'action_type' => $log->getActionType(),
                 'page' => $log->getPage(),
                 'status' => $log->getStatus(),
-                'created_at' => $log->getCreatedAt()->format(\DateTimeInterface::ATOM)
+                'created_at' => $log->getCreatedAt() ? $log->getCreatedAt()->format(\DateTimeInterface::ATOM) : null
             ];
         }, $activities);
 
@@ -67,7 +67,7 @@ class ActivityApiController extends AbstractController
                 'description' => $log->getDescription(),
                 'ip_address' => $log->getIpAddress(),
                 'status' => $log->getStatus(),
-                'created_at' => $log->getCreatedAt()->format(\DateTimeInterface::ATOM)
+                'created_at' => $log->getCreatedAt() ? $log->getCreatedAt()->format(\DateTimeInterface::ATOM) : null
             ];
         }, $alerts);
 

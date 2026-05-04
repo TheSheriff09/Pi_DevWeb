@@ -23,6 +23,7 @@ class BadWordsFilter
 
     // Custom words now fetched dynamcially from the database table 'banned_words'.
 
+    /** @var string[] */
     private array $alwaysBlocked = [
         'kill', 'murder', 'stab', 'shoot', 'bomb', 'attack',
         'assassinate', 'slaughter', 'massacre', 'execute',
@@ -35,13 +36,15 @@ class BadWordsFilter
         'terrorist', 'jihad', 'suicide bomber',
     ];
 
+    /** @var string[] */
     private array $whitelist = [
         'hell', 'cum', 'ho', 'bum', 'poo', 'crap', 'damn',
     ];
 
     private string $cacheFile;
+    /** @var string[]|null */
     private ?array $words = null;
-    private $em;
+    private EntityManagerInterface $em;
 
     private const LEET_MAP = [
         '@'  => 'a', '4'  => 'a', '8'  => 'b', '('  => 'c', '{'  => 'c', '['  => 'c', '<'  => 'c',
@@ -80,12 +83,15 @@ class BadWordsFilter
         return null;
     }
 
+    /**
+     * @return string[]
+     */
     private function buildVariants(string $text): array
     {
         $lower = mb_strtolower($text);
         return array_unique([
             $this->normalize($lower),
-            $this->normalize(preg_replace('/[^a-z0-9]/u', '', $lower)),
+            $this->normalize((string) preg_replace('/[^a-z0-9]/u', '', $lower)),
             $this->normalize($this->collapseRepeats($lower)),
             $this->normalize($this->decodeLeet($lower)),
             $this->normalize($this->collapseRepeats($this->decodeLeet($lower))),
@@ -103,17 +109,22 @@ class BadWordsFilter
         return $text;
     }
 
+    /**
+     * @return string[]
+     */
     private function getWords(): array
     {
         if ($this->words !== null) return $this->words;
 
         if (file_exists($this->cacheFile) && (time() - filemtime($this->cacheFile)) < 86400) {
-            $this->words = $this->parseWordList(file_get_contents($this->cacheFile));
+            $content = file_get_contents($this->cacheFile);
+            $this->words = $content !== false ? $this->parseWordList($content) : [];
         } elseif ($remote = $this->fetchRemote(self::WORD_LIST_URL)) {
             file_put_contents($this->cacheFile, $remote);
             $this->words = $this->parseWordList($remote);
         } elseif (file_exists($this->cacheFile)) {
-            $this->words = $this->parseWordList(file_get_contents($this->cacheFile));
+            $content = file_get_contents($this->cacheFile);
+            $this->words = $content !== false ? $this->parseWordList($content) : [];
         } else {
             $this->words = [];
         }
@@ -121,7 +132,7 @@ class BadWordsFilter
         $dynamicWords = $this->em->getRepository(BannedWord::class)->findAll();
         $custom = [];
         foreach ($dynamicWords as $bw) {
-            $custom[] = mb_strtolower($bw->getWord());
+            $custom[] = mb_strtolower((string) $bw->getWord());
         }
 
         $always = array_map('mb_strtolower', $this->alwaysBlocked);
@@ -129,6 +140,9 @@ class BadWordsFilter
         return $this->words;
     }
 
+    /**
+     * @return string[]
+     */
     private function parseWordList(string $raw): array
     {
         $lines = explode("\n", str_replace("\r", '', $raw));

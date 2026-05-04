@@ -169,8 +169,8 @@ class AdminForumController extends AbstractController
     {
         if ($redirect = $this->ensureAdmin($request)) return $redirect;
 
-        $wordText = $request->request->get('word');
-        if ($wordText) {
+        $wordText = (string) $request->request->get('word');
+        if ($wordText !== '') {
             $existing = $em->getRepository(BannedWord::class)->findOneBy(['word' => mb_strtolower(trim($wordText))]);
             if (!$existing) {
                 $bw = new BannedWord();
@@ -229,7 +229,7 @@ class AdminForumController extends AbstractController
 
             $reportsData[] = [
                 'report' => $report,
-                'contentSnippet' => mb_strimwidth($content, 0, 100, '...'),
+                'contentSnippet' => mb_strimwidth((string) $content, 0, 100, '...'),
                 'authorName' => $authorName ?: 'Unknown'
             ];
         }

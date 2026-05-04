@@ -33,7 +33,7 @@ class AdminReclamationController extends AbstractController
         $existingAlerts = $em->getRepository(Reclamations::class)->findBy(['title' => 'AI Bias Alert']);
         $existingAppIds = [];
         foreach ($existingAlerts as $alert) {
-            if (preg_match('/Application #(\d+)/', $alert->getDescription(), $matches)) {
+            if (preg_match('/Application #(\d+)/', (string)$alert->getDescription(), $matches)) {
                 $existingAppIds[] = (int)$matches[1];
             }
         }
@@ -92,10 +92,11 @@ class AdminReclamationController extends AbstractController
                 // Determine admin name safely, default to 'Admin' if not mapped
                 $adminName = $usersMap[$r->getResponderUserId()] ?? 'Admin';
                 
+                $createdAt = $r->getCreatedAt();
                 $resList[] = [
                     'id' => $r->getId(),
                     'content' => $r->getContent(),
-                    'date' => $r->getCreatedAt()->format('Y-m-d H:i'),
+                    'date' => $createdAt ? $createdAt->format('Y-m-d H:i') : '',
                     'adminName' => $adminName
                 ];
             }
@@ -149,7 +150,7 @@ class AdminReclamationController extends AbstractController
         $validStatuses = ['OPEN', 'IN_PROGRESS', 'RESOLVED', 'REJECTED'];
 
         if ($reclamation && $status && in_array($status, $validStatuses)) {
-            $reclamation->setStatus($status);
+            $reclamation->setStatus((string)$status);
             $em->flush();
         }
 
@@ -168,7 +169,7 @@ class AdminReclamationController extends AbstractController
         
         if ($reclamation && $content) {
             $response = new ReclamationResponses();
-            $response->setContent($content);
+            $response->setContent((string)$content);
             $response->setCreatedAt(new \DateTime());
             $response->setReclamationId($reclamation->getId());
             $response->setResponderUserId($request->getSession()->get('user_id'));

@@ -23,7 +23,7 @@ class ScheduleController extends AbstractController
             return $this->redirectToRoute('app_login');
         }
         
-        if (strtoupper($userRole) === 'EVALUATOR') {
+        if (strtoupper((string) $userRole) === 'EVALUATOR') {
             $this->addFlash('error', 'Access Denied: Evaluators are not allowed to access Mentorship features.');
             return $this->redirectToRoute('app_home');
         }
@@ -32,7 +32,7 @@ class ScheduleController extends AbstractController
             return $this->redirectToRoute('app_login');
         }
         
-        $role = $userRole;
+        $role = (string) $userRole;
 
         if ($request->isMethod('POST')) {
             $date = $request->request->get('date');
@@ -40,10 +40,10 @@ class ScheduleController extends AbstractController
             $endTime = $request->request->get('end_time');
             
             $schedule = new Schedule();
-            $schedule->setAvailableDate($date ? new \DateTime($date) : null);
-            $schedule->setStartTime($startTime ? new \DateTime($startTime) : null);
-            $schedule->setEndTime($endTime ? new \DateTime($endTime) : null);
-            $schedule->setMentorID($userId);
+            $schedule->setAvailableDate($date ? new \DateTime((string) $date) : null);
+            $schedule->setStartTime($startTime ? new \DateTime((string) $startTime) : null);
+            $schedule->setEndTime($endTime ? new \DateTime((string) $endTime) : null);
+            $schedule->setMentorID((int) $userId);
             $schedule->setIsBooked(false);
 
             $maxId = $em->createQueryBuilder()
@@ -51,19 +51,21 @@ class ScheduleController extends AbstractController
                 ->from(Schedule::class, 's')
                 ->getQuery()
                 ->getSingleScalarResult();
-            $schedule->setScheduleID(($maxId ?? 0) + 1);
+            $schedule->setScheduleID((int) ($maxId ?? 0) + 1);
 
             $errors = $validator->validate($schedule);
             if (count($errors) > 0) {
                 foreach ($errors as $error) {
-                    $this->addFlash('error', $error->getMessage());
+                    $this->addFlash('error', (string) $error->getMessage());
                 }
                 return $this->redirectToRoute('app_mentor_schedule');
             }
 
             $now = new \DateTime();
-            if ($schedule->getAvailableDate()->format('Y-m-d') < $now->format('Y-m-d') || 
-               ($schedule->getAvailableDate()->format('Y-m-d') === $now->format('Y-m-d') && $schedule->getStartTime()->format('H:i') < $now->format('H:i'))) {
+            $availableDate = $schedule->getAvailableDate();
+            $startTimeObj = $schedule->getStartTime();
+            if ($availableDate && $startTimeObj && ($availableDate->format('Y-m-d') < $now->format('Y-m-d') || 
+               ($availableDate->format('Y-m-d') === $now->format('Y-m-d') && $startTimeObj->format('H:i') < $now->format('H:i')))) {
                 $this->addFlash('error', 'Cannot create a schedule slot in the past.');
                 return $this->redirectToRoute('app_mentor_schedule');
             }
@@ -104,7 +106,7 @@ class ScheduleController extends AbstractController
             return $this->json(['status' => 'error', 'message' => 'Unauthorized'], 401);
         }
         
-        if (strtoupper($userRole) === 'EVALUATOR') {
+        if (strtoupper((string) $userRole) === 'EVALUATOR') {
             return $this->json(['status' => 'error', 'message' => 'Access Denied: Evaluators are not allowed to access Mentorship features.'], 403);
         }
         

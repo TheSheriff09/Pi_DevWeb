@@ -48,7 +48,7 @@ class AdminStartupController extends AbstractController
 
         $search = $request->query->get('search', '');
         $sortBy = $request->query->get('sortBy', 'creationDate');
-        $sortDir = strtoupper($request->query->get('sortDir', 'DESC')) === 'ASC' ? 'ASC' : 'DESC';
+        $sortDir = strtoupper((string) $request->query->get('sortDir', 'DESC')) === 'ASC' ? 'ASC' : 'DESC';
 
         $qb = $em->getRepository(Startup::class)->createQueryBuilder('s');
 
@@ -88,10 +88,10 @@ class AdminStartupController extends AbstractController
         }
 
         if ($request->isMethod('POST')) {
-            $startup->setName($request->request->get('name'));
-            $startup->setSector($request->request->get('sector'));
-            $startup->setStage($request->request->get('stage'));
-            $startup->setStatus($request->request->get('status'));
+            $startup->setName((string) $request->request->get('name'));
+            $startup->setSector((string) $request->request->get('sector'));
+            $startup->setStage((string) $request->request->get('stage'));
+            $startup->setStatus((string) $request->request->get('status'));
             $startup->setKPIscore((float) $request->request->get('kPIscore'));
             
             $em->flush();
@@ -126,7 +126,7 @@ class AdminStartupController extends AbstractController
 
         $search = $request->query->get('search', '');
         $sortBy = $request->query->get('sortBy', 'creationDate');
-        $sortDir = strtoupper($request->query->get('sortDir', 'DESC')) === 'ASC' ? 'ASC' : 'DESC';
+        $sortDir = strtoupper((string) $request->query->get('sortDir', 'DESC')) === 'ASC' ? 'ASC' : 'DESC';
 
         $qb = $em->getRepository(Businessplan::class)->createQueryBuilder('b');
 
@@ -166,10 +166,10 @@ class AdminStartupController extends AbstractController
         }
 
         if ($request->isMethod('POST')) {
-            $businessPlan->setTitle($request->request->get('title'));
+            $businessPlan->setTitle((string) $request->request->get('title'));
             $businessPlan->setFundingRequired((float) $request->request->get('fundingRequired'));
-            $businessPlan->setTimeline($request->request->get('timeline'));
-            $businessPlan->setStatus($request->request->get('status'));
+            $businessPlan->setTimeline((string) $request->request->get('timeline'));
+            $businessPlan->setStatus((string) $request->request->get('status'));
             
             $em->flush();
             return $this->redirectToRoute('app_admin_startup_businessplans');

@@ -25,7 +25,7 @@ class MentorController extends AbstractController
             return $this->redirectToRoute('app_login');
         }
         
-        if (strtoupper($userRole) === 'EVALUATOR') {
+        if (strtoupper((string) $userRole) === 'EVALUATOR') {
             $this->addFlash('error', 'Access Denied: Evaluators are not allowed to access Mentorship features.');
             return $this->redirectToRoute('app_home');
         }
@@ -109,7 +109,7 @@ class MentorController extends AbstractController
             return $this->redirectToRoute('app_login');
         }
         
-        if (strtoupper($userRole) === 'EVALUATOR') {
+        if (strtoupper((string) $userRole) === 'EVALUATOR') {
             $this->addFlash('error', 'Access Denied: Evaluators are not allowed to access Mentorship features.');
             return $this->redirectToRoute('app_home');
         }
@@ -139,7 +139,8 @@ class MentorController extends AbstractController
             'Thursday' => [], 'Friday' => [], 'Saturday' => [], 'Sunday' => []
         ];
         foreach ($schedule as $slot) {
-            $dayName = $slot->getAvailableDate()->format('l');
+            $availableDate = $slot->getAvailableDate();
+            $dayName = $availableDate ? $availableDate->format('l') : 'Unknown';
             $groupedSchedule[$dayName][] = $slot;
         }
         
@@ -172,12 +173,12 @@ class MentorController extends AbstractController
             return $this->redirectToRoute('app_login');
         }
         
-        if (strtoupper($userRole) === 'EVALUATOR') {
+        if (strtoupper((string) $userRole) === 'EVALUATOR') {
             $this->addFlash('error', 'Access Denied: Evaluators are not allowed to access Mentorship features.');
             return $this->redirectToRoute('app_home');
         }
         
-        if (strtoupper($userRole) !== 'ENTREPRENEUR' && strtoupper($userRole) !== 'MENTOR') {
+        if (strtoupper((string) $userRole) !== 'ENTREPRENEUR' && strtoupper((string) $userRole) !== 'MENTOR') {
             return $this->redirectToRoute('app_login');
         }
 
@@ -246,7 +247,7 @@ class MentorController extends AbstractController
                 ->getSingleScalarResult();
 
             $favorite = new MentorFavorites();
-            $favorite->setId(($maxId ?? 0) + 1);
+            $favorite->setId((int) ($maxId ?? 0) + 1);
             $favorite->setEntrepreneurID($userId);
             $favorite->setMentorID($id);
             $favorite->setCreatedAt(new \DateTime());

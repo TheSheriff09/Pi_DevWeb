@@ -54,16 +54,14 @@ class UserActivityLogger
             }
         }
 
-        // Ensure Admin users are NEVER tracked
-        if ($user !== null && strtoupper($user->getRole()) === 'ADMIN') {
+        if ($user !== null && strtoupper($user->getRole() ?? '') === 'ADMIN') {
             return;
         }
 
         $log = new UserActivityLogs();
         $log->setActionType($actionType);
         $log->setDescription($description);
-        $log->setStatus($status);
-
+        $log->setStatus($status ?? 'SUCCESS');
         if ($user !== null) {
             $log->setUser($user);
         }
@@ -89,16 +87,14 @@ class UserActivityLogger
         ?string $status = 'SUCCESS',
         ?Users $user = null
     ): void {
-        // Ensure Admin users are NEVER tracked
-        if ($user !== null && strtoupper($user->getRole()) === 'ADMIN') {
+        if ($user !== null && strtoupper($user->getRole() ?? '') === 'ADMIN') {
             return;
         }
 
         $log = new UserActivityLogs();
         $log->setActionType($actionType);
         $log->setDescription($description);
-        $log->setStatus($status);
-
+        $log->setStatus($status ?? 'SUCCESS');
         if ($user !== null) {
             $log->setUser($user);
         }

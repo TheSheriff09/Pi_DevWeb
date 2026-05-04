@@ -65,7 +65,7 @@ class MentorshipChatController extends AbstractController
                     'name' => $user->getFullName(),
                     'role' => $user->getRole(),
                     'unread' => $unreadCount,
-                    'latestPreview' => $lastMsg ? substr($lastMsg->getContent(), 0, 30) . (strlen($lastMsg->getContent()) > 30 ? '...' : '') : ''
+                    'latestPreview' => $lastMsg ? substr((string)$lastMsg->getContent(), 0, 30) . (strlen((string)$lastMsg->getContent()) > 30 ? '...' : '') : ''
                 ];
             }
         }
@@ -110,12 +110,13 @@ class MentorshipChatController extends AbstractController
 
         $messages = [];
         foreach ($rawMessages as $m) {
+            $timestamp = $m->getTimestamp();
             $messages[] = [
                 'id' => $m->getId(),
                 'senderId' => $m->getSenderId(),
                 'content' => $m->getContent(),
-                'time' => $m->getTimestamp()->format('H:i'),
-                'date' => $m->getTimestamp()->format('M j')
+                'time' => $timestamp ? $timestamp->format('H:i') : '',
+                'date' => $timestamp ? $timestamp->format('M j') : ''
             ];
         }
 
@@ -136,7 +137,7 @@ class MentorshipChatController extends AbstractController
             return $this->json(['error' => 'Access Denied: Evaluators are not allowed to access Mentorship features.'], 403);
         }
 
-        $content = trim($request->request->get('message', ''));
+        $content = trim((string)$request->request->get('message', ''));
         if (empty($content)) return $this->json(['error' => 'Empty message'], 400);
 
         $msg = new MentorshipMessage();
@@ -149,13 +150,14 @@ class MentorshipChatController extends AbstractController
         $em->persist($msg);
         $em->flush();
 
-        return $this->json([
-            'id' => $msg->getId(),
-            'senderId' => $msg->getSenderId(),
-            'content' => $msg->getContent(),
-            'time' => $msg->getTimestamp()->format('H:i'),
-            'date' => $msg->getTimestamp()->format('M j')
-        ]);
+            $timestamp = $msg->getTimestamp();
+            return $this->json([
+                'id' => $msg->getId(),
+                'senderId' => $msg->getSenderId(),
+                'content' => $msg->getContent(),
+                'time' => $timestamp ? $timestamp->format('H:i') : '',
+                'date' => $timestamp ? $timestamp->format('M j') : ''
+            ]);
     }
 
     #[Route('/poll', name: 'app_mentorship_chat_poll', methods: ['GET'])]
@@ -196,11 +198,12 @@ class MentorshipChatController extends AbstractController
 
             // If this message belongs to the currently active window, forward it directly!
             if ($activeContactId && $sid == $activeContactId) {
+                $timestamp = $m->getTimestamp();
                 $payload['newActiveMessages'][] = [
                     'id' => $m->getId(),
                     'senderId' => $sid,
                     'content' => $m->getContent(),
-                    'time' => $m->getTimestamp()->format('H:i')
+                    'time' => $timestamp ? $timestamp->format('H:i') : ''
                 ];
                 $m->setIsRead(true);
             }
