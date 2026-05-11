@@ -34,20 +34,20 @@ class MentorshipDashboardController extends AbstractController
         $todoRepo = $em->getRepository(SessionTodos::class);
         
         if ($role === 'ENTREPRENEUR') {
-            $sessions = $sessionRepo->findBy(['entrepreneurID' => $userId]);
+            $sessions = $sessionRepo->findBy(['entrepreneur' => $userId]);
         } elseif ($role === 'MENTOR') {
-            $sessions = $sessionRepo->findBy(['mentorID' => $userId]);
+            $sessions = $sessionRepo->findBy(['mentor' => $userId]);
         } else {
             return $this->redirectToRoute('app_admin_mentorship');
         }
 
-        $sessionIds = array_map(fn($s) => $s->getSessionID(), $sessions);
+        $sessionIds = array_map(fn($s) => $s->getId(), $sessions);
         $todos = [];
         if (!empty($sessionIds)) {
             $qb = $em->createQueryBuilder()
                 ->select('t')
                 ->from(SessionTodos::class, 't')
-                ->where('t.sessionID IN (:ids)')
+                ->where('t.session IN (:ids)')
                 ->setParameter('ids', $sessionIds);
             $todos = $qb->getQuery()->getResult();
         }
@@ -61,10 +61,9 @@ class MentorshipDashboardController extends AbstractController
         if ($role === 'MENTOR') {
             foreach ($todos as $t) {
                 // Find matching session without losing scope
-                $sessArr = array_filter($sessions, fn($s) => $s->getSessionID() === $t->getSessionID());
-                $sess = reset($sessArr);
+                $sess = $t->getSession();
                 if ($sess) {
-                    $entId = $sess->getEntrepreneurID();
+                    $entId = $sess->getEntrepreneur()->getId();
                     if (!isset($groupedTodos[$entId])) {
                         $entUser = $userRepo->find($entId);
                         $groupedTodos[$entId] = [
@@ -93,7 +92,7 @@ class MentorshipDashboardController extends AbstractController
 
         $upcomingSessionsData = [];
         foreach ($upcomingSessions as $s) {
-            $otherId = ($role === 'MENTOR') ? $s->getEntrepreneurID() : $s->getMentorID();
+            $otherId = ($role === 'MENTOR') ? $s->getEntrepreneur()->getId() : $s->getMentor()->getId();
             $otherUser = $userRepo->find($otherId);
             $sessionDate = $s->getSessionDate();
             $upcomingSessionsData[] = [

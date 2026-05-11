@@ -12,31 +12,29 @@ use Symfony\Component\Validator\Constraints as Assert;
 class SessionNotes
 {
     #[ORM\Id]
-    #[ORM\Column(name: '`noteID`', type: Types::INTEGER)]
-    #[Assert\NotBlank]
+    #[ORM\GeneratedValue]
+    #[ORM\Column(name: 'note_id', type: Types::INTEGER)]
     #[Assert\Type('integer')]
     private ?int $noteID = null;
 
-    #[ORM\Column(name: '`sessionID`', type: Types::INTEGER)]
-    #[Assert\NotBlank]
-    #[Assert\Type('integer')]
-    private ?int $sessionID = null;
+    #[ORM\ManyToOne(targetEntity: Session::class)]
+    #[ORM\JoinColumn(name: 'sessionID', referencedColumnName: 'sessionID', nullable: false)]
+    private ?Session $session = null;
 
-    #[ORM\Column(name: '`entrepreneurID`', type: Types::INTEGER)]
-    #[Assert\NotBlank]
-    #[Assert\Type('integer')]
-    private ?int $entrepreneurID = null;
+    #[ORM\ManyToOne(targetEntity: Users::class)]
+    #[ORM\JoinColumn(name: 'entrepreneur_id', referencedColumnName: 'id', nullable: false)]
+    private ?Users $entrepreneur = null;
 
-    #[ORM\Column(name: '`satisfactionScore`', type: Types::INTEGER, nullable: true)]
+    #[ORM\Column(name: 'satisfaction_score', type: Types::INTEGER, nullable: true)]
     #[Assert\Type('integer')]
     private ?int $satisfactionScore = null;
 
-    #[ORM\Column(name: '`notes`', type: Types::TEXT)]
+    #[ORM\Column(name: 'notes', type: Types::TEXT, nullable: true)]
     #[Assert\NotBlank]
     #[Assert\Type('string')]
     private ?string $notes = null;
 
-    #[ORM\Column(name: '`noteDate`', type: Types::DATE_MUTABLE)]
+    #[ORM\Column(name: 'note_date', type: Types::DATE_MUTABLE, nullable: true)]
     private ?\DateTimeInterface $noteDate = null;
 
     public function getNoteID(): ?int
@@ -50,25 +48,25 @@ class SessionNotes
         return $this;
     }
 
-    public function getSessionID(): ?int
+    public function getSession(): ?Session
     {
-        return $this->sessionID;
+        return $this->session;
     }
 
-    public function setSessionID(?int $sessionID): static
+    public function setSession(?Session $session): static
     {
-        $this->sessionID = $sessionID;
+        $this->session = $session;
         return $this;
     }
 
-    public function getEntrepreneurID(): ?int
+    public function getEntrepreneur(): ?Users
     {
-        return $this->entrepreneurID;
+        return $this->entrepreneur;
     }
 
-    public function setEntrepreneurID(?int $entrepreneurID): static
+    public function setEntrepreneur(?Users $entrepreneur): static
     {
-        $this->entrepreneurID = $entrepreneurID;
+        $this->entrepreneur = $entrepreneur;
         return $this;
     }
 

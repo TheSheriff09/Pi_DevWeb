@@ -25,6 +25,8 @@
         "symfony/maker-bundle": "^1.67",
         "symfony/mime": "6.4.*",
         "symfony/runtime": "6.4.*",
+        "symfony/security-bundle": "6.4.*",
+        "symfony/serializer": "6.4.*",
         "symfony/twig-bundle": "6.4.*",
         "symfony/validator": "6.4.*",
         "symfony/yaml": "6.4.*",
@@ -79,6 +81,12 @@
         }
     },
     "require-dev": {
-        "phpstan/phpstan": "^2.1"
+        "ahmed-bhs/doctrine-doctor": "^1.1",
+        "phpstan/phpstan": "^2.1",
+        "phpunit/phpunit": "^11.5",
+        "symfony/browser-kit": "6.4.*",
+        "symfony/css-selector": "6.4.*",
+        "symfony/stopwatch": "6.4.*",
+        "symfony/web-profiler-bundle": "6.4.*"
     }
 }

@@ -16,13 +16,15 @@ class ForumFollow
     /** @phpstan-ignore-next-line */
     private ?int $id = null;
 
-    #[ORM\Column(type: Types::INTEGER)]
-    private ?int $followerId = null;
+    #[ORM\ManyToOne(targetEntity: Users::class)]
+    #[ORM\JoinColumn(name: 'follower_id', referencedColumnName: 'id', nullable: false)]
+    private ?Users $follower = null;
 
-    #[ORM\Column(type: Types::INTEGER)]
-    private ?int $followingId = null;
+    #[ORM\ManyToOne(targetEntity: Users::class)]
+    #[ORM\JoinColumn(name: 'following_id', referencedColumnName: 'id', nullable: false)]
+    private ?Users $following = null;
 
-    #[ORM\Column(type: Types::DATETIME_MUTABLE)]
+    #[ORM\Column(name: 'created_at', type: Types::DATETIME_MUTABLE)]
     private ?\DateTimeInterface $createdAt = null;
 
     public function getId(): ?int
@@ -30,25 +32,25 @@ class ForumFollow
         return $this->id;
     }
 
-    public function getFollowerId(): ?int
+    public function getFollower(): ?Users
     {
-        return $this->followerId;
+        return $this->follower;
     }
 
-    public function setFollowerId(int $followerId): static
+    public function setFollower(?Users $follower): static
     {
-        $this->followerId = $followerId;
+        $this->follower = $follower;
         return $this;
     }
 
-    public function getFollowingId(): ?int
+    public function getFollowing(): ?Users
     {
-        return $this->followingId;
+        return $this->following;
     }
 
-    public function setFollowingId(int $followingId): static
+    public function setFollowing(?Users $following): static
     {
-        $this->followingId = $followingId;
+        $this->following = $following;
         return $this;
     }
 

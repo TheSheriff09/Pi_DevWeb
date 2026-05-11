@@ -43,7 +43,7 @@ class ScheduleController extends AbstractController
             $schedule->setAvailableDate($date ? new \DateTime((string) $date) : null);
             $schedule->setStartTime($startTime ? new \DateTime((string) $startTime) : null);
             $schedule->setEndTime($endTime ? new \DateTime((string) $endTime) : null);
-            $schedule->setMentorID((int) $userId);
+            $schedule->setMentor($em->getRepository(Users::class)->find($userId));
             $schedule->setIsBooked(false);
 
             $maxId = $em->createQueryBuilder()
@@ -84,7 +84,7 @@ class ScheduleController extends AbstractController
         $qb = $em->createQueryBuilder()
             ->select('s')
             ->from(Schedule::class, 's')
-            ->where('s.mentorID = :mentorId')
+            ->where('s.mentor = :mentorId')
             ->setParameter('mentorId', $userId)
             ->orderBy('s.availableDate', 'DESC')
             ->addOrderBy('s.startTime', 'DESC');
@@ -114,7 +114,7 @@ class ScheduleController extends AbstractController
             return $this->json(['status' => 'error', 'message' => 'Unauthorized'], 401);
         }
 
-        $schedule = $em->getRepository(Schedule::class)->findOneBy(['scheduleID' => $id, 'mentorID' => $userId]);
+        $schedule = $em->getRepository(Schedule::class)->findOneBy(['scheduleID' => $id, 'mentor' => $userId]);
         if ($schedule && !$schedule->getIsBooked()) {
             $em->remove($schedule);
             $em->flush();

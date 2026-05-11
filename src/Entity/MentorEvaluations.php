@@ -16,20 +16,17 @@ class MentorEvaluations
     #[Assert\Type('integer')]
     private ?int $id = null;
 
-    #[ORM\Column(name: '`entrepreneurID`', type: Types::INTEGER)]
-    #[Assert\NotBlank]
-    #[Assert\Type('integer')]
-    private ?int $entrepreneurID = null;
+    #[ORM\ManyToOne(targetEntity: Users::class)]
+    #[ORM\JoinColumn(name: 'entrepreneur_id', referencedColumnName: 'id', nullable: false)]
+    private ?Users $entrepreneur = null;
 
-    #[ORM\Column(name: '`mentorID`', type: Types::INTEGER)]
-    #[Assert\NotBlank]
-    #[Assert\Type('integer')]
-    private ?int $mentorID = null;
+    #[ORM\ManyToOne(targetEntity: Users::class)]
+    #[ORM\JoinColumn(name: 'mentor_id', referencedColumnName: 'id', nullable: false)]
+    private ?Users $mentor = null;
 
-    #[ORM\Column(name: '`sessionID`', type: Types::INTEGER)]
-    #[Assert\NotBlank]
-    #[Assert\Type('integer')]
-    private ?int $sessionID = null;
+    #[ORM\ManyToOne(targetEntity: Session::class)]
+    #[ORM\JoinColumn(name: 'sessionID', referencedColumnName: 'sessionID', nullable: false)]
+    private ?Session $session = null;
 
     #[ORM\Column(name: '`rating`', type: Types::INTEGER)]
     #[Assert\NotBlank]
@@ -41,7 +38,7 @@ class MentorEvaluations
     #[Assert\NotBlank(message: 'Please provide a comment.')]
     private ?string $comment = null;
 
-    #[ORM\Column(name: '`createdAt`', type: Types::DATETIME_MUTABLE)]
+    #[ORM\Column(name: 'created_at', type: Types::DATETIME_MUTABLE)]
     private ?\DateTimeInterface $createdAt = null;
 
     public function getId(): ?int
@@ -55,36 +52,36 @@ class MentorEvaluations
         return $this;
     }
 
-    public function getEntrepreneurID(): ?int
+    public function getEntrepreneur(): ?Users
     {
-        return $this->entrepreneurID;
+        return $this->entrepreneur;
     }
 
-    public function setEntrepreneurID(?int $entrepreneurID): static
+    public function setEntrepreneur(?Users $entrepreneur): static
     {
-        $this->entrepreneurID = $entrepreneurID;
+        $this->entrepreneur = $entrepreneur;
         return $this;
     }
 
-    public function getMentorID(): ?int
+    public function getMentor(): ?Users
     {
-        return $this->mentorID;
+        return $this->mentor;
     }
 
-    public function setMentorID(?int $mentorID): static
+    public function setMentor(?Users $mentor): static
     {
-        $this->mentorID = $mentorID;
+        $this->mentor = $mentor;
         return $this;
     }
 
-    public function getSessionID(): ?int
+    public function getSession(): ?Session
     {
-        return $this->sessionID;
+        return $this->session;
     }
 
-    public function setSessionID(?int $sessionID): static
+    public function setSession(?Session $session): static
     {
-        $this->sessionID = $sessionID;
+        $this->session = $session;
         return $this;
     }
 

@@ -63,7 +63,12 @@ class AdminForumController extends AbstractController
                        ->getQuery()
                        ->getResult();
         } else {
-            $posts = $em->getRepository(ForumPosts::class)->findBy([], ['createdAt' => 'DESC']);
+            $posts = $em->getRepository(ForumPosts::class)->createQueryBuilder('p')
+                ->leftJoin('p.user', 'u')->addSelect('u')
+                ->orderBy('p.createdAt', 'DESC')
+                ->setMaxResults(100)
+                ->getQuery()
+                ->getResult();
         }
 
         if ($request->isXmlHttpRequest()) {
@@ -99,7 +104,13 @@ class AdminForumController extends AbstractController
     {
         if ($redirect = $this->ensureAdmin($request)) return $redirect;
 
-        $comments = $em->getRepository(Comments::class)->findBy([], ['createdAt' => 'DESC']);
+        $comments = $em->getRepository(Comments::class)->createQueryBuilder('c')
+            ->leftJoin('c.user', 'u')->addSelect('u')
+            ->leftJoin('c.post', 'p')->addSelect('p')
+            ->orderBy('c.createdAt', 'DESC')
+            ->setMaxResults(100)
+            ->getQuery()
+            ->getResult();
 
         return $this->render('BackOffice/forum/comments.html.twig', [
             'comments' => $comments,
@@ -127,7 +138,13 @@ class AdminForumController extends AbstractController
     {
         if ($redirect = $this->ensureAdmin($request)) return $redirect;
 
-        $interactions = $em->getRepository(Interactions::class)->findBy([], ['createdAt' => 'DESC']);
+        $interactions = $em->getRepository(Interactions::class)->createQueryBuilder('i')
+            ->leftJoin('i.user', 'u')->addSelect('u')
+            ->leftJoin('i.post', 'p')->addSelect('p')
+            ->orderBy('i.createdAt', 'DESC')
+            ->setMaxResults(100)
+            ->getQuery()
+            ->getResult();
 
         return $this->render('BackOffice/forum/interactions.html.twig', [
             'interactions' => $interactions,
@@ -206,21 +223,52 @@ class AdminForumController extends AbstractController
     {
         if ($redirect = $this->ensureAdmin($request)) return $redirect;
 
-        $reports = $em->getRepository(Report::class)->findBy([], ['createdAt' => 'DESC']);
+        $reports = $em->getRepository(Report::class)->createQueryBuilder('r')
+            ->leftJoin('r.reporter', 'u')->addSelect('u')
+            ->orderBy('r.createdAt', 'DESC')
+            ->setMaxResults(100)
+            ->getQuery()
+            ->getResult();
         
-        // Enrich reports for the view
+        // Enrich reports for the view using bulk fetching to avoid N+1
+        $postIds = [];
+        $commentIds = [];
+        foreach ($reports as $r) {
+            if ($r->getTargetType() === 'post') {
+                $postIds[] = $r->getTargetId();
+            } else {
+                $commentIds[] = $r->getTargetId();
+            }
+        }
+        
+        $postsDict = [];
+        if (!empty($postIds)) {
+            $fetchedPosts = $em->getRepository(ForumPosts::class)->findBy(['id' => $postIds]);
+            foreach ($fetchedPosts as $p) {
+                $postsDict[$p->getId()] = $p;
+            }
+        }
+        
+        $commentsDict = [];
+        if (!empty($commentIds)) {
+            $fetchedComments = $em->getRepository(Comments::class)->findBy(['id' => $commentIds]);
+            foreach ($fetchedComments as $c) {
+                $commentsDict[$c->getId()] = $c;
+            }
+        }
+
         $reportsData = [];
         foreach ($reports as $report) {
             $content = '';
             $authorName = '';
             if ($report->getTargetType() === 'post') {
-                $post = $em->getRepository(ForumPosts::class)->find($report->getTargetId());
+                $post = $postsDict[$report->getTargetId()] ?? null;
                 if ($post) {
                     $content = $post->getContent();
                     $authorName = $post->getAuthorName();
                 }
             } else {
-                $comment = $em->getRepository(Comments::class)->find($report->getTargetId());
+                $comment = $commentsDict[$report->getTargetId()] ?? null;
                 if ($comment) {
                     $content = $comment->getContent();
                     $authorName = $comment->getAuthorName();

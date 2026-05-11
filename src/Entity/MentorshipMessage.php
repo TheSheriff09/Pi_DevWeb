@@ -13,19 +13,21 @@ class MentorshipMessage
     /** @phpstan-ignore-next-line */
     private ?int $id = null;
 
-    #[ORM\Column(type: 'integer')]
-    private ?int $senderId = null;
+    #[ORM\ManyToOne(targetEntity: Users::class)]
+    #[ORM\JoinColumn(name: 'sender_id', referencedColumnName: 'id', nullable: false)]
+    private ?Users $sender = null;
 
-    #[ORM\Column(type: 'integer')]
-    private ?int $receiverId = null;
+    #[ORM\ManyToOne(targetEntity: Users::class)]
+    #[ORM\JoinColumn(name: 'receiver_id', referencedColumnName: 'id', nullable: false)]
+    private ?Users $receiver = null;
 
-    #[ORM\Column(type: 'text')]
+    #[ORM\Column(type: 'text', nullable: true)]
     private ?string $content = null;
 
-    #[ORM\Column(type: 'datetime')]
+    #[ORM\Column(name: 'created_at', type: 'datetime', nullable: true)]
     private ?\DateTimeInterface $timestamp = null;
 
-    #[ORM\Column(type: 'boolean')]
+    #[ORM\Column(name: 'is_read', type: 'boolean')]
     private bool $isRead = false;
 
     public function getId(): ?int
@@ -33,25 +35,25 @@ class MentorshipMessage
         return $this->id;
     }
 
-    public function getSenderId(): ?int
+    public function getSender(): ?Users
     {
-        return $this->senderId;
+        return $this->sender;
     }
 
-    public function setSenderId(int $senderId): self
+    public function setSender(?Users $sender): self
     {
-        $this->senderId = $senderId;
+        $this->sender = $sender;
         return $this;
     }
 
-    public function getReceiverId(): ?int
+    public function getReceiver(): ?Users
     {
-        return $this->receiverId;
+        return $this->receiver;
     }
 
-    public function setReceiverId(int $receiverId): self
+    public function setReceiver(?Users $receiver): self
     {
-        $this->receiverId = $receiverId;
+        $this->receiver = $receiver;
         return $this;
     }
 

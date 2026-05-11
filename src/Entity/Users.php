@@ -3,8 +3,13 @@
 namespace App\Entity;
 
 use App\Repository\UsersRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
+use Symfony\Component\Security\Core\User\UserInterface;
+use Symfony\Component\Serializer\Annotation\Ignore;
 use Symfony\Component\Validator\Constraints as Assert;
 use Vich\UploaderBundle\Mapping\Annotation as Vich;
 use Symfony\Component\HttpFoundation\File\File;
@@ -12,7 +17,7 @@ use Symfony\Component\HttpFoundation\File\File;
 #[ORM\Entity]
 #[ORM\Table(name: '`users`')]
 #[Vich\Uploadable]
-class Users
+class Users implements UserInterface, PasswordAuthenticatedUserInterface
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
@@ -21,67 +26,78 @@ class Users
     /** @phpstan-ignore-next-line */
     private ?int $id = null;
 
-    #[ORM\Column(type: Types::STRING, length: 100)]
+    #[ORM\Column(name: 'full_name', type: Types::STRING, length: 100, nullable: true)]
     #[Assert\NotBlank]
     #[Assert\Length(max: 100)]
     #[Assert\Type('string')]
     private ?string $fullName = null;
 
-    #[ORM\Column(type: Types::STRING, length: 150)]
+    #[ORM\Column(type: Types::STRING, length: 150, nullable: true)]
     #[Assert\NotBlank]
     #[Assert\Length(max: 150)]
     #[Assert\Type('string')]
     private ?string $email = null;
 
-    #[ORM\Column(type: Types::STRING, length: 255, nullable: true)]
+    #[ORM\Column(name: 'password_hash', type: Types::STRING, length: 255, nullable: true)]
     #[Assert\Length(max: 255)]
     #[Assert\Type('string')]
+    #[Ignore]
     private ?string $passwordHash = null;
 
-    #[ORM\Column(type: Types::STRING)]
+    #[ORM\Column(type: Types::STRING, nullable: true)]
     #[Assert\NotBlank]
     #[Assert\Length(max: 255)]
     #[Assert\Type('string')]
     private ?string $role = null;
 
-    #[ORM\Column(type: Types::STRING)]
+    #[ORM\Column(type: Types::STRING, nullable: true)]
     #[Assert\Length(max: 255)]
     #[Assert\Type('string')]
     private ?string $status = null;
 
-    #[ORM\Column(type: Types::TEXT, nullable: true)]
+    #[ORM\Column(name: 'mentor_expertise', type: Types::TEXT, nullable: true)]
     #[Assert\Type('string')]
     private ?string $mentorExpertise = null;
 
-    #[ORM\Column(type: Types::STRING, length: 50, nullable: true)]
+    #[ORM\Column(name: 'evaluator_level', type: Types::STRING, length: 50, nullable: true)]
     #[Assert\Length(max: 50)]
     #[Assert\Type('string')]
     private ?string $evaluatorLevel = null;
 
-    #[ORM\Column(type: Types::TEXT, nullable: true)]
+    #[ORM\Column(name: 'face_encoding', type: Types::TEXT, nullable: true)]
     #[Assert\Type('string')]
     private ?string $faceEncoding = null;
 
     #[Vich\UploadableField(mapping: 'mentors_images', fileNameProperty: 'imageName', size: 'imageSize')]
     private ?File $imageFile = null;
 
-    #[ORM\Column(type: Types::STRING, length: 255, nullable: true)]
+    #[ORM\Column(name: 'image_name', type: Types::STRING, length: 255, nullable: true)]
     private ?string $imageName = null;
 
-    #[ORM\Column(type: Types::INTEGER, nullable: true)]
+    #[ORM\Column(name: 'image_size', type: Types::INTEGER, nullable: true)]
     private ?int $imageSize = null;
 
-    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
+    #[ORM\Column(name: 'updated_at', type: Types::DATETIME_MUTABLE, nullable: true)]
     private ?\DateTimeInterface $updatedAt = null;
 
-    #[ORM\Column(type: Types::DATETIME_MUTABLE)]
+    #[ORM\Column(name: 'created_at', type: Types::DATETIME_MUTABLE, nullable: true)]
     private ?\DateTimeInterface $createdAt = null;
 
-    #[ORM\Column(type: Types::TEXT, nullable: true)]
+    #[ORM\Column(name: 'forum_bio', type: Types::TEXT, nullable: true)]
     private ?string $forumBio = null;
 
-    #[ORM\Column(type: Types::STRING, length: 255, nullable: true)]
+    #[ORM\Column(name: 'forum_image', type: Types::STRING, length: 255, nullable: true)]
     private ?string $forumImage = null;
+
+    #[ORM\OneToMany(mappedBy: 'user', targetEntity: Booking::class, orphanRemoval: true, cascade: ['persist', 'remove'])]
+    #[ORM\JoinColumn(onDelete: 'CASCADE')]
+    private Collection $bookings;
+
+    public function __construct()
+    {
+        $this->bookings = new ArrayCollection();
+        $this->createdAt = new \DateTime();
+    }
 
     public function getId(): ?int
     {
@@ -115,7 +131,7 @@ class Users
         return $this->passwordHash;
     }
 
-    public function setPasswordHash(?string $passwordHash): static
+    public function setPasswordHash(#[SensitiveParameter] ?string $passwordHash): static
     {
         $this->passwordHash = $passwordHash;
         return $this;
@@ -322,5 +338,53 @@ class Users
     {
         $this->forumImage = $forumImage;
         return $this;
+    }
+
+    /**
+     * @return Collection<int, Booking>
+     */
+    public function getBookings(): Collection
+    {
+        return $this->bookings;
+    }
+
+    public function addBooking(Booking $booking): static
+    {
+        if (!$this->bookings->contains($booking)) {
+            $this->bookings->add($booking);
+            $booking->setUser($this);
+        }
+        return $this;
+    }
+
+    public function removeBooking(Booking $booking): static
+    {
+        if ($this->bookings->removeElement($booking)) {
+            if ($booking->getUser() === $this) {
+                $booking->setUser(null);
+            }
+        }
+        return $this;
+    }
+
+    public function getPassword(): ?string
+    {
+        return $this->passwordHash;
+    }
+
+    public function getRoles(): array
+    {
+        $roles = [$this->role];
+        $roles[] = 'ROLE_USER';
+        return array_unique($roles);
+    }
+
+    public function eraseCredentials(): void
+    {
+    }
+
+    public function getUserIdentifier(): string
+    {
+        return (string) $this->email;
     }
 }

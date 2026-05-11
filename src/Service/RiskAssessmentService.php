@@ -33,8 +33,8 @@ class RiskAssessmentService
         // 1. Fetch all reclamations where TargetId = User ID
         // Note: Reclamations repository is standard. Using DQL since it's cleaner.
         $query = $this->em->createQuery(
-            'SELECT r.description FROM App\Entity\Reclamations r WHERE r.targetId = :userId'
-        )->setParameter('userId', $user->getId());
+            'SELECT r.description FROM App\Entity\Reclamations r WHERE r.targetUser = :user'
+        )->setParameter('user', $user);
         
         $results = $query->getResult();
         $descriptions = array_column($results, 'description');

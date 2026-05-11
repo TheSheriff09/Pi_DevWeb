@@ -44,7 +44,7 @@ class AdvancedMentorshipController extends AbstractController
         $messages = [];
 
         foreach ($sessionsData as $data) {
-            $session = $this->em->getRepository(Session::class)->find($data['sessionID']);
+            $session = $this->em->getRepository(Session::class)->find($data['session_id']);
             if (!$session || !$session->getScheduleID()) continue;
 
             $schedule = $this->em->getRepository(Schedule::class)->find($session->getScheduleID());
@@ -73,8 +73,8 @@ class AdvancedMentorshipController extends AbstractController
                 $interval = $combinedStart->getTimestamp() - $now->getTimestamp();
                 if ($interval > 0 && $interval <= 3600) {
                     // Send reminder email via Mailer
-                    $mentor = $this->em->getRepository(Users::class)->find($session->getMentorID());
-                    $entrepreneur = $this->em->getRepository(Users::class)->find($session->getEntrepreneurID());
+                    $mentor = $this->em->getRepository(Users::class)->find($session->getMentor()->getId());
+                    $entrepreneur = $this->em->getRepository(Users::class)->find($session->getEntrepreneur()->getId());
                     if ($mentor && $entrepreneur) {
                         try {
                            $this->mailer->sendSessionReminderEmail($session, $entrepreneur, $mentor);
@@ -100,10 +100,10 @@ class AdvancedMentorshipController extends AbstractController
         // 1. Entrepreneur Progress (Assuming default User mapping: ID 1 for testing)
         // Adjust logic if an entrepreneur logs in. We mock entrepreneurID = 2 for now.
         $entrepreneurID = 2; // Stub
-        $sqlTodosTotal = "SELECT COUNT(*) as c FROM session_todos st JOIN session s ON st.sessionID = s.sessionID WHERE s.entrepreneurID = :id";
-        $sqlTodosDone = "SELECT COUNT(*) as c FROM session_todos st JOIN session s ON st.sessionID = s.sessionID WHERE s.entrepreneurID = :id AND st.isDone = 1";
-        $sqlSessionsTotal = "SELECT COUNT(*) as c FROM session WHERE entrepreneurID = :id";
-        $sqlSessionsDone = "SELECT COUNT(*) as c FROM session WHERE entrepreneurID = :id AND status = 'Completed'";
+        $sqlTodosTotal = "SELECT COUNT(*) as c FROM session_todos st JOIN session s ON st.session_id = s.session_id WHERE s.entrepreneur_id = :id";
+        $sqlTodosDone = "SELECT COUNT(*) as c FROM session_todos st JOIN session s ON st.session_id = s.session_id WHERE s.entrepreneur_id = :id AND st.isDone = 1";
+        $sqlSessionsTotal = "SELECT COUNT(*) as c FROM session WHERE entrepreneur_id = :id";
+        $sqlSessionsDone = "SELECT COUNT(*) as c FROM session WHERE entrepreneur_id = :id AND status = 'Completed'";
 
         $todosTotal = $conn->fetchOne($sqlTodosTotal, ['id' => $entrepreneurID]);
         $todosDone = $conn->fetchOne($sqlTodosDone, ['id' => $entrepreneurID]);
@@ -116,7 +116,7 @@ class AdvancedMentorshipController extends AbstractController
         // 2. Mentor Performance calculation & Ranking
         $sqlMentors = "SELECT u.id, u.fullName, u.image_name, AVG(sf.progressScore) as avgScore 
                        FROM users u 
-                       LEFT JOIN session_feedback sf ON u.id = sf.mentorID 
+                       LEFT JOIN session_feedback sf ON u.id = sf.mentor_id 
                        WHERE u.role = 'Mentor' 
                        GROUP BY u.id 
                        ORDER BY avgScore DESC";
@@ -141,13 +141,13 @@ class AdvancedMentorshipController extends AbstractController
             throw $this->createNotFoundException('Session not found');
         }
 
-        $mentor = $this->em->getRepository(Users::class)->find($session->getMentorID());
-        $entrepreneur = $this->em->getRepository(Users::class)->find($session->getEntrepreneurID());
+        $mentor = $this->em->getRepository(Users::class)->find($session->getMentor()->getId());
+        $entrepreneur = $this->em->getRepository(Users::class)->find($session->getEntrepreneur()->getId());
 
         // Fetch Notes, Todos, Feedback manually since no associations
-        $notes = $this->em->getRepository(SessionNotes::class)->findBy(['sessionID' => $id]);
-        $todos = $this->em->getRepository(SessionTodos::class)->findBy(['sessionID' => $id]);
-        $feedbacks = $this->em->getRepository(SessionFeedback::class)->findBy(['sessionID' => $id]);
+        $notes = $this->em->getRepository(SessionNotes::class)->findBy(['session' => $id]);
+        $todos = $this->em->getRepository(SessionTodos::class)->findBy(['session' => $id]);
+        $feedbacks = $this->em->getRepository(SessionFeedback::class)->findBy(['session' => $id]);
 
         return $this->render('BackOffice/mentorship/advanced/workspace.html.twig', [
             'session' => $session,
@@ -169,9 +169,9 @@ class AdvancedMentorshipController extends AbstractController
 
         $sqlSessions = "SELECT s.*, u.fullName as mentorName, u.image_name 
                         FROM session s 
-                        LEFT JOIN users u ON s.mentorID = u.id 
-                        WHERE s.entrepreneurID = :id OR s.mentorID = :id
-                        ORDER BY s.sessionDate DESC";
+                        LEFT JOIN users u ON s.mentor_id = u.id 
+                        WHERE s.entrepreneur_id = :id OR s.mentor_id = :id
+                        ORDER BY s.session_date DESC";
         $stmtSessions = $conn->prepare($sqlSessions);
         /** @phpstan-ignore-next-line */
         $resultSetSessions = $stmtSessions->executeQuery(['id' => $userId]);
@@ -179,9 +179,9 @@ class AdvancedMentorshipController extends AbstractController
 
         $sqlBookings = "SELECT b.*, u.fullName as mentorName 
                         FROM booking b 
-                        LEFT JOIN users u ON b.mentorID = u.id 
-                        WHERE b.entrepreneurID = :id OR b.mentorID = :id
-                        ORDER BY b.creationDate DESC";
+                        LEFT JOIN users u ON b.mentor_id = u.id 
+                        WHERE b.entrepreneur_id = :id OR b.mentor_id = :id
+                        ORDER BY b.creation_date DESC";
         $stmtBookings = $conn->prepare($sqlBookings);
         /** @phpstan-ignore-next-line */
         $resultSetBookings = $stmtBookings->executeQuery(['id' => $userId]);
@@ -218,15 +218,15 @@ class AdvancedMentorshipController extends AbstractController
         $conn = $this->em->getConnection();
         
         // 1. Prevent double booking for this exact date and time
-        $sqlDouble = "SELECT COUNT(*) FROM booking WHERE mentorID = :mentorID AND requestedDate = :date AND requestedTime = :time AND status != 'Rejected'";
+        $sqlDouble = "SELECT COUNT(*) FROM booking WHERE mentor_id = :mentorID AND requested_date = :date AND requested_time = :time AND status != 'Rejected'";
         $doubleBookingCount = $conn->fetchOne($sqlDouble, ['mentorID' => $mentorId, 'date' => $dateStr, 'time' => $timeStr]);
         if ($doubleBookingCount > 0) {
              return $this->json(['status' => 'error', 'message' => 'This slot is already booked. Please choose another time.']);
         }
 
         // 2. Limit mentor to max 5 sessions per day
-        $sqlCheck = "SELECT COUNT(*) as c FROM session s JOIN schedule sc ON s.scheduleID = sc.scheduleID 
-                     WHERE sc.mentorID = :mentorID AND sc.availableDate = :date";
+        $sqlCheck = "SELECT COUNT(*) as c FROM session s JOIN schedule sc ON s.schedule_id_int = sc.schedule_id 
+                     WHERE sc.mentor_id = :mentorID AND sc.available_date = :date";
         $count = $conn->fetchOne($sqlCheck, ['mentorID' => $mentorId, 'date' => $dateStr]);
 
         if ($count >= 5) {
@@ -237,8 +237,8 @@ class AdvancedMentorshipController extends AbstractController
             // 3. Create Booking
             $booking = new Booking();
             $booking->setBookingID(random_int(1000, 9999));
-            $booking->setEntrepreneurID($entrepreneurId);
-            $booking->setMentorID($mentorId);
+            $booking->setEntrepreneur($em->getRepository(Users::class)->find($entrepreneurId));
+            $booking->setMentor($em->getRepository(Users::class)->find($mentorId));
             $booking->setRequestedDate(\DateTime::createFromFormat('Y-m-d', $dateStr) ?: null);
             $booking->setRequestedTime(\DateTime::createFromFormat('H:i:s', $timeStr) ?: (\DateTime::createFromFormat('H:i', $timeStr) ?: null));
             $booking->setTopic($topic);
@@ -275,7 +275,7 @@ class AdvancedMentorshipController extends AbstractController
         // Create Schedule
         $schedule = new Schedule();
         $schedule->setScheduleID(random_int(1000, 9999));
-        $schedule->setMentorID($booking->getMentorID());
+        $schedule->setMentor($booking->getMentor());
         $schedule->setAvailableDate($booking->getRequestedDate());
         $requestedTime = $booking->getRequestedTime();
         if ($requestedTime instanceof \DateTimeInterface) {
@@ -296,8 +296,8 @@ class AdvancedMentorshipController extends AbstractController
         // Create Session
         $session = new Session();
         $session->setSessionID(random_int(1000, 9999));
-        $session->setMentorID($booking->getMentorID());
-        $session->setEntrepreneurID($booking->getEntrepreneurID());
+        $session->setMentor($booking->getMentor());
+        $session->setEntrepreneur($booking->getEntrepreneur());
         $session->setScheduleID($schedule->getScheduleID());
         $session->setSessionDate($schedule->getAvailableDate());
         $session->setSessionType('Video');
@@ -309,8 +309,8 @@ class AdvancedMentorshipController extends AbstractController
         $this->em->flush();
 
         // Send Email
-        $mentor = $this->em->getRepository(Users::class)->find($booking->getMentorID());
-        $entrepreneur = $this->em->getRepository(Users::class)->find($booking->getEntrepreneurID());
+        $mentor = $this->em->getRepository(Users::class)->find($booking->getMentor()->getId());
+        $entrepreneur = $this->em->getRepository(Users::class)->find($booking->getEntrepreneur()->getId());
         if ($mentor && $entrepreneur) {
              $this->mailer->sendBookingApprovalEmail($booking, $entrepreneur, $mentor, $session);
         }

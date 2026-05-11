@@ -9,13 +9,14 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity]
 #[ORM\Table(name: '`businessplan`')]
+#[ORM\Index(columns: ['startup_id'], name: 'idx_plan_startup')]
+#[ORM\Index(columns: ['user_id'], name: 'idx_plan_user')]
 class Businessplan
 {
     #[ORM\Id]
     #[ORM\GeneratedValue(strategy: 'IDENTITY')]
-    #[ORM\Column(name: 'businessPlanID', type: Types::INTEGER)]
+    #[ORM\Column(name: 'business_plan_id', type: Types::INTEGER)]
     #[Assert\Type('integer')]
-    /** @phpstan-ignore-next-line */
     private ?int $businessPlanID = null;
 
     #[ORM\Column(type: Types::STRING, length: 255, nullable: true)]
@@ -27,29 +28,28 @@ class Businessplan
     #[Assert\Type('string')]
     private ?string $description = null;
 
-    #[ORM\Column(name: 'marketAnalysis', type: Types::TEXT, nullable: true)]
+    #[ORM\Column(name: 'market_analysis', type: Types::TEXT, nullable: true)]
     #[Assert\Type('string')]
     private ?string $marketAnalysis = null;
 
-    #[ORM\Column(name: 'valueProposition', type: Types::TEXT, nullable: true)]
+    #[ORM\Column(name: 'value_proposition', type: Types::TEXT, nullable: true)]
     #[Assert\Type('string')]
     private ?string $valueProposition = null;
 
-    #[ORM\Column(name: 'businessModel', type: Types::TEXT, nullable: true)]
+    #[ORM\Column(name: 'business_model', type: Types::TEXT, nullable: true)]
     #[Assert\Type('string')]
     private ?string $businessModel = null;
 
-    #[ORM\Column(name: 'marketingStrategy', type: Types::TEXT, nullable: true)]
+    #[ORM\Column(name: 'marketing_strategy', type: Types::TEXT, nullable: true)]
     #[Assert\Type('string')]
     private ?string $marketingStrategy = null;
 
-    #[ORM\Column(name: 'financialForecast', type: Types::TEXT, nullable: true)]
+    #[ORM\Column(name: 'financial_forecast', type: Types::TEXT, nullable: true)]
     #[Assert\Type('string')]
     private ?string $financialForecast = null;
 
-    #[ORM\Column(name: 'fundingRequired', type: Types::FLOAT, nullable: true)]
-    #[Assert\Type('float')]
-    private ?float $fundingRequired = null;
+    #[ORM\Column(name: 'funding_required', type: Types::DECIMAL, precision: 15, scale: 2, nullable: true)]
+    private ?string $fundingRequired = null;
 
     #[ORM\Column(type: Types::STRING, length: 255, nullable: true)]
     #[Assert\Length(max: 255)]
@@ -61,19 +61,19 @@ class Businessplan
     #[Assert\Type('string')]
     private ?string $status = null;
 
-    #[ORM\Column(name: 'creationDate', type: Types::DATE_MUTABLE, nullable: true)]
+    #[ORM\Column(name: 'creation_date', type: Types::DATE_MUTABLE, nullable: true)]
     private ?\DateTimeInterface $creationDate = null;
 
-    #[ORM\Column(name: 'lastUpdate', type: Types::DATE_MUTABLE, nullable: true)]
+    #[ORM\Column(name: 'last_update', type: Types::DATE_MUTABLE, nullable: true)]
     private ?\DateTimeInterface $lastUpdate = null;
 
-    #[ORM\Column(name: 'startupID', type: Types::INTEGER, nullable: true)]
-    #[Assert\Type('integer')]
-    private ?int $startupID = null;
+    #[ORM\ManyToOne(targetEntity: Startup::class)]
+    #[ORM\JoinColumn(name: 'startup_id', referencedColumnName: 'startup_id', nullable: true)]
+    private ?Startup $startup = null;
 
-    #[ORM\Column(type: Types::INTEGER, nullable: true)]
-    #[Assert\Type('integer')]
-    private ?int $userId = null;
+    #[ORM\ManyToOne(targetEntity: Users::class)]
+    #[ORM\JoinColumn(name: 'user_id', referencedColumnName: 'id', nullable: true)]
+    private ?Users $user = null;
 
     public function getBusinessPlanID(): ?int
     {
@@ -157,12 +157,12 @@ class Businessplan
         return $this;
     }
 
-    public function getFundingRequired(): ?float
+    public function getFundingRequired(): ?string
     {
         return $this->fundingRequired;
     }
 
-    public function setFundingRequired(?float $fundingRequired): static
+    public function setFundingRequired(?string $fundingRequired): static
     {
         $this->fundingRequired = $fundingRequired;
         return $this;
@@ -212,25 +212,25 @@ class Businessplan
         return $this;
     }
 
-    public function getStartupID(): ?int
+    public function getStartup(): ?Startup
     {
-        return $this->startupID;
+        return $this->startup;
     }
 
-    public function setStartupID(?int $startupID): static
+    public function setStartup(?Startup $startup): static
     {
-        $this->startupID = $startupID;
+        $this->startup = $startup;
         return $this;
     }
 
-    public function getUserId(): ?int
+    public function getUser(): ?Users
     {
-        return $this->userId;
+        return $this->user;
     }
 
-    public function setUserId(?int $userId): static
+    public function setUser(?Users $user): static
     {
-        $this->userId = $userId;
+        $this->user = $user;
         return $this;
     }
 

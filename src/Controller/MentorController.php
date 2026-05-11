@@ -50,7 +50,7 @@ class MentorController extends AbstractController
                     $em->createQueryBuilder()
                        ->select('1')
                        ->from(Schedule::class, 's')
-                       ->where('s.mentorID = u.id AND s.isBooked = false AND s.availableDate >= :today')
+                       ->where('s.mentor = u.id AND s.isBooked = false AND s.availableDate >= :today')
                        ->getDQL()
                 )
             )->setParameter('today', new \DateTime('today'));
@@ -59,17 +59,15 @@ class MentorController extends AbstractController
         $mentors = $qb->getQuery()->getResult();
         
         $favoritesRepo = $em->getRepository(MentorFavorites::class);
-        $favorites = $favoritesRepo->findBy(['entrepreneurID' => $userId]);
-        $favoriteIds = array_map(fn($f) => $f->getMentorID(), $favorites);
+        $favorites = $favoritesRepo->findBy(['entrepreneur' => $userId]);
+        $favoriteIds = array_map(fn($f) => $f->getMentor()->getId(), $favorites);
 
-        // Fetch aggregate ratings for fast UI loads
-        $evaluations = $em->getRepository(MentorEvaluations::class)->findAll();
+        // Fetch aggregate ratings using fast DQL grouping instead of fetching all entities
+        $evalsData = $em->createQuery('SELECT IDENTITY(e.mentor) as mId, SUM(e.rating) as totalRating, COUNT(e.id) as evCount FROM App\Entity\MentorEvaluations e GROUP BY e.mentor')->getResult();
         $ratingsMap = [];
-        foreach ($evaluations as $ev) {
-            $mId = $ev->getMentorID();
-            if (!isset($ratingsMap[$mId])) { $ratingsMap[$mId] = ['sum' => 0, 'count' => 0]; }
-            $ratingsMap[$mId]['sum'] += $ev->getRating();
-            $ratingsMap[$mId]['count']++;
+        foreach ($evalsData as $row) {
+            $mId = $row['mId'];
+            $ratingsMap[$mId] = ['sum' => (int)$row['totalRating'], 'count' => (int)$row['evCount']];
         }
         $mentorRatings = [];
         foreach ($mentors as $m) {
@@ -124,7 +122,7 @@ class MentorController extends AbstractController
         $qb = $em->createQueryBuilder()
             ->select('s')
             ->from(Schedule::class, 's')
-            ->where('s.mentorID = :mentorId')
+            ->where('s.mentor = :mentorId')
             ->andWhere('s.isBooked = false')
             ->andWhere('s.availableDate >= :today')
             ->setParameter('mentorId', $id)
@@ -145,11 +143,11 @@ class MentorController extends AbstractController
         }
         
         $favorite = $em->getRepository(MentorFavorites::class)->findOneBy([
-            'entrepreneurID' => $userId,
-            'mentorID' => $id
+            'entrepreneur' => $userId,
+            'mentor' => $id
         ]);
 
-        $evaluations = $em->getRepository(MentorEvaluations::class)->findBy(['mentorID' => $id], ['createdAt' => 'DESC']);
+        $evaluations = $em->getRepository(MentorEvaluations::class)->findBy(['mentor' => $id], ['createdAt' => 'DESC']);
         $totalRating = 0;
         foreach ($evaluations as $ev) { $totalRating += $ev->getRating(); }
         $avgRating = count($evaluations) > 0 ? round($totalRating / count($evaluations), 1) : 0;
@@ -182,8 +180,8 @@ class MentorController extends AbstractController
             return $this->redirectToRoute('app_login');
         }
 
-        $favorites = $em->getRepository(MentorFavorites::class)->findBy(['entrepreneurID' => $userId]);
-        $mentorIds = array_map(fn($f) => $f->getMentorID(), $favorites);
+        $favorites = $em->getRepository(MentorFavorites::class)->findBy(['entrepreneur' => $userId]);
+        $mentorIds = array_map(fn($f) => $f->getMentor()->getId(), $favorites);
         
         $mentors = [];
         if (!empty($mentorIds)) {
@@ -195,14 +193,16 @@ class MentorController extends AbstractController
             $mentors = $qb->getQuery()->getResult();
         }
 
-        // Fetch ratings identically for Favorites view
-        $evaluations = $em->getRepository(MentorEvaluations::class)->findBy(['mentorID' => $mentorIds]);
+        // Fetch aggregate ratings using fast DQL
         $ratingsMap = [];
-        foreach ($evaluations as $ev) {
-            $mId = $ev->getMentorID();
-            if (!isset($ratingsMap[$mId])) { $ratingsMap[$mId] = ['sum' => 0, 'count' => 0]; }
-            $ratingsMap[$mId]['sum'] += $ev->getRating();
-            $ratingsMap[$mId]['count']++;
+        if (!empty($mentorIds)) {
+            $evalsData = $em->createQuery('SELECT IDENTITY(e.mentor) as mId, SUM(e.rating) as totalRating, COUNT(e.id) as evCount FROM App\Entity\MentorEvaluations e WHERE e.mentor IN (:mIds) GROUP BY e.mentor')
+                ->setParameter('mIds', $mentorIds)
+                ->getResult();
+            foreach ($evalsData as $row) {
+                $mId = $row['mId'];
+                $ratingsMap[$mId] = ['sum' => (int)$row['totalRating'], 'count' => (int)$row['evCount']];
+            }
         }
         $mentorRatings = [];
         foreach ($mentors as $m) {
@@ -248,8 +248,8 @@ class MentorController extends AbstractController
 
             $favorite = new MentorFavorites();
             $favorite->setId((int) ($maxId ?? 0) + 1);
-            $favorite->setEntrepreneurID($userId);
-            $favorite->setMentorID($id);
+            $favorite->setEntrepreneur($em->getRepository(Users::class)->find($userId));
+            $favorite->setMentor($em->getRepository(Users::class)->find($id));
             $favorite->setCreatedAt(new \DateTime());
             $em->persist($favorite);
             $action = 'added';

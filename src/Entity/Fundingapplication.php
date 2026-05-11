@@ -9,6 +9,8 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity]
 #[ORM\Table(name: '`fundingapplication`')]
+#[ORM\Index(columns: ['entrepreneur_id_int'], name: 'idx_funding_entrepreneur')]
+#[ORM\Index(columns: ['project_id_int'], name: 'idx_funding_project')]
 class Fundingapplication
 {
     #[ORM\Id]
@@ -18,44 +20,43 @@ class Fundingapplication
     /** @phpstan-ignore-next-line */
     private ?int $id = null;
 
-    #[ORM\Column(name: 'entrepreneurId', type: Types::INTEGER)]
+    #[ORM\Column(name: 'entrepreneur_id_int', type: Types::INTEGER, nullable: true)]
     #[Assert\NotBlank]
     #[Assert\Type('integer')]
     private ?int $entrepreneurId = null;
 
-    #[ORM\Column(type: Types::FLOAT)]
+    #[ORM\Column(type: Types::DECIMAL, precision: 15, scale: 2, nullable: true)]
     #[Assert\NotBlank]
     #[Assert\Positive(message: "The requested amount must be a positive value.")]
-    #[Assert\Type('float')]
-    private ?float $amount = null;
+    private ?string $amount = null;
 
-    #[ORM\Column(type: Types::STRING, length: 255)]
+    #[ORM\Column(type: Types::STRING, length: 255, nullable: true)]
     #[Assert\NotBlank]
     #[Assert\Length(max: 255)]
     #[Assert\Type('string')]
     private ?string $status = null;
 
-    #[ORM\Column(name: 'submissionDate', type: Types::DATE_MUTABLE)]
+    #[ORM\Column(name: 'submission_date', type: Types::DATE_MUTABLE, nullable: true)]
     private ?\DateTimeInterface $submissionDate = null;
 
-    #[ORM\Column(name: 'applicationReason', type: Types::STRING, length: 255)]
+    #[ORM\Column(name: 'application_reason', type: Types::STRING, length: 255, nullable: true)]
     #[Assert\NotBlank]
     #[Assert\Length(max: 255)]
     #[Assert\Type('string')]
     private ?string $applicationReason = null;
 
-    #[ORM\Column(name: 'projectId', type: Types::INTEGER)]
+    #[ORM\Column(name: 'project_id_int', type: Types::INTEGER, nullable: true)]
     #[Assert\NotBlank]
     #[Assert\Type('integer')]
     private ?int $projectId = null;
 
-    #[ORM\Column(name: 'paymentSchedule', type: Types::STRING, length: 255)]
+    #[ORM\Column(name: 'payment_schedule', type: Types::STRING, length: 255, nullable: true)]
     #[Assert\NotBlank]
     #[Assert\Length(max: 255)]
     #[Assert\Type('string')]
     private ?string $paymentSchedule = null;
 
-    #[ORM\Column(type: Types::STRING, length: 255)]
+    #[ORM\Column(type: Types::STRING, length: 255, nullable: true)]
     #[Assert\NotBlank]
     #[Assert\Length(max: 255)]
     #[Assert\Type('string')]
@@ -77,12 +78,12 @@ class Fundingapplication
         return $this;
     }
 
-    public function getAmount(): ?float
+    public function getAmount(): ?string
     {
         return $this->amount;
     }
 
-    public function setAmount(?float $amount): static
+    public function setAmount(?string $amount): static
     {
         $this->amount = $amount;
         return $this;

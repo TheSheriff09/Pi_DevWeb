@@ -36,16 +36,31 @@ class SessionController extends AbstractController
         $role = $userRole;
 
         if ($role === 'MENTOR') {
-            $sessionsRaw = $em->getRepository(Session::class)->findBy(['mentorID' => $userId], ['sessionDate' => 'DESC']);
+            $sessionsRaw = $em->getRepository(Session::class)->createQueryBuilder('s')
+                ->leftJoin('s.mentor', 'm')->addSelect('m')
+                ->leftJoin('s.entrepreneur', 'e')->addSelect('e')
+                ->leftJoin('s.startup', 'st')->addSelect('st')
+                ->where('s.mentor = :uid')
+                ->setParameter('uid', $userId)
+                ->orderBy('s.sessionDate', 'DESC')
+                ->getQuery()
+                ->getResult();
         } else {
-            $sessionsRaw = $em->getRepository(Session::class)->findBy(['entrepreneurID' => $userId], ['sessionDate' => 'DESC']);
+            $sessionsRaw = $em->getRepository(Session::class)->createQueryBuilder('s')
+                ->leftJoin('s.mentor', 'm')->addSelect('m')
+                ->leftJoin('s.entrepreneur', 'e')->addSelect('e')
+                ->leftJoin('s.startup', 'st')->addSelect('st')
+                ->where('s.entrepreneur = :uid')
+                ->setParameter('uid', $userId)
+                ->orderBy('s.sessionDate', 'DESC')
+                ->getQuery()
+                ->getResult();
         }
 
         $sessions = [];
         $upcomingSessionsData = [];
         foreach ($sessionsRaw as $s) {
-            $otherId = $role === 'MENTOR' ? $s->getEntrepreneurID() : $s->getMentorID();
-            $otherUser = $em->getRepository(Users::class)->find($otherId);
+            $otherUser = $role === 'MENTOR' ? $s->getEntrepreneur() : $s->getMentor();
             $sessionDate = $s->getSessionDate();
             $upcomingSessionsData[] = [
                 'session' => $s,
@@ -78,7 +93,7 @@ class SessionController extends AbstractController
         $role = $userRole;
 
         $session = $em->getRepository(Session::class)->find($id);
-        if (!$session || ($session->getMentorID() !== $userId && $session->getEntrepreneurID() !== $userId)) {
+        if (!$session || ($session->getMentor()->getId() !== $userId && $session->getEntrepreneur()->getId() !== $userId)) {
             throw $this->createNotFoundException('Session not found or forbidden.');
         }
 
@@ -93,8 +108,8 @@ class SessionController extends AbstractController
 
                 $note = new SessionNotes();
                 $note->setNoteID((int) ($maxId ?? 0) + 1);
-                $note->setSessionID($id);
-                $note->setEntrepreneurID($session->getEntrepreneurID());
+                $note->setSession($session);
+                $note->setEntrepreneur($session->getEntrepreneur());
                 $note->setNotes((string) $request->request->get('note_content'));
                 $note->setNoteDate(new \DateTime());
                 
@@ -122,7 +137,7 @@ class SessionController extends AbstractController
 
                 $todo = new SessionTodos();
                 $todo->setId((int) ($maxId ?? 0) + 1);
-                $todo->setSessionID($id);
+                $todo->setSession($session);
                 $todo->setTaskDescription((string) $request->request->get('todo_content'));
                 $todo->setIsDone(false);
                 $todo->setCreatedAt(new \DateTime());
@@ -140,11 +155,11 @@ class SessionController extends AbstractController
             return $this->redirectToRoute('app_session_details', ['id' => $id]);
         }
 
-        $notes = $em->getRepository(SessionNotes::class)->findBy(['sessionID' => $id], ['noteDate' => 'DESC']);
-        $todos = $em->getRepository(SessionTodos::class)->findBy(['sessionID' => $id], ['id' => 'ASC']);
+        $notes = $em->getRepository(SessionNotes::class)->findBy(['session' => $id], ['noteDate' => 'DESC']);
+        $todos = $em->getRepository(SessionTodos::class)->findBy(['session' => $id], ['id' => 'ASC']);
 
         // Fetch partner details
-        $partnerId = $role === 'MENTOR' ? $session->getEntrepreneurID() : $session->getMentorID();
+        $partnerId = $role === 'MENTOR' ? $session->getEntrepreneur()->getId() : $session->getMentor()->getId();
         $partner = $em->getRepository(Users::class)->find($partnerId);
 
         return $this->render('FrontOffice/mentorship/session_details.html.twig', [
@@ -177,8 +192,8 @@ class SessionController extends AbstractController
         $todo = $em->getRepository(SessionTodos::class)->find($id);
         if (!$todo) return $this->json(['status' => 'error'], 404);
 
-        $session = $em->getRepository(Session::class)->find($todo->getSessionID());
-        if (!$session || $session->getEntrepreneurID() !== $userId) return $this->json(['status' => 'error'], 403);
+        $session = $todo->getSession();
+        if (!$session || $session->getEntrepreneur()->getId() !== $userId) return $this->json(['status' => 'error'], 403);
 
         $isDone = filter_var($request->request->get('isDone'), FILTER_VALIDATE_BOOLEAN);
         $todo->setIsDone($isDone);
@@ -252,7 +267,7 @@ class SessionController extends AbstractController
         }
 
         $session = $em->getRepository(Session::class)->find($id);
-        if (!$session || $session->getEntrepreneurID() !== $userId) {
+        if (!$session || $session->getEntrepreneur()->getId() !== $userId) {
             return $this->json(['status' => 'error'], 404);
         }
 
@@ -268,9 +283,9 @@ class SessionController extends AbstractController
 
             $evaluation = new MentorEvaluations();
             $evaluation->setId((int) ($maxId ?? 0) + 1);
-            $evaluation->setEntrepreneurID($userId);
-            $evaluation->setMentorID($session->getMentorID());
-            $evaluation->setSessionID($session->getSessionID());
+            $evaluation->setEntrepreneur($em->getRepository(Users::class)->find($userId));
+            $evaluation->setMentor($session->getMentor());
+            $evaluation->setSession($session);
             $evaluation->setRating($rating);
             $evaluation->setComment((string) $comment);
             $evaluation->setCreatedAt(new \DateTime());

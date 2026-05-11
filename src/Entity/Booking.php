@@ -12,29 +12,28 @@ use Symfony\Component\Validator\Constraints as Assert;
 class Booking
 {
     #[ORM\Id]
-    #[ORM\Column(name: '`bookingID`', type: Types::INTEGER)]
+    #[ORM\GeneratedValue]
+    #[ORM\Column(name: 'booking_id', type: Types::INTEGER)]
     #[Assert\NotBlank]
     #[Assert\Type('integer')]
     private ?int $bookingID = null;
 
-    #[ORM\Column(name: '`entrepreneurID`', type: Types::INTEGER)]
-    #[Assert\NotBlank]
-    #[Assert\Type('integer')]
-    private ?int $entrepreneurID = null;
+    #[ORM\ManyToOne(targetEntity: Users::class)]
+    #[ORM\JoinColumn(name: 'entrepreneur_id', referencedColumnName: 'id', nullable: false)]
+    private ?Users $entrepreneur = null;
 
-    #[ORM\Column(name: '`mentorID`', type: Types::INTEGER)]
-    #[Assert\NotBlank]
-    #[Assert\Type('integer')]
-    private ?int $mentorID = null;
+    #[ORM\ManyToOne(targetEntity: Users::class)]
+    #[ORM\JoinColumn(name: 'mentor_id', referencedColumnName: 'id', nullable: false)]
+    private ?Users $mentor = null;
 
-    #[ORM\Column(name: '`startupID`', type: Types::INTEGER)]
-    #[Assert\Type('integer')]
-    private ?int $startupID = null;
+    #[ORM\ManyToOne(targetEntity: Startup::class)]
+    #[ORM\JoinColumn(name: 'startup_id', referencedColumnName: 'startup_id', nullable: true)]
+    private ?Startup $startup = null;
 
-    #[ORM\Column(name: '`requestedDate`', type: Types::DATE_MUTABLE)]
+    #[ORM\Column(name: 'requested_date', type: Types::DATE_MUTABLE)]
     private ?\DateTimeInterface $requestedDate = null;
 
-    #[ORM\Column(name: '`requestedTime`', type: Types::TIME_MUTABLE)]
+    #[ORM\Column(name: 'requested_time', type: Types::TIME_MUTABLE)]
     private ?\DateTimeInterface $requestedTime = null;
 
     #[ORM\Column(name: '`topic`', type: Types::STRING, length: 255)]
@@ -48,8 +47,12 @@ class Booking
     #[Assert\Type('string')]
     private ?string $status = null;
 
-    #[ORM\Column(name: '`creationDate`', type: Types::DATETIME_MUTABLE)]
+    #[ORM\Column(name: 'creation_date', type: Types::DATETIME_MUTABLE)]
     private ?\DateTimeInterface $creationDate = null;
+
+    #[ORM\ManyToOne(inversedBy: 'bookings')]
+    #[ORM\JoinColumn(name: 'user_id', referencedColumnName: 'id', nullable: false)]
+    private ?Users $user = null;
 
     public function getBookingID(): ?int
     {
@@ -62,36 +65,36 @@ class Booking
         return $this;
     }
 
-    public function getEntrepreneurID(): ?int
+    public function getEntrepreneur(): ?Users
     {
-        return $this->entrepreneurID;
+        return $this->entrepreneur;
     }
 
-    public function setEntrepreneurID(?int $entrepreneurID): static
+    public function setEntrepreneur(?Users $entrepreneur): static
     {
-        $this->entrepreneurID = $entrepreneurID;
+        $this->entrepreneur = $entrepreneur;
         return $this;
     }
 
-    public function getMentorID(): ?int
+    public function getMentor(): ?Users
     {
-        return $this->mentorID;
+        return $this->mentor;
     }
 
-    public function setMentorID(?int $mentorID): static
+    public function setMentor(?Users $mentor): static
     {
-        $this->mentorID = $mentorID;
+        $this->mentor = $mentor;
         return $this;
     }
 
-    public function getStartupID(): ?int
+    public function getStartup(): ?Startup
     {
-        return $this->startupID;
+        return $this->startup;
     }
 
-    public function setStartupID(?int $startupID): static
+    public function setStartup(?Startup $startup): static
     {
-        $this->startupID = $startupID;
+        $this->startup = $startup;
         return $this;
     }
 
@@ -150,4 +153,14 @@ class Booking
         return $this;
     }
 
+    public function getUser(): ?Users
+    {
+        return $this->user;
+    }
+
+    public function setUser(?Users $user): static
+    {
+        $this->user = $user;
+        return $this;
+    }
 }

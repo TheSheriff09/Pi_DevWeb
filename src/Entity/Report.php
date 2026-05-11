@@ -16,19 +16,20 @@ class Report
     /** @phpstan-ignore-next-line */
     private ?int $id = null;
 
-    #[ORM\Column(type: Types::INTEGER)]
-    private ?int $reporterId = null;
+    #[ORM\ManyToOne(targetEntity: Users::class)]
+    #[ORM\JoinColumn(name: 'reporter_id', referencedColumnName: 'id', nullable: false)]
+    private ?Users $reporter = null;
 
-    #[ORM\Column(type: Types::STRING, length: 50)]
+    #[ORM\Column(name: 'target_type', type: Types::STRING, length: 50)]
     private ?string $targetType = null; // 'post' or 'comment'
 
-    #[ORM\Column(type: Types::INTEGER)]
+    #[ORM\Column(name: 'target_id_int', type: Types::INTEGER)]
     private ?int $targetId = null;
 
-    #[ORM\Column(type: Types::TEXT)]
+    #[ORM\Column(name: 'reason', type: Types::TEXT)]
     private ?string $reason = null;
 
-    #[ORM\Column(type: Types::DATETIME_MUTABLE)]
+    #[ORM\Column(name: 'created_at', type: Types::DATETIME_MUTABLE)]
     private ?\DateTimeInterface $createdAt = null;
 
     public function getId(): ?int
@@ -36,14 +37,14 @@ class Report
         return $this->id;
     }
 
-    public function getReporterId(): ?int
+    public function getReporter(): ?Users
     {
-        return $this->reporterId;
+        return $this->reporter;
     }
 
-    public function setReporterId(int $reporterId): static
+    public function setReporter(?Users $reporter): static
     {
-        $this->reporterId = $reporterId;
+        $this->reporter = $reporter;
         return $this;
     }
 

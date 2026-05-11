@@ -32,15 +32,15 @@ class BookingController extends AbstractController
         }
 
         $schedule = $em->getRepository(Schedule::class)->find($scheduleId);
-        if (!$schedule || $schedule->getMentorID() !== $mentorId || $schedule->getIsBooked()) {
+        if (!$schedule || $schedule->getMentor()->getId() !== $mentorId || $schedule->getIsBooked()) {
             // Already booked or invalid
             return $this->redirectToRoute('app_mentor_profile', ['id' => $mentorId]);
         }
 
         // Check double booking
         $existing = $em->getRepository(Booking::class)->findOneBy([
-            'entrepreneurID' => $userId,
-            'mentorID' => $mentorId,
+            'entrepreneur' => $userId,
+            'mentor' => $mentorId,
             'requestedDate' => $schedule->getAvailableDate(),
             'requestedTime' => $schedule->getStartTime(),
             'status' => 'PENDING'
@@ -55,11 +55,11 @@ class BookingController extends AbstractController
         if ($request->isMethod('POST')) {
             $topic = (string) $request->request->get('topic', '');
                 
-            $startup = $em->getRepository(Startup::class)->findOneBy(['founderID' => $userId]);
+            $startup = $em->getRepository(Startup::class)->findOneBy(['founder' => $userId]);
             if (!$startup) {
-                $startup = $em->getRepository(Startup::class)->findOneBy(['userId' => $userId]);
+                $startup = $em->getRepository(Startup::class)->findOneBy(['user' => $userId]);
             }
-            $startupId = $startup ? (int) $startup->getStartupID() : 0;
+            $startupObj = $startup;
 
             $maxId = $em->createQueryBuilder()
                 ->select('MAX(b.bookingID)')
@@ -69,9 +69,9 @@ class BookingController extends AbstractController
 
             $booking = new Booking();
             $booking->setBookingID((int) ($maxId ?? 0) + 1);
-            $booking->setEntrepreneurID($userId);
-            $booking->setMentorID($mentorId);
-            $booking->setStartupID($startupId);
+            $booking->setEntrepreneur($em->getRepository(Users::class)->find($userId));
+            $booking->setMentor($em->getRepository(Users::class)->find($mentorId));
+            $booking->setStartup($startupObj);
             $booking->setRequestedDate($schedule->getAvailableDate());
             $booking->setRequestedTime($schedule->getStartTime());
             $booking->setTopic($topic);
@@ -118,14 +118,14 @@ class BookingController extends AbstractController
         $role = $userRole;
 
         if ($role === 'MENTOR') {
-            $bookingsRaw = $em->getRepository(Booking::class)->findBy(['mentorID' => $userId], ['creationDate' => 'DESC']);
+            $bookingsRaw = $em->getRepository(Booking::class)->findBy(['mentor' => $userId], ['creationDate' => 'DESC']);
         } else {
-            $bookingsRaw = $em->getRepository(Booking::class)->findBy(['entrepreneurID' => $userId], ['creationDate' => 'DESC']);
+            $bookingsRaw = $em->getRepository(Booking::class)->findBy(['entrepreneur' => $userId], ['creationDate' => 'DESC']);
         }
 
         $bookings = [];
         foreach ($bookingsRaw as $b) {
-            $otherId = $role === 'MENTOR' ? (int) $b->getEntrepreneurID() : (int) $b->getMentorID();
+            $otherId = $role === 'MENTOR' ? (int) $b->getEntrepreneur()->getId() : (int) $b->getMentor()->getId();
             $otherUser = $em->getRepository(\App\Entity\Users::class)->find($otherId);
             $bookings[] = [
                 'booking' => $b,
@@ -157,7 +157,7 @@ class BookingController extends AbstractController
             return $this->json(['status' => 'error', 'message' => 'Unauthorized'], 401);
         }
 
-        $booking = $em->getRepository(Booking::class)->findOneBy(['bookingID' => $id, 'mentorID' => $userId]);
+        $booking = $em->getRepository(Booking::class)->findOneBy(['bookingID' => $id, 'mentor' => $userId]);
         $status = $booking ? (string) $booking->getStatus() : null;
         if (!$booking || ($status !== null && strtoupper($status) !== 'PENDING')) {
             return $this->json(['status' => 'error', 'message' => 'Invalid booking'], 400);
@@ -168,11 +168,11 @@ class BookingController extends AbstractController
         if ($action === 'accept') {
             $booking->setStatus('approved');
             $bookingDate = $booking->getRequestedDate();
-            $this->pushNotification((int) $booking->getEntrepreneurID(), 'success', 'Your booking on ' . ($bookingDate ? $bookingDate->format('j M Y') : '') . ' was Approved!');
+            $this->pushNotification((int) $booking->getEntrepreneur()->getId(), 'success', 'Your booking on ' . ($bookingDate ? $bookingDate->format('j M Y') : '') . ' was Approved!');
             
             // Mark corresponding schedule as booked
             $schedule = $em->getRepository(Schedule::class)->findOneBy([
-                'mentorID' => $userId,
+                'mentor' => $userId,
                 'availableDate' => $booking->getRequestedDate(),
                 'startTime' => $booking->getRequestedTime(),
                 'isBooked' => false
@@ -192,9 +192,9 @@ class BookingController extends AbstractController
 
             $session = new Session();
             $session->setSessionID((int) ($maxSessionId ?? 0) + 1);
-            $session->setMentorID($userId);
-            $session->setEntrepreneurID((int) $booking->getEntrepreneurID());
-            $session->setStartupID((int) ($booking->getStartupID() ?? 0));
+            $session->setMentor($em->getRepository(Users::class)->find($userId));
+            $session->setEntrepreneur($booking->getEntrepreneur());
+            $session->setStartup($booking->getStartup());
             if ($scheduleId) {
                 $session->setScheduleID($scheduleId);
             }
@@ -207,7 +207,7 @@ class BookingController extends AbstractController
         } elseif ($action === 'reject') {
             $booking->setStatus('rejected');
             $bookingDate = $booking->getRequestedDate();
-            $this->pushNotification((int) $booking->getEntrepreneurID(), 'error', 'Your booking on ' . ($bookingDate ? $bookingDate->format('j M Y') : '') . ' was Rejected.');
+            $this->pushNotification((int) $booking->getEntrepreneur()->getId(), 'error', 'Your booking on ' . ($bookingDate ? $bookingDate->format('j M Y') : '') . ' was Rejected.');
         }
 
         $em->flush();
@@ -233,6 +233,11 @@ class BookingController extends AbstractController
         $userId = $request->getSession()->get('user_id');
         $userRole = $request->getSession()->get('user_role');
         
+        // Immediately unlock the session to prevent blocking subsequent page navigations
+        if ($request->hasSession() && $request->getSession()->isStarted()) {
+            $request->getSession()->save();
+        }
+
         if (!$userId || strtoupper((string) $userRole) === 'EVALUATOR' || $userRole !== 'ENTREPRENEUR') {
             return $this->json([]);
         }

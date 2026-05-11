@@ -209,7 +209,7 @@
                 }).catch(e => {});
             };
             pollNotifs(); 
-            setInterval(pollNotifs, 2500); 
+            setInterval(pollNotifs, 15000); 
             {% endif %}
 
             {% if isLoggedIn %}
@@ -688,7 +688,7 @@
                             }
                         });
                 }
-                setInterval(pollChatSystem, 3000);
+                setInterval(pollChatSystem, 5000);
             </script>
         {% endif %}
 

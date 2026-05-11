@@ -33,8 +33,15 @@ class StartupController extends AbstractController
             return $this->redirectToRoute('app_home');
         }
         
-        // Get user's startups
-        $startups = $em->getRepository(Startup::class)->findBy(['userId' => $userId]);
+        // Get user's startups with optimized eager loading to prevent N+1 queries
+        $startups = $em->getRepository(Startup::class)->createQueryBuilder('s')
+            ->leftJoin('s.mentor', 'm')->addSelect('m')
+            ->leftJoin('s.founder', 'f')->addSelect('f')
+            ->leftJoin('s.businessPlan', 'b')->addSelect('b')
+            ->where('s.user = :userId')
+            ->setParameter('userId', $userId)
+            ->getQuery()
+            ->getResult();
         
         return $this->render('FrontOffice/startup/index.html.twig', [
             'startups' => $startups,
@@ -92,19 +99,22 @@ class StartupController extends AbstractController
             
             // Set IDs if provided
             if ($request->request->get('mentorID')) {
-                $startup->setMentorID(intval($request->request->get('mentorID')));
+                $mentor = $em->getRepository(Users::class)->find($request->request->get('mentorID'));
+                $startup->setMentor($mentor);
             }
             
             if ($request->request->get('founderID')) {
-                $startup->setFounderID(intval($request->request->get('founderID')));
+                $founder = $em->getRepository(Users::class)->find($request->request->get('founderID'));
+                $startup->setFounder($founder);
             }
             
             if ($request->request->get('businessPlanID')) {
-                $startup->setBusinessPlanID(intval($request->request->get('businessPlanID')));
+                $bp = $em->getRepository(Businessplan::class)->find($request->request->get('businessPlanID'));
+                $startup->setBusinessPlan($bp);
             }
             
             // Set the current user as the owner
-            $startup->setUserId($userId);
+            $startup->setUser($em->getRepository(Users::class)->find($userId));
             
             $errors = $validator->validate($startup);
             if (count($errors) > 0) {
@@ -151,11 +161,11 @@ class StartupController extends AbstractController
         $startup = $em->getRepository(Startup::class)->find($id);
         
         // Check if startup exists and belongs to current user
-        if (!$startup || $startup->getUserId() !== $userId) {
+        if (!$startup || $startup->getUser()->getId() !== $userId) {
             return $this->redirectToRoute('app_entrepreneur_startups');
         }
 
-        $businessPlan = $em->getRepository(Businessplan::class)->findOneBy(['startupID' => $id]);
+        $businessPlan = $em->getRepository(Businessplan::class)->findOneBy(['startup' => $id]);
         $fundingApplications = $em->getRepository(Fundingapplication::class)->findBy(['projectId' => $id]);
 
         return $this->render('FrontOffice/startup/show.html.twig', [
@@ -184,7 +194,7 @@ class StartupController extends AbstractController
         $startup = $em->getRepository(Startup::class)->find($id);
         
         // Check if startup exists and belongs to current user
-        if (!$startup || $startup->getUserId() !== $userId) {
+        if (!$startup || $startup->getUser()->getId() !== $userId) {
             return $this->redirectToRoute('app_entrepreneur_startups');
         }
         
@@ -216,15 +226,15 @@ class StartupController extends AbstractController
             }
             
             if ($request->request->get('mentorID')) {
-                $startup->setMentorID(intval($request->request->get('mentorID')));
+                $startup->setMentor($em->getRepository(Users::class)->find($request->request->get('mentorID')));
             }
             
             if ($request->request->get('founderID')) {
-                $startup->setFounderID(intval($request->request->get('founderID')));
+                $startup->setFounder($em->getRepository(Users::class)->find($request->request->get('founderID')));
             }
             
             if ($request->request->get('businessPlanID')) {
-                $startup->setBusinessPlanID(intval($request->request->get('businessPlanID')));
+                $startup->setBusinessPlan($em->getRepository(Businessplan::class)->find($request->request->get('businessPlanID')));
             }
             
             $errors = $validator->validate($startup);
@@ -272,7 +282,7 @@ class StartupController extends AbstractController
         $startup = $em->getRepository(Startup::class)->find($id);
         
         // Check if startup exists and belongs to current user
-        if (!$startup || $startup->getUserId() !== $userId) {
+        if (!$startup || $startup->getUser()->getId() !== $userId) {
             return $this->redirectToRoute('app_entrepreneur_startups');
         }
         
@@ -304,7 +314,7 @@ class StartupController extends AbstractController
         
         $startup = $em->getRepository(Startup::class)->find($id);
         
-        if (!$startup || $startup->getUserId() !== $userId) {
+        if (!$startup || $startup->getUser()->getId() !== $userId) {
             return new JsonResponse(['error' => 'Startup not found or unauthorized'], Response::HTTP_NOT_FOUND);
         }
 

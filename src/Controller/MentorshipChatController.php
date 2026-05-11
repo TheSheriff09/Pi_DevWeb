@@ -29,7 +29,7 @@ class MentorshipChatController extends AbstractController
         }
 
         $bookings = $em->getRepository(Booking::class)->createQueryBuilder('b')
-            ->where('(b.entrepreneurID = :uid OR b.mentorID = :uid) AND b.status = :status')
+            ->where('(b.entrepreneur = :uid OR b.mentor = :uid) AND b.status = :status')
             ->setParameter('uid', $userId)
             ->setParameter('status', 'approved')
             ->getQuery()
@@ -37,7 +37,7 @@ class MentorshipChatController extends AbstractController
 
         $contactIds = [];
         foreach ($bookings as $b) {
-            $otherId = ($b->getEntrepreneurID() == $userId) ? $b->getMentorID() : $b->getEntrepreneurID();
+            $otherId = ($b->getEntrepreneur()->getId() == $userId) ? $b->getMentor()->getId() : $b->getEntrepreneur()->getId();
             if (!in_array($otherId, $contactIds)) {
                 $contactIds[] = $otherId;
             }
@@ -49,14 +49,14 @@ class MentorshipChatController extends AbstractController
             if ($user) {
                 // Get unread count specifically for this contact
                 $unreadCount = $em->getRepository(MentorshipMessage::class)->count([
-                    'senderId' => $cid,
-                    'receiverId' => $userId,
+                    'sender' => $cid,
+                    'receiver' => $userId,
                     'isRead' => false
                 ]);
 
                 // Get last message text
                 $lastMsg = $em->getRepository(MentorshipMessage::class)->findOneBy(
-                    ['senderId' => [$cid, $userId], 'receiverId' => [$cid, $userId]],
+                    ['sender' => [$cid, $userId], 'receiver' => [$cid, $userId]],
                     ['timestamp' => 'DESC']
                 );
 
@@ -91,8 +91,8 @@ class MentorshipChatController extends AbstractController
         $em->createQueryBuilder()
             ->update(MentorshipMessage::class, 'm')
             ->set('m.isRead', '1')
-            ->where('m.senderId = :cid')
-            ->andWhere('m.receiverId = :uid')
+            ->where('m.sender = :cid')
+            ->andWhere('m.receiver = :uid')
             ->andWhere('m.isRead = 0')
             ->setParameter('cid', $contactId)
             ->setParameter('uid', $userId)
@@ -101,7 +101,7 @@ class MentorshipChatController extends AbstractController
 
         // Fetch history
         $rawMessages = $em->getRepository(MentorshipMessage::class)->createQueryBuilder('m')
-            ->where('(m.senderId = :uid AND m.receiverId = :cid) OR (m.senderId = :cid AND m.receiverId = :uid)')
+            ->where('(m.sender = :uid AND m.receiver = :cid) OR (m.sender = :cid AND m.receiver = :uid)')
             ->setParameter('uid', $userId)
             ->setParameter('cid', $contactId)
             ->orderBy('m.timestamp', 'ASC')
@@ -113,7 +113,7 @@ class MentorshipChatController extends AbstractController
             $timestamp = $m->getTimestamp();
             $messages[] = [
                 'id' => $m->getId(),
-                'senderId' => $m->getSenderId(),
+                'sender' => $m->getSender()->getId(),
                 'content' => $m->getContent(),
                 'time' => $timestamp ? $timestamp->format('H:i') : '',
                 'date' => $timestamp ? $timestamp->format('M j') : ''
@@ -123,8 +123,8 @@ class MentorshipChatController extends AbstractController
         return $this->json($messages);
     }
 
-    #[Route('/send/{receiverId}', name: 'app_mentorship_chat_send', methods: ['POST'])]
-    public function sendMessage(int $receiverId, Request $request, EntityManagerInterface $em): Response
+    #[Route('/send/{receiver}', name: 'app_mentorship_chat_send', methods: ['POST'])]
+    public function sendMessage(int $receiver, Request $request, EntityManagerInterface $em): Response
     {
         $userId = $request->getSession()->get('user_id');
         $userRole = $request->getSession()->get('user_role');
@@ -141,8 +141,8 @@ class MentorshipChatController extends AbstractController
         if (empty($content)) return $this->json(['error' => 'Empty message'], 400);
 
         $msg = new MentorshipMessage();
-        $msg->setSenderId($userId);
-        $msg->setReceiverId($receiverId);
+        $msg->setSender($em->getRepository(Users::class)->find($userId));
+        $msg->setReceiver($em->getRepository(Users::class)->find($receiver));
         $msg->setContent($content);
         $msg->setTimestamp(new \DateTime());
         $msg->setIsRead(false);
@@ -153,7 +153,7 @@ class MentorshipChatController extends AbstractController
             $timestamp = $msg->getTimestamp();
             return $this->json([
                 'id' => $msg->getId(),
-                'senderId' => $msg->getSenderId(),
+                'sender' => $msg->getSender()->getId(),
                 'content' => $msg->getContent(),
                 'time' => $timestamp ? $timestamp->format('H:i') : '',
                 'date' => $timestamp ? $timestamp->format('M j') : ''
@@ -176,8 +176,14 @@ class MentorshipChatController extends AbstractController
 
         $activeContactId = $request->query->get('activeContact'); // ID of currently open chat
 
+        // Immediately unlock the session to prevent blocking subsequent page navigations
+        if ($request->hasSession() && $request->getSession()->isStarted()) {
+            $request->getSession()->save();
+        }
+
         $qb = $em->getRepository(MentorshipMessage::class)->createQueryBuilder('m')
-            ->where('m.receiverId = :uid')
+            ->leftJoin('m.sender', 's')->addSelect('s')
+            ->where('m.receiver = :uid')
             ->andWhere('m.isRead = 0')
             ->setParameter('uid', $userId);
             
@@ -190,7 +196,7 @@ class MentorshipChatController extends AbstractController
         ];
 
         foreach ($unreadMessages as $m) {
-            $sid = $m->getSenderId();
+            $sid = $m->getSender()->getId();
             if (!isset($payload['contactsUnread'][$sid])) {
                 $payload['contactsUnread'][$sid] = 0;
             }

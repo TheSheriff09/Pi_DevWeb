@@ -101,8 +101,8 @@ class AdminMentorshipController extends AbstractController
         $mentors = [];
 
         foreach ($mentorsRaw as $m) {
-            $sessionsCount = $em->getRepository(Session::class)->count(['mentorID' => (int)$m->getId(), 'status' => 'completed']);
-            $evaluations = $em->getRepository(\App\Entity\MentorEvaluations::class)->findBy(['mentorID' => (int)$m->getId()]);
+            $sessionsCount = $em->getRepository(Session::class)->count(['mentor' => (int)$m->getId(), 'status' => 'completed']);
+            $evaluations = $em->getRepository(\App\Entity\MentorEvaluations::class)->findBy(['mentor' => (int)$m->getId()]);
             
             $totalScore = 0;
             foreach ($evaluations as $e) { 
@@ -164,12 +164,18 @@ class AdminMentorshipController extends AbstractController
             return $this->redirectToRoute('app_admin_mentorship_bookings');
         }
 
-        $bookingsRaw = $em->getRepository(Booking::class)->findBy([], ['creationDate' => 'DESC']);
+        $bookingsRaw = $em->getRepository(Booking::class)->createQueryBuilder('b')
+            ->leftJoin('b.mentor', 'm')->addSelect('m')
+            ->leftJoin('b.entrepreneur', 'e')->addSelect('e')
+            ->orderBy('b.creationDate', 'DESC')
+            ->setMaxResults(100)
+            ->getQuery()
+            ->getResult();
         $bookings = [];
 
         foreach ($bookingsRaw as $b) {
-            $mentor = $em->getRepository(Users::class)->find((int)$b->getMentorID());
-            $entrepreneur = $em->getRepository(Users::class)->find((int)$b->getEntrepreneurID());
+            $mentor = $b->getMentor();
+            $entrepreneur = $b->getEntrepreneur();
             
             $bookings[] = [
                 'booking' => $b,
@@ -206,14 +212,40 @@ class AdminMentorshipController extends AbstractController
             return $this->redirectToRoute('app_admin_mentorship_sessions');
         }
 
-        $sessionsRaw = $em->getRepository(Session::class)->findBy([], ['sessionDate' => 'DESC']);
+        $sessionsRaw = $em->getRepository(Session::class)->createQueryBuilder('s')
+            ->leftJoin('s.mentor', 'm')->addSelect('m')
+            ->leftJoin('s.entrepreneur', 'e')->addSelect('e')
+            ->orderBy('s.sessionDate', 'DESC')
+            ->setMaxResults(100)
+            ->getQuery()
+            ->getResult();
+            
+        $sessionIds = [];
+        foreach ($sessionsRaw as $s) {
+            $sessionIds[] = $s->getId();
+        }
+        
+        $todosCounts = [];
+        $notesCounts = [];
+        if (!empty($sessionIds)) {
+            $tc = $em->createQuery('SELECT IDENTITY(t.session) as sId, COUNT(t.id) as cnt FROM App\Entity\SessionTodos t WHERE t.session IN (:ids) GROUP BY t.session')
+                ->setParameter('ids', $sessionIds)->getResult();
+            foreach ($tc as $row) { $todosCounts[$row['sId']] = (int)$row['cnt']; }
+            
+            $nc = $em->createQuery('SELECT IDENTITY(n.session) as sId, COUNT(n.id) as cnt FROM App\Entity\SessionNotes n WHERE n.session IN (:ids) GROUP BY n.session')
+                ->setParameter('ids', $sessionIds)->getResult();
+            foreach ($nc as $row) { $notesCounts[$row['sId']] = (int)$row['cnt']; }
+        }
+
         $sessionsData = [];
 
         foreach ($sessionsRaw as $s) {
-            $mentor = $em->getRepository(Users::class)->find((int)$s->getMentorID());
-            $entrepreneur = $em->getRepository(Users::class)->find((int)$s->getEntrepreneurID());
-            $todosCount = $em->getRepository(\App\Entity\SessionTodos::class)->count(['sessionID' => $s->getSessionID()]);
-            $notesCount = $em->getRepository(\App\Entity\SessionNotes::class)->count(['sessionID' => $s->getSessionID()]);
+            $mentor = $s->getMentor();
+            $entrepreneur = $s->getEntrepreneur();
+            $sId = $s->getId();
+            
+            $todosCount = $todosCounts[$sId] ?? 0;
+            $notesCount = $notesCounts[$sId] ?? 0;
             
             $sessionsData[] = [
                 'session' => $s,
@@ -252,13 +284,20 @@ class AdminMentorshipController extends AbstractController
             return $this->redirectToRoute('app_admin_mentorship_feedback');
         }
 
-        $evalsRaw = $em->getRepository(\App\Entity\MentorEvaluations::class)->findBy([], ['createdAt' => 'DESC']);
+        $evalsRaw = $em->getRepository(\App\Entity\MentorEvaluations::class)->createQueryBuilder('e')
+            ->leftJoin('e.mentor', 'm')->addSelect('m')
+            ->leftJoin('e.entrepreneur', 'en')->addSelect('en')
+            ->leftJoin('e.session', 's')->addSelect('s')
+            ->orderBy('e.createdAt', 'DESC')
+            ->setMaxResults(100)
+            ->getQuery()
+            ->getResult();
         $feedbacks = [];
 
         foreach ($evalsRaw as $e) {
-            $mentor = $em->getRepository(Users::class)->find((int)$e->getMentorID());
-            $entrepreneur = $em->getRepository(Users::class)->find((int)$e->getEntrepreneurID());
-            $session = $em->getRepository(Session::class)->find((int)$e->getSessionID());
+            $mentor = $e->getMentor();
+            $entrepreneur = $e->getEntrepreneur();
+            $session = $e->getSession();
             
             $feedbacks[] = [
                 'evaluation' => $e,

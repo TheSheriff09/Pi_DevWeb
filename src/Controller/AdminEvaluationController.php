@@ -38,14 +38,11 @@ class AdminEvaluationController extends AbstractController
 
         $topEvaluations = $em->getRepository(Fundingevaluation::class)->findBy([], ['score' => 'DESC'], 5);
 
-        $evaluationsAll = $em->getRepository(Fundingevaluation::class)->findAll();
-        $decisionCounts = ['Approved' => 0, 'Rejected' => 0];
-        foreach ($evaluationsAll as $ev) {
-            $dec = (string)($ev->getDecision() ?: 'Pending');
-            if (!isset($decisionCounts[$dec])) {
-                $decisionCounts[$dec] = 0;
-            }
-            $decisionCounts[$dec]++;
+        $decisionCountsRaw = $em->createQuery('SELECT e.decision, COUNT(e.id) as cnt FROM App\Entity\Fundingevaluation e GROUP BY e.decision')->getResult();
+        $decisionCounts = ['Approved' => 0, 'Rejected' => 0, 'Pending' => 0];
+        foreach ($decisionCountsRaw as $row) {
+            $dec = (string)($row['decision'] ?: 'Pending');
+            $decisionCounts[$dec] = (int)$row['cnt'];
         }
 
         return $this->render('BackOffice/evaluation/dashboard.html.twig', [
@@ -236,8 +233,10 @@ class AdminEvaluationController extends AbstractController
     {
         if ($redirect = $this->ensureAdmin($request)) return $redirect;
 
-        $applications = $em->getRepository(Fundingapplication::class)->findAll();
-        $evaluations = $em->getRepository(Fundingevaluation::class)->findAll();
+        $applications = $em->getRepository(Fundingapplication::class)->createQueryBuilder('a')
+            ->orderBy('a.submissionDate', 'DESC')->setMaxResults(500)->getQuery()->getResult();
+        $evaluations = $em->getRepository(Fundingevaluation::class)->createQueryBuilder('e')
+            ->orderBy('e.createdAt', 'DESC')->setMaxResults(500)->getQuery()->getResult();
 
         $projectDir = $this->getParameter('kernel.project_dir');
         $logoPath = (is_string($projectDir) ? $projectDir : '') . '/public/Front/images/email/logo.png';

@@ -35,22 +35,28 @@ class ForumController extends AbstractController
 
         $followingIds = [];
         if ($isLoggedIn) {
-            $follows = $em->getRepository(ForumFollow::class)->findBy(['followerId' => $userId]);
+            $follows = $em->getRepository(ForumFollow::class)->findBy(['follower' => $userId]);
             foreach ($follows as $f) {
-                $followingIds[] = $f->getFollowingId();
+                $followingIds[] = $f->getFollowing()->getId();
             }
         }
 
         if ($isLoggedIn && count($followingIds) > 0) {
             $qb = $em->getRepository(ForumPosts::class)->createQueryBuilder('p');
-            $qb->addSelect('(CASE WHEN p.userId IN (:followingIds) THEN 1 ELSE 0 END) AS HIDDEN isFollowed')
+            $qb->leftJoin('p.user', 'u')->addSelect('u')
+               ->addSelect('(CASE WHEN p.user IN (:followingIds) THEN 1 ELSE 0 END) AS HIDDEN isFollowed')
                ->setParameter('followingIds', $followingIds)
                ->orderBy('p.isPinned', 'DESC')
                ->addOrderBy('isFollowed', 'DESC')
                ->addOrderBy('p.createdAt', 'DESC');
             $allPosts = $qb->getQuery()->getResult();
         } else {
-            $allPosts = $em->getRepository(ForumPosts::class)->findBy([], ['isPinned' => 'DESC', 'createdAt' => 'DESC']);
+            $allPosts = $em->getRepository(ForumPosts::class)->createQueryBuilder('p')
+                ->leftJoin('p.user', 'u')->addSelect('u')
+                ->orderBy('p.isPinned', 'DESC')
+                ->addOrderBy('p.createdAt', 'DESC')
+                ->getQuery()
+                ->getResult();
         }
 
         $postsData = [];
@@ -60,35 +66,61 @@ class ForumController extends AbstractController
         $totalCommentsCount = $em->getRepository(Comments::class)->count([]);
         $trendingPosts = $em->getRepository(ForumPosts::class)->findBy([], ['views' => 'DESC'], 3);
 
+        // BULK OPTIMIZATION: Extract all Post IDs to fetch data in 3 big queries instead of N*4 queries
+        $postIds = [];
         foreach ($allPosts as $post) {
-            if (!$post->getIsActive() && (!isset($userId) || $post->getUserId() !== $userId)) {
+            $postIds[] = $post->getId();
+        }
+
+        $commentCounts = [];
+        $likeCounts = [];
+        $userLikedPosts = [];
+
+        if (!empty($postIds)) {
+            // Bulk fetch comment counts
+            $commentRes = $em->getRepository(Comments::class)->createQueryBuilder('c')
+                ->select('IDENTITY(c.post) as postId, count(c.id) as cnt')
+                ->where('c.post IN (:postIds)')
+                ->setParameter('postIds', $postIds)
+                ->groupBy('c.post')
+                ->getQuery()->getResult();
+            foreach ($commentRes as $res) { $commentCounts[$res['postId']] = $res['cnt']; }
+
+            // Bulk fetch like counts
+            $likeRes = $em->getRepository(Interactions::class)->createQueryBuilder('i')
+                ->select('IDENTITY(i.post) as postId, count(i.id) as cnt')
+                ->where('i.post IN (:postIds)')
+                ->setParameter('postIds', $postIds)
+                ->groupBy('i.post')
+                ->getQuery()->getResult();
+            foreach ($likeRes as $res) { $likeCounts[$res['postId']] = $res['cnt']; }
+
+            // Bulk fetch if current user liked these posts
+            if ($isLoggedIn) {
+                $userLikeRes = $em->getRepository(Interactions::class)->createQueryBuilder('i')
+                    ->select('IDENTITY(i.post) as postId')
+                    ->where('i.post IN (:postIds)')
+                    ->andWhere('i.user = :user')
+                    ->setParameter('postIds', $postIds)
+                    ->setParameter('user', $userId)
+                    ->getQuery()->getResult();
+                foreach ($userLikeRes as $res) { $userLikedPosts[$res['postId']] = true; }
+            }
+        }
+
+        // Now loop through posts using the pre-loaded bulk arrays in memory
+        foreach ($allPosts as $post) {
+            if (!$post->getIsActive() && (!isset($userId) || $post->getUser()->getId() !== $userId)) {
                 continue; // Skip inactive posts for non-owners
             }
             $postId = $post->getId();
             
-            // Count comments
-            $commentCount = $em->getRepository(Comments::class)->count(['postId' => $postId]);
-            
-            // Count likes (type LIKE or LOVE etc. let's just count all interactions or type = 'like')
-            // Using generic count matching 'type' => 'like' (ignoring case usually or just enforce lower/upper)
-            $likeCount = $em->getRepository(Interactions::class)->count(['postId' => $postId]);
-
-            $userLiked = false;
-            if ($isLoggedIn) {
-                $interaction = $em->getRepository(Interactions::class)->findOneBy(['postId' => $postId, 'userId' => $userId]);
-                if ($interaction) {
-                    $userLiked = true;
-                }
-            }
-            
-            $authorUser = $em->getRepository(Users::class)->find($post->getUserId());
-
             $postsData[] = [
                 'post' => $post,
-                'commentCount' => $commentCount,
-                'likeCount' => $likeCount,
-                'userLiked' => $userLiked,
-                'author' => $authorUser
+                'commentCount' => $commentCounts[$postId] ?? 0,
+                'likeCount' => $likeCounts[$postId] ?? 0,
+                'userLiked' => isset($userLikedPosts[$postId]),
+                'author' => $post->getUser() // Already eager-loaded! No extra query.
             ];
         }
 
@@ -174,7 +206,7 @@ class ForumController extends AbstractController
         $post->setContent($content);
         $post->setCreatedAt(new \DateTime());
         $post->setUpdatedAt(new \DateTime());
-        $post->setUserId($user->getId());
+        $post->setUser($user);
         $post->setAuthorName($user->getFullName());
         
         $imageName = 'default_post.png';
@@ -228,7 +260,7 @@ class ForumController extends AbstractController
         $post->setViews($post->getViews() + 1);
         $em->flush();
 
-        $allComments = $em->getRepository(Comments::class)->findBy(['postId' => $id], ['createdAt' => 'ASC']);
+        $allComments = $em->getRepository(Comments::class)->findBy(['post' => $id], ['createdAt' => 'ASC']);
         $rootComments = [];
         $replies = [];
         
@@ -243,11 +275,11 @@ class ForumController extends AbstractController
         // Sort root comments by upvotes
         usort($rootComments, fn($a, $b) => $b->getUpvotes() <=> $a->getUpvotes());
 
-        $likeCount = $em->getRepository(Interactions::class)->count(['postId' => $id]);
+        $likeCount = $em->getRepository(Interactions::class)->count(['post' => $id]);
         
         $userLiked = false;
         if ($isLoggedIn) {
-            $interaction = $em->getRepository(Interactions::class)->findOneBy(['postId' => $id, 'userId' => $userId]);
+            $interaction = $em->getRepository(Interactions::class)->findOneBy(['post' => $id, 'user' => $userId]);
             if ($interaction) {
                 $userLiked = true;
             }
@@ -309,8 +341,8 @@ class ForumController extends AbstractController
             $comment = new Comments();
             $comment->setContent($content);
             $comment->setCreatedAt(new \DateTime());
-            $comment->setPostId($post->getId());
-            $comment->setUserId($user->getId());
+            $comment->setPost($post);
+            $comment->setUser($user);
             $comment->setAuthorName($user->getFullName());
             
             if ($parentId) {
@@ -343,6 +375,7 @@ class ForumController extends AbstractController
             return $this->json(['error' => 'Not authenticated'], 401);
         }
 
+        $user = $em->getRepository(Users::class)->find($userId);
         $post = $em->getRepository(ForumPosts::class)->find($id);
         if (!$post) {
             return $this->json(['error' => 'Post not found'], 404);
@@ -355,8 +388,8 @@ class ForumController extends AbstractController
         }
 
         $existingInteraction = $em->getRepository(Interactions::class)->findOneBy([
-            'postId' => $id,
-            'userId' => $userId
+            'post' => $id,
+            'user' => $userId
         ]);
 
         if ($existingInteraction) {
@@ -376,8 +409,8 @@ class ForumController extends AbstractController
         } else {
             // New reaction
             $interaction = new Interactions();
-            $interaction->setPostId($id);
-            $interaction->setUserId($userId);
+            $interaction->setPost($post);
+            $interaction->setUser($user);
             $interaction->setType($type);
             $interaction->setCreatedAt(new \DateTime());
 
@@ -387,7 +420,7 @@ class ForumController extends AbstractController
             $currentType = $type;
         }
 
-        $totalCount = $em->getRepository(Interactions::class)->count(['postId' => $id]);
+        $totalCount = $em->getRepository(Interactions::class)->count(['post' => $id]);
         return $this->json(['reacted' => $reacted, 'type' => $currentType, 'count' => $totalCount]);
     }
 
@@ -400,7 +433,7 @@ class ForumController extends AbstractController
         }
 
         $post = $em->getRepository(ForumPosts::class)->find($id);
-        if ($post && $post->getUserId() === $userId) {
+        if ($post && $post->getUser()->getId() === $userId) {
             // Optional: delete related comments and interactions or rely on DB CASCADE
             // Since constraints have CASCADE, deleting the post deletes comments/interactions seamlessly.
             $em->remove($post);
@@ -424,11 +457,18 @@ class ForumController extends AbstractController
         $notifiedPosts = $request->getSession()->get('notified_posts', []);
         
         if (in_array($data['post_id'], $notifiedPosts)) {
+            if ($request->hasSession() && $request->getSession()->isStarted()) {
+                $request->getSession()->save();
+            }
             return $this->json(['post_id' => $data['post_id'], 'show_toast' => false]);
         }
         
         $notifiedPosts[] = $data['post_id'];
         $request->getSession()->set('notified_posts', $notifiedPosts);
+        
+        if ($request->hasSession() && $request->getSession()->isStarted()) {
+            $request->getSession()->save();
+        }
         
         return $this->json([
             'post_id' => $data['post_id'],
@@ -482,7 +522,7 @@ class ForumController extends AbstractController
         $userId = $request->getSession()->get('user_id');
         $post = $em->getRepository(ForumPosts::class)->find($id);
         
-        if ($post && $post->getUserId() === $userId) {
+        if ($post && $post->getUser()->getId() === $userId) {
             $post->setIsActive(!$post->getIsActive());
             $em->flush();
             $this->addFlash('success', 'Post visibility toggled.');
@@ -499,7 +539,7 @@ class ForumController extends AbstractController
         $userId = $request->getSession()->get('user_id');
         $post = $em->getRepository(ForumPosts::class)->find($id);
         
-        if ($post && $post->getUserId() === $userId) {
+        if ($post && $post->getUser()->getId() === $userId) {
             $post->setIsCommentsLocked(!$post->getIsCommentsLocked());
             $em->flush();
             $this->addFlash('success', 'Comments lock state updated.');
@@ -516,7 +556,7 @@ class ForumController extends AbstractController
         $userId = $request->getSession()->get('user_id');
         $comment = $em->getRepository(Comments::class)->find($id);
 
-        if (!$comment || $comment->getUserId() !== $userId) {
+        if (!$comment || $comment->getUser()->getId() !== $userId) {
             $this->addFlash('error', 'Unauthorized or comment not found.');
             return $this->redirectToRoute('app_forum_index');
         }
@@ -525,7 +565,7 @@ class ForumController extends AbstractController
         $createdAt = $comment->getCreatedAt() ?? new \DateTime();
         if ((new \DateTime())->diff($createdAt)->i >= 15) {
             $this->addFlash('error', 'You can no longer edit this comment. The 15-minute window has passed.');
-            return $this->redirectToRoute('app_forum_show', ['id' => $comment->getPostId()]);
+            return $this->redirectToRoute('app_forum_show', ['id' => $comment->getPost()->getId()]);
         }
 
         $content = trim((string) $request->request->get('content', ''));
@@ -543,7 +583,7 @@ class ForumController extends AbstractController
             $this->addFlash('error', 'Comment cannot be empty.');
         }
 
-        return $this->redirectToRoute('app_forum_show', ['id' => $comment->getPostId()]);
+        return $this->redirectToRoute('app_forum_show', ['id' => $comment->getPost()->getId()]);
     }
 
     #[Route('/comment/{id}/delete', name: 'app_forum_comment_delete_user', methods: ['POST'])]
@@ -552,7 +592,7 @@ class ForumController extends AbstractController
         $userId = $request->getSession()->get('user_id');
         $comment = $em->getRepository(Comments::class)->find($id);
 
-        if (!$comment || $comment->getUserId() !== $userId) {
+        if (!$comment || $comment->getUser()->getId() !== $userId) {
             $this->addFlash('error', 'Unauthorized or comment not found.');
             return $this->redirectToRoute('app_forum_index');
         }
@@ -561,10 +601,10 @@ class ForumController extends AbstractController
         $createdAt = $comment->getCreatedAt() ?? new \DateTime();
         if ((new \DateTime())->diff($createdAt)->i >= 15) {
             $this->addFlash('error', 'You can no longer delete this comment. The 15-minute window has passed.');
-            return $this->redirectToRoute('app_forum_show', ['id' => $comment->getPostId()]);
+            return $this->redirectToRoute('app_forum_show', ['id' => $comment->getPost()->getId()]);
         }
 
-        $postId = $comment->getPostId();
+        $postId = $comment->getPost()->getId();
         $em->remove($comment);
         $em->flush();
         $this->addFlash('success', 'Comment deleted.');
@@ -578,13 +618,14 @@ class ForumController extends AbstractController
         $userId = $request->getSession()->get('user_id');
         if (!$userId) return $this->json(['error' => 'Not authenticated'], 401);
 
+        $user = $em->getRepository(Users::class)->find($userId);
         $comment = $em->getRepository(Comments::class)->find($id);
         if (!$comment) return $this->json(['error' => 'Comment not found'], 404);
 
         $type = (string) $request->query->get('type', 'upvote'); // 'upvote' or 'downvote'
         if (!in_array($type, ['upvote', 'downvote'])) $type = 'upvote';
 
-        $reaction = $em->getRepository(CommentReaction::class)->findOneBy(['commentId' => $id, 'userId' => $userId]);
+        $reaction = $em->getRepository(CommentReaction::class)->findOneBy(['comment' => $id, 'user' => $userId]);
 
         if ($reaction) {
             if ($reaction->getType() === $type) {
@@ -606,8 +647,8 @@ class ForumController extends AbstractController
         } else {
             // new vote
             $reaction = new CommentReaction();
-            $reaction->setCommentId($id);
-            $reaction->setUserId($userId);
+            $reaction->setComment($comment);
+            $reaction->setUser($user);
             $reaction->setType($type);
             $em->persist($reaction);
 
@@ -657,7 +698,7 @@ class ForumController extends AbstractController
             $reporter = $em->getRepository(Users::class)->find($userId);
             
             $report = new Report();
-            $report->setReporterId($userId);
+            $report->setReporter($reporter);
             $report->setTargetType($type);
             $report->setTargetId((int)$targetId);
             $report->setReason($reason);
@@ -682,7 +723,7 @@ class ForumController extends AbstractController
                 if ($comment) {
                     $targetContent = $comment->getContent();
                     $targetAuthor = $comment->getAuthorName();
-                    $actionUrl = $this->generateUrl('app_forum_show', ['id' => $comment->getPostId()], UrlGeneratorInterface::ABSOLUTE_URL);
+                    $actionUrl = $this->generateUrl('app_forum_show', ['id' => $comment->getPost()->getId()], UrlGeneratorInterface::ABSOLUTE_URL);
                 }
             }
 
@@ -723,7 +764,7 @@ class ForumController extends AbstractController
         $post = $em->getRepository(ForumPosts::class)->find($id);
 
         if ($post && $user) {
-            if ($post->getUserId() !== $userId) {
+            if ($post->getUser()->getId() !== $userId) {
                 $this->addFlash('error', 'You can only pin your own posts.');
             } else if ($user->getGamificationPoints() >= 50) {
                 $user->setGamificationPoints($user->getGamificationPoints() - 50);
@@ -767,14 +808,12 @@ class ForumController extends AbstractController
             return $this->redirectToRoute('app_forum_profile', ['id' => $id]);
         }
 
-        $followerCount = $em->getRepository(ForumFollow::class)->count(['followingId' => $id]);
-        $followingCount = $em->getRepository(ForumFollow::class)->count(['followerId' => $id]);
+        $followerCount = $em->getRepository(ForumFollow::class)->count(['following' => $id]);
+        $followingCount = $em->getRepository(ForumFollow::class)->count(['follower' => $id]);
 
         $postRepo = $em->getRepository(ForumPosts::class);
         $commentRepo = $em->getRepository(Comments::class);
 
-        $totalPosts = $postRepo->count(['userId' => $id]);
-        $totalComments = $commentRepo->count(['userId' => $id]);
 
         $bestPost = $postRepo->findOneBy(['userId' => $id], ['views' => 'DESC']);
         $bestComment = $commentRepo->findOneBy(['userId' => $id], ['upvotes' => 'DESC']);
@@ -782,8 +821,8 @@ class ForumController extends AbstractController
         $isFollowing = false;
         if ($isLoggedIn) {
             $isFollowing = (bool) $em->getRepository(ForumFollow::class)->count([
-                'followerId' => $currentUserId,
-                'followingId' => $id
+                'follower' => $currentUserId,
+                'following' => $id
             ]);
         }
 
@@ -817,8 +856,8 @@ class ForumController extends AbstractController
 
         $followRepo = $em->getRepository(ForumFollow::class);
         $existing = $followRepo->findOneBy([
-            'followerId' => $currentUserId,
-            'followingId' => $id
+            'follower' => $currentUserId,
+            'following' => $id
         ]);
 
         if ($existing) {
@@ -826,11 +865,11 @@ class ForumController extends AbstractController
             $this->addFlash('success', 'You unfollowed this user.');
         } else {
             $follow = new ForumFollow();
-            $follow->setFollowerId($currentUserId);
-            $follow->setFollowingId($id);
+            $follow->setFollower($em->getRepository(Users::class)->find($currentUserId));
+            $follow->setFollowing($em->getRepository(Users::class)->find($id));
             $follow->setCreatedAt(new \DateTime());
             $em->persist($follow);
-            $this->addFlash('success', 'You are now following this user!');
+            $this->addFlash('success', 'You are now following this user.');
         }
         $em->flush();
 

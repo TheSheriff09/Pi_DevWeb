@@ -18,23 +18,21 @@ class Responses
     /** @phpstan-ignore-next-line */
     private ?int $id = null;
 
-    #[ORM\Column(type: Types::TEXT)]
+    #[ORM\Column(name: 'content', type: Types::TEXT)]
     #[Assert\NotBlank]
     #[Assert\Type('string')]
     private ?string $content = null;
 
-    #[ORM\Column(type: Types::DATETIME_MUTABLE)]
+    #[ORM\Column(name: 'created_at', type: Types::DATETIME_MUTABLE)]
     private ?\DateTimeInterface $createdAt = null;
 
-    #[ORM\Column(type: Types::INTEGER)]
-    #[Assert\NotBlank]
-    #[Assert\Type('integer')]
-    private ?int $reclamationId = null;
+    #[ORM\ManyToOne(targetEntity: Reclamations::class)]
+    #[ORM\JoinColumn(name: 'reclamation_id', referencedColumnName: 'id', nullable: false)]
+    private ?Reclamations $reclamation = null;
 
-    #[ORM\Column(type: Types::INTEGER)]
-    #[Assert\NotBlank]
-    #[Assert\Type('integer')]
-    private ?int $responderUserId = null;
+    #[ORM\ManyToOne(targetEntity: Users::class)]
+    #[ORM\JoinColumn(name: 'responder_user_id', referencedColumnName: 'id', nullable: false)]
+    private ?Users $responder = null;
 
     public function getId(): ?int
     {
@@ -63,25 +61,25 @@ class Responses
         return $this;
     }
 
-    public function getReclamationId(): ?int
+    public function getReclamation(): ?Reclamations
     {
-        return $this->reclamationId;
+        return $this->reclamation;
     }
 
-    public function setReclamationId(?int $reclamationId): static
+    public function setReclamation(?Reclamations $reclamation): static
     {
-        $this->reclamationId = $reclamationId;
+        $this->reclamation = $reclamation;
         return $this;
     }
 
-    public function getResponderUserId(): ?int
+    public function getResponder(): ?Users
     {
-        return $this->responderUserId;
+        return $this->responder;
     }
 
-    public function setResponderUserId(?int $responderUserId): static
+    public function setResponder(?Users $responder): static
     {
-        $this->responderUserId = $responderUserId;
+        $this->responder = $responder;
         return $this;
     }
 

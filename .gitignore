@@ -26,3 +26,8 @@
 __pycache__/
 *.pyc
 /.env
+
+###> phpunit/phpunit ###
+/phpunit.xml
+/.phpunit.cache/
+###< phpunit/phpunit ###

@@ -17,13 +17,15 @@ class CommentReaction
     /** @phpstan-ignore-next-line */
     private ?int $id = null;
 
-    #[ORM\Column(type: Types::INTEGER)]
-    private ?int $commentId = null;
+    #[ORM\ManyToOne(targetEntity: Comments::class)]
+    #[ORM\JoinColumn(name: 'comment_id', referencedColumnName: 'id', nullable: false)]
+    private ?Comments $comment = null;
 
-    #[ORM\Column(type: Types::INTEGER)]
-    private ?int $userId = null;
+    #[ORM\ManyToOne(targetEntity: Users::class)]
+    #[ORM\JoinColumn(name: 'user_id', referencedColumnName: 'id', nullable: false)]
+    private ?Users $user = null;
 
-    #[ORM\Column(type: Types::STRING, length: 20)]
+    #[ORM\Column(name: 'reaction_type', type: Types::STRING, length: 20)]
     private ?string $type = null;
 
     public function getId(): ?int
@@ -31,25 +33,25 @@ class CommentReaction
         return $this->id;
     }
 
-    public function getCommentId(): ?int
+    public function getComment(): ?Comments
     {
-        return $this->commentId;
+        return $this->comment;
     }
 
-    public function setCommentId(int $commentId): static
+    public function setComment(?Comments $comment): static
     {
-        $this->commentId = $commentId;
+        $this->comment = $comment;
         return $this;
     }
 
-    public function getUserId(): ?int
+    public function getUser(): ?Users
     {
-        return $this->userId;
+        return $this->user;
     }
 
-    public function setUserId(int $userId): static
+    public function setUser(?Users $user): static
     {
-        $this->userId = $userId;
+        $this->user = $user;
         return $this;
     }
 

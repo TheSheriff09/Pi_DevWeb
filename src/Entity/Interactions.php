@@ -19,23 +19,21 @@ class Interactions
     /** @phpstan-ignore-next-line */
     private ?int $id = null;
 
-    #[ORM\Column(type: Types::INTEGER)]
-    #[Assert\NotBlank]
-    #[Assert\Type('integer')]
-    private ?int $postId = null;
+    #[ORM\ManyToOne(targetEntity: ForumPosts::class)]
+    #[ORM\JoinColumn(name: 'post_id', referencedColumnName: 'id', nullable: false)]
+    private ?ForumPosts $post = null;
 
-    #[ORM\Column(type: Types::INTEGER)]
-    #[Assert\NotBlank]
-    #[Assert\Type('integer')]
-    private ?int $userId = null;
+    #[ORM\ManyToOne(targetEntity: Users::class)]
+    #[ORM\JoinColumn(name: 'user_id', referencedColumnName: 'id', nullable: false)]
+    private ?Users $user = null;
 
-    #[ORM\Column(type: Types::STRING, length: 20)]
+    #[ORM\Column(name: 'interaction_type', type: Types::STRING, length: 20)]
     #[Assert\NotBlank]
     #[Assert\Length(max: 20)]
     #[Assert\Type('string')]
     private ?string $type = null;
 
-    #[ORM\Column(type: Types::DATETIME_MUTABLE)]
+    #[ORM\Column(name: 'created_at', type: Types::DATETIME_MUTABLE)]
     private ?\DateTimeInterface $createdAt = null;
 
     public function getId(): ?int
@@ -43,25 +41,25 @@ class Interactions
         return $this->id;
     }
 
-    public function getPostId(): ?int
+    public function getPost(): ?ForumPosts
     {
-        return $this->postId;
+        return $this->post;
     }
 
-    public function setPostId(?int $postId): static
+    public function setPost(?ForumPosts $post): static
     {
-        $this->postId = $postId;
+        $this->post = $post;
         return $this;
     }
 
-    public function getUserId(): ?int
+    public function getUser(): ?Users
     {
-        return $this->userId;
+        return $this->user;
     }
 
-    public function setUserId(?int $userId): static
+    public function setUser(?Users $user): static
     {
-        $this->userId = $userId;
+        $this->user = $user;
         return $this;
     }
 

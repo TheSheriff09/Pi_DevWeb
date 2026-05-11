@@ -9,6 +9,8 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity]
 #[ORM\Table(name: '`reclamations`')]
+#[ORM\Index(columns: ['requested_id'], name: 'idx_reclamation_requester')]
+#[ORM\Index(columns: ['target_id'], name: 'idx_reclamation_target')]
 class Reclamations
 {
     #[ORM\Id]
@@ -18,33 +20,32 @@ class Reclamations
     /** @phpstan-ignore-next-line */
     private ?int $id = null;
 
-    #[ORM\Column(type: Types::STRING, length: 100)]
+    #[ORM\Column(type: Types::STRING, length: 100, nullable: true)]
     #[Assert\NotBlank]
     #[Assert\Length(max: 100)]
     #[Assert\Type('string')]
     private ?string $title = null;
 
-    #[ORM\Column(type: Types::TEXT)]
+    #[ORM\Column(type: Types::TEXT, nullable: true)]
     #[Assert\NotBlank]
     #[Assert\Type('string')]
     private ?string $description = null;
 
-    #[ORM\Column(type: Types::STRING)]
+    #[ORM\Column(type: Types::STRING, nullable: true)]
     #[Assert\Length(max: 255)]
     #[Assert\Type('string')]
     private ?string $status = null;
 
-    #[ORM\Column(type: Types::DATETIME_MUTABLE)]
+    #[ORM\Column(name: 'created_at', type: Types::DATETIME_MUTABLE, nullable: true)]
     private ?\DateTimeInterface $createdAt = null;
 
-    #[ORM\Column(type: Types::INTEGER)]
-    #[Assert\NotBlank]
-    #[Assert\Type('integer')]
-    private ?int $requestedId = null;
+    #[ORM\ManyToOne(targetEntity: Users::class)]
+    #[ORM\JoinColumn(name: 'requested_id', referencedColumnName: 'id', nullable: false)]
+    private ?Users $requestedBy = null;
 
-    #[ORM\Column(type: Types::INTEGER, nullable: true)]
-    #[Assert\Type('integer')]
-    private ?int $targetId = null;
+    #[ORM\ManyToOne(targetEntity: Users::class)]
+    #[ORM\JoinColumn(name: 'target_id', referencedColumnName: 'id', nullable: true)]
+    private ?Users $targetUser = null;
 
     public function getId(): ?int
     {
@@ -95,25 +96,25 @@ class Reclamations
         return $this;
     }
 
-    public function getRequestedId(): ?int
+    public function getRequestedBy(): ?Users
     {
-        return $this->requestedId;
+        return $this->requestedBy;
     }
 
-    public function setRequestedId(?int $requestedId): static
+    public function setRequestedBy(?Users $requestedBy): static
     {
-        $this->requestedId = $requestedId;
+        $this->requestedBy = $requestedBy;
         return $this;
     }
 
-    public function getTargetId(): ?int
+    public function getTargetUser(): ?Users
     {
-        return $this->targetId;
+        return $this->targetUser;
     }
 
-    public function setTargetId(?int $targetId): static
+    public function setTargetUser(?Users $targetUser): static
     {
-        $this->targetId = $targetId;
+        $this->targetUser = $targetUser;
         return $this;
     }
 
