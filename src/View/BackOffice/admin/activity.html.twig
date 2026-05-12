@@ -18,7 +18,7 @@
         <!-- Top Active Users -->
         <div class="card" style="text-align: left; padding: 25px;">
             <h3 style="color: var(--primary); margin-bottom: 20px; font-size: 1.1rem; display: flex; align-items: center; gap: 10px;">
-                <span></span> Top Active Users
+                <span>🏆</span> Top Active Users
             </h3>
             <ul style="list-style: none; padding: 0; margin: 0;">
                 {% for userStat in mostActiveUsers %}
@@ -35,7 +35,7 @@
         <!-- Most Visited Pages -->
         <div class="card" style="text-align: left; padding: 25px;">
             <h3 style="color: var(--primary); margin-bottom: 20px; font-size: 1.1rem; display: flex; align-items: center; gap: 10px;">
-                <span></span> Most Visited Pages
+                <span>🔥</span> Most Visited Pages
             </h3>
             <ul style="list-style: none; padding: 0; margin: 0;">
                 {% for pageStat in mostVisitedPages %}
@@ -100,13 +100,13 @@
                         </td>
                         <td style="padding: 15px 25px;">
                             {% if log.actionType == 'VIEW_PAGE' %}
-                                <span style="color: #4facfe; font-weight: 600;"> VIEW</span>
+                                <span style="color: #4facfe; font-weight: 600;">👁️ VIEW</span>
                             {% elseif log.actionType == 'LOGIN' %}
-                                <span style="color: #00f2fe; font-weight: 600;"> LOGIN</span>
+                                <span style="color: #00f2fe; font-weight: 600;">🔑 LOGIN</span>
                             {% elseif log.actionType == 'LOGOUT' %}
-                                <span style="color: #f77062; font-weight: 600;"> LOGOUT</span>
+                                <span style="color: #f77062; font-weight: 600;">🚪 LOGOUT</span>
                             {% elseif log.actionType == 'LOGIN_FAILED' %}
-                                <span style="color: #ff0844; font-weight: 600;"> FAILED</span>
+                                <span style="color: #ff0844; font-weight: 600;">⚠️ FAILED</span>
                             {% else %}
                                 <span style="color: var(--primary); font-weight: 600;">⚡ {{ log.actionType }}</span>
                             {% endif %}

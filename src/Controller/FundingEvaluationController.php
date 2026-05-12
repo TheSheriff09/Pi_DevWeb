@@ -94,15 +94,15 @@ class FundingEvaluationController extends AbstractController
             $evaluation = new Fundingevaluation();
             // Fix for missing Auto-Increment constraint in schema
             $maxId = $em->createQuery('SELECT MAX(f.id) FROM App\Entity\Fundingevaluation f')->getSingleScalarResult();
-            $evaluation->setId($maxId ? (int)$maxId + 1 : 1);
+            $evaluation->setId($maxId ? $maxId + 1 : 1);
             
             // Map manual inputs
             $evaluation->setScore((int)$request->request->get('score'));
-            $decision = (string) $request->request->get('decision'); // "Accepted" or "Rejected"
+            $decision = $request->request->get('decision'); // "Accepted" or "Rejected"
             $evaluation->setDecision($decision);
-            $evaluation->setEvaluationComments((string) $request->request->get('evaluationComments'));
-            $evaluation->setRiskLevel((string) $request->request->get('riskLevel'));
-            $evaluation->setFundingCategory((string) $request->request->get('fundingCategory'));
+            $evaluation->setEvaluationComments($request->request->get('evaluationComments'));
+            $evaluation->setRiskLevel($request->request->get('riskLevel'));
+            $evaluation->setFundingCategory($request->request->get('fundingCategory'));
 
             // Map strict automated metrics
             $evaluation->setFundingApplicationId($id);
@@ -139,8 +139,7 @@ class FundingEvaluationController extends AbstractController
                         'entrepreneur' => $entrepreneur
                     ]);
                 
-                $projectDir = $this->getParameter('kernel.project_dir');
-                $logoPath = (is_string($projectDir) ? $projectDir : '') . '/public/Front/images/email/logo.png';
+                $logoPath = $this->getParameter('kernel.project_dir') . '/public/Front/images/email/logo.png';
                 if (file_exists($logoPath)) {
                     $email->embedFromPath($logoPath, 'logo');
                 }
@@ -216,7 +215,7 @@ class FundingEvaluationController extends AbstractController
         
         $evaluation = new Fundingevaluation();
         $maxId = $em->createQuery('SELECT MAX(f.id) FROM App\Entity\Fundingevaluation f')->getSingleScalarResult();
-        $evaluation->setId($maxId ? (int)$maxId + 1 : 1);
+        $evaluation->setId($maxId ? $maxId + 1 : 1);
         
         $evaluation->setFundingApplicationId($id);
         $evaluation->setScore($score);
@@ -250,8 +249,7 @@ class FundingEvaluationController extends AbstractController
                     'entrepreneur' => $entrepreneur
                 ]);
             
-            $projectDir = $this->getParameter('kernel.project_dir');
-            $logoPath = (is_string($projectDir) ? $projectDir : '') . '/public/Front/images/email/logo.png';
+            $logoPath = $this->getParameter('kernel.project_dir') . '/public/Front/images/email/logo.png';
             if (file_exists($logoPath)) {
                 $email->embedFromPath($logoPath, 'logo');
             }
@@ -265,12 +263,11 @@ class FundingEvaluationController extends AbstractController
 
     private function getAiPrediction(Fundingapplication $application): ?float
     {
-        $projectDirParam = $this->getParameter('kernel.project_dir');
-        $projectDir = is_string($projectDirParam) ? $projectDirParam : '';
+        $projectDir = $this->getParameter('kernel.project_dir');
         $pythonScript = $projectDir . '/train_funding_model.py';
 
-        $schedule = (string) ($application->getPaymentSchedule() ?: '');
-        $amount = (string) ($application->getAmount() ?: 0);
+        $schedule = $application->getPaymentSchedule() ?: '';
+        $amount = $application->getAmount() ?: 0;
 
         $pythonExe = DIRECTORY_SEPARATOR === '\\' ? $projectDir . '\.venv\Scripts\python.exe' : $projectDir . '/.venv/bin/python';
         if (!file_exists($pythonExe)) {

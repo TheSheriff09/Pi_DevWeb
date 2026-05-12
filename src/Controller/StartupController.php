@@ -33,15 +33,8 @@ class StartupController extends AbstractController
             return $this->redirectToRoute('app_home');
         }
         
-        // Get user's startups with optimized eager loading to prevent N+1 queries
-        $startups = $em->getRepository(Startup::class)->createQueryBuilder('s')
-            ->leftJoin('s.mentor', 'm')->addSelect('m')
-            ->leftJoin('s.founder', 'f')->addSelect('f')
-            ->leftJoin('s.businessPlan', 'b')->addSelect('b')
-            ->where('s.user = :userId')
-            ->setParameter('userId', $userId)
-            ->getQuery()
-            ->getResult();
+        // Get user's startups
+        $startups = $em->getRepository(Startup::class)->findBy(['userId' => $userId]);
         
         return $this->render('FrontOffice/startup/index.html.twig', [
             'startups' => $startups,
@@ -68,14 +61,14 @@ class StartupController extends AbstractController
             $startup = new Startup();
             
             // Set basic fields
-            $startup->setName((string) $request->request->get('name'));
-            $startup->setDescription((string) $request->request->get('description'));
-            $startup->setSector((string) $request->request->get('sector'));
-            $startup->setImageURL((string) $request->request->get('imageURL'));
+            $startup->setName($request->request->get('name'));
+            $startup->setDescription($request->request->get('description'));
+            $startup->setSector($request->request->get('sector'));
+            $startup->setImageURL($request->request->get('imageURL'));
             
             // Set dates
             if ($request->request->get('creationDate')) {
-                $startup->setCreationDate(new \DateTime((string) $request->request->get('creationDate')));
+                $startup->setCreationDate(new \DateTime($request->request->get('creationDate')));
             }
             
             // Set numeric fields
@@ -88,33 +81,30 @@ class StartupController extends AbstractController
             }
             
             // Set other fields
-            $startup->setStage((string) $request->request->get('stage'));
-            $startup->setStatus((string) $request->request->get('status'));
-            $startup->setIncubatorProgram((string) $request->request->get('incubatorProgram'));
+            $startup->setStage($request->request->get('stage'));
+            $startup->setStatus($request->request->get('status'));
+            $startup->setIncubatorProgram($request->request->get('incubatorProgram'));
             
             // Set evaluation date if provided
             if ($request->request->get('lastEvaluationDate')) {
-                $startup->setLastEvaluationDate(new \DateTime((string) $request->request->get('lastEvaluationDate')));
+                $startup->setLastEvaluationDate(new \DateTime($request->request->get('lastEvaluationDate')));
             }
             
             // Set IDs if provided
             if ($request->request->get('mentorID')) {
-                $mentor = $em->getRepository(Users::class)->find($request->request->get('mentorID'));
-                $startup->setMentor($mentor);
+                $startup->setMentorID(intval($request->request->get('mentorID')));
             }
             
             if ($request->request->get('founderID')) {
-                $founder = $em->getRepository(Users::class)->find($request->request->get('founderID'));
-                $startup->setFounder($founder);
+                $startup->setFounderID(intval($request->request->get('founderID')));
             }
             
             if ($request->request->get('businessPlanID')) {
-                $bp = $em->getRepository(Businessplan::class)->find($request->request->get('businessPlanID'));
-                $startup->setBusinessPlan($bp);
+                $startup->setBusinessPlanID(intval($request->request->get('businessPlanID')));
             }
             
             // Set the current user as the owner
-            $startup->setUser($em->getRepository(Users::class)->find($userId));
+            $startup->setUserId($userId);
             
             $errors = $validator->validate($startup);
             if (count($errors) > 0) {
@@ -161,11 +151,11 @@ class StartupController extends AbstractController
         $startup = $em->getRepository(Startup::class)->find($id);
         
         // Check if startup exists and belongs to current user
-        if (!$startup || $startup->getUser()->getId() !== $userId) {
+        if (!$startup || $startup->getUserId() !== $userId) {
             return $this->redirectToRoute('app_entrepreneur_startups');
         }
 
-        $businessPlan = $em->getRepository(Businessplan::class)->findOneBy(['startup' => $id]);
+        $businessPlan = $em->getRepository(Businessplan::class)->findOneBy(['startupID' => $id]);
         $fundingApplications = $em->getRepository(Fundingapplication::class)->findBy(['projectId' => $id]);
 
         return $this->render('FrontOffice/startup/show.html.twig', [
@@ -194,19 +184,19 @@ class StartupController extends AbstractController
         $startup = $em->getRepository(Startup::class)->find($id);
         
         // Check if startup exists and belongs to current user
-        if (!$startup || $startup->getUser()->getId() !== $userId) {
+        if (!$startup || $startup->getUserId() !== $userId) {
             return $this->redirectToRoute('app_entrepreneur_startups');
         }
         
         if ($request->isMethod('POST')) {
             // Update all fields
-            $startup->setName((string) $request->request->get('name'));
-            $startup->setDescription((string) $request->request->get('description'));
-            $startup->setSector((string) $request->request->get('sector'));
-            $startup->setImageURL((string) $request->request->get('imageURL'));
+            $startup->setName($request->request->get('name'));
+            $startup->setDescription($request->request->get('description'));
+            $startup->setSector($request->request->get('sector'));
+            $startup->setImageURL($request->request->get('imageURL'));
             
             if ($request->request->get('creationDate')) {
-                $startup->setCreationDate(new \DateTime((string) $request->request->get('creationDate')));
+                $startup->setCreationDate(new \DateTime($request->request->get('creationDate')));
             }
             
             if ($request->request->get('kPIscore')) {
@@ -217,24 +207,24 @@ class StartupController extends AbstractController
                 $startup->setFundingAmount(floatval($request->request->get('fundingAmount')));
             }
             
-            $startup->setStage((string) $request->request->get('stage'));
-            $startup->setStatus((string) $request->request->get('status'));
-            $startup->setIncubatorProgram((string) $request->request->get('incubatorProgram'));
+            $startup->setStage($request->request->get('stage'));
+            $startup->setStatus($request->request->get('status'));
+            $startup->setIncubatorProgram($request->request->get('incubatorProgram'));
             
             if ($request->request->get('lastEvaluationDate')) {
-                $startup->setLastEvaluationDate(new \DateTime((string) $request->request->get('lastEvaluationDate')));
+                $startup->setLastEvaluationDate(new \DateTime($request->request->get('lastEvaluationDate')));
             }
             
             if ($request->request->get('mentorID')) {
-                $startup->setMentor($em->getRepository(Users::class)->find($request->request->get('mentorID')));
+                $startup->setMentorID(intval($request->request->get('mentorID')));
             }
             
             if ($request->request->get('founderID')) {
-                $startup->setFounder($em->getRepository(Users::class)->find($request->request->get('founderID')));
+                $startup->setFounderID(intval($request->request->get('founderID')));
             }
             
             if ($request->request->get('businessPlanID')) {
-                $startup->setBusinessPlan($em->getRepository(Businessplan::class)->find($request->request->get('businessPlanID')));
+                $startup->setBusinessPlanID(intval($request->request->get('businessPlanID')));
             }
             
             $errors = $validator->validate($startup);
@@ -282,7 +272,7 @@ class StartupController extends AbstractController
         $startup = $em->getRepository(Startup::class)->find($id);
         
         // Check if startup exists and belongs to current user
-        if (!$startup || $startup->getUser()->getId() !== $userId) {
+        if (!$startup || $startup->getUserId() !== $userId) {
             return $this->redirectToRoute('app_entrepreneur_startups');
         }
         
@@ -314,12 +304,12 @@ class StartupController extends AbstractController
         
         $startup = $em->getRepository(Startup::class)->find($id);
         
-        if (!$startup || $startup->getUser()->getId() !== $userId) {
+        if (!$startup || $startup->getUserId() !== $userId) {
             return new JsonResponse(['error' => 'Startup not found or unauthorized'], Response::HTTP_NOT_FOUND);
         }
 
         $projectDir = $this->getParameter('kernel.project_dir');
-        $pythonScript = (is_string($projectDir) ? $projectDir : '') . '/bin/swot_generator.py';
+        $pythonScript = $projectDir . '/bin/swot_generator.py';
 
         $name = $startup->getName() ?: '';
         $description = $startup->getDescription() ?: '';
@@ -367,7 +357,7 @@ class StartupController extends AbstractController
         }
 
         $projectDir = $this->getParameter('kernel.project_dir');
-        $pythonScript = (is_string($projectDir) ? $projectDir : '') . '/bin/forecast_generator.py';
+        $pythonScript = $projectDir . '/bin/forecast_generator.py';
         $pythonExe = DIRECTORY_SEPARATOR === '\\' ? 'py' : 'python3';
 
         $process = new Process([$pythonExe, $pythonScript, $revenue, $growth, $expenses]);

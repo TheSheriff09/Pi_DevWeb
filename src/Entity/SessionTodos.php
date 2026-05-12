@@ -12,25 +12,25 @@ use Symfony\Component\Validator\Constraints as Assert;
 class SessionTodos
 {
     #[ORM\Id]
-    #[ORM\GeneratedValue]
-    #[ORM\Column(name: 'id', type: Types::INTEGER)]
+    #[ORM\Column(name: '`id`', type: Types::INTEGER)]
     #[Assert\Type('integer')]
     private ?int $id = null;
 
-    #[ORM\ManyToOne(targetEntity: Session::class)]
-    #[ORM\JoinColumn(name: 'sessionID', referencedColumnName: 'sessionID', nullable: false)]
-    private ?Session $session = null;
+    #[ORM\Column(name: '`sessionID`', type: Types::INTEGER)]
+    #[Assert\NotBlank]
+    #[Assert\Type('integer')]
+    private ?int $sessionID = null;
 
-    #[ORM\Column(name: 'task_description', type: Types::STRING, length: 255)]
+    #[ORM\Column(name: '`taskDescription`', type: Types::STRING, length: 255)]
     #[Assert\NotBlank]
     #[Assert\Length(max: 255)]
     #[Assert\Type('string')]
     private ?string $taskDescription = null;
 
-    #[ORM\Column(name: 'is_done', type: Types::BOOLEAN, nullable: true)]
+    #[ORM\Column(name: '`isDone`', type: Types::BOOLEAN, nullable: true)]
     private ?bool $isDone = null;
 
-    #[ORM\Column(name: 'created_at', type: Types::DATETIME_MUTABLE)]
+    #[ORM\Column(name: '`createdAt`', type: Types::DATETIME_MUTABLE)]
     private ?\DateTimeInterface $createdAt = null;
 
     public function getId(): ?int
@@ -44,14 +44,14 @@ class SessionTodos
         return $this;
     }
 
-    public function getSession(): ?Session
+    public function getSessionID(): ?int
     {
-        return $this->session;
+        return $this->sessionID;
     }
 
-    public function setSession(?Session $session): static
+    public function setSessionID(?int $sessionID): static
     {
-        $this->session = $session;
+        $this->sessionID = $sessionID;
         return $this;
     }
 

@@ -34,20 +34,20 @@ class MentorshipDashboardController extends AbstractController
         $todoRepo = $em->getRepository(SessionTodos::class);
         
         if ($role === 'ENTREPRENEUR') {
-            $sessions = $sessionRepo->findBy(['entrepreneur' => $userId]);
+            $sessions = $sessionRepo->findBy(['entrepreneurID' => $userId]);
         } elseif ($role === 'MENTOR') {
-            $sessions = $sessionRepo->findBy(['mentor' => $userId]);
+            $sessions = $sessionRepo->findBy(['mentorID' => $userId]);
         } else {
             return $this->redirectToRoute('app_admin_mentorship');
         }
 
-        $sessionIds = array_map(fn($s) => $s->getId(), $sessions);
+        $sessionIds = array_map(fn($s) => $s->getSessionID(), $sessions);
         $todos = [];
         if (!empty($sessionIds)) {
             $qb = $em->createQueryBuilder()
                 ->select('t')
                 ->from(SessionTodos::class, 't')
-                ->where('t.session IN (:ids)')
+                ->where('t.sessionID IN (:ids)')
                 ->setParameter('ids', $sessionIds);
             $todos = $qb->getQuery()->getResult();
         }
@@ -61,9 +61,10 @@ class MentorshipDashboardController extends AbstractController
         if ($role === 'MENTOR') {
             foreach ($todos as $t) {
                 // Find matching session without losing scope
-                $sess = $t->getSession();
+                $sessArr = array_filter($sessions, fn($s) => $s->getSessionID() === $t->getSessionID());
+                $sess = reset($sessArr);
                 if ($sess) {
-                    $entId = $sess->getEntrepreneur()->getId();
+                    $entId = $sess->getEntrepreneurID();
                     if (!isset($groupedTodos[$entId])) {
                         $entUser = $userRepo->find($entId);
                         $groupedTodos[$entId] = [
@@ -82,8 +83,7 @@ class MentorshipDashboardController extends AbstractController
         // --- Upcoming Sessions Logic ---
         $now = new \DateTime();
         $upcomingSessions = array_filter($sessions, function($s) use ($now) {
-            $sessionDate = $s->getSessionDate();
-            return $sessionDate && $sessionDate->format('Y-m-d') >= $now->format('Y-m-d');
+            return $s->getSessionDate()->format('Y-m-d') >= $now->format('Y-m-d');
         });
         
         // Sort by closest date
@@ -92,13 +92,12 @@ class MentorshipDashboardController extends AbstractController
 
         $upcomingSessionsData = [];
         foreach ($upcomingSessions as $s) {
-            $otherId = ($role === 'MENTOR') ? $s->getEntrepreneur()->getId() : $s->getMentor()->getId();
+            $otherId = ($role === 'MENTOR') ? $s->getEntrepreneurID() : $s->getMentorID();
             $otherUser = $userRepo->find($otherId);
-            $sessionDate = $s->getSessionDate();
             $upcomingSessionsData[] = [
                 'session' => $s,
                 'partnerName' => $otherUser ? $otherUser->getFullName() : 'Unknown',
-                'isToday' => $sessionDate && $sessionDate->format('Y-m-d') === $now->format('Y-m-d')
+                'isToday' => $s->getSessionDate()->format('Y-m-d') === $now->format('Y-m-d')
             ];
         }
 

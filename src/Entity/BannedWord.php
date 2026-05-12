@@ -13,15 +13,14 @@ class BannedWord
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: Types::INTEGER)]
-    /** @phpstan-ignore-next-line */
     private ?int $id = null;
 
-    #[ORM\Column(type: Types::STRING, length: 100, unique: true, nullable: true)]
+    #[ORM\Column(type: Types::STRING, length: 100, unique: true)]
     #[Assert\NotBlank]
     #[Assert\Length(max: 100)]
     private ?string $word = null;
 
-    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
+    #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     private ?\DateTimeInterface $createdAt = null;
 
     public function __construct()

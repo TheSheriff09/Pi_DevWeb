@@ -16,7 +16,6 @@ class UserActivityLogsRepository extends ServiceEntityRepository
         parent::__construct($registry, UserActivityLogs::class);
     }
 
-    /** @return array<int, UserActivityLogs> */
     public function findRecentActivities(int $limit = 50): array
     {
         return $this->createQueryBuilder('u')
@@ -34,7 +33,6 @@ class UserActivityLogsRepository extends ServiceEntityRepository
         ;
     }
 
-    /** @return array<int, UserActivityLogs> */
     public function findActivitiesByUser(int $userId, int $limit = 50): array
     {
         return $this->createQueryBuilder('u')
@@ -47,7 +45,6 @@ class UserActivityLogsRepository extends ServiceEntityRepository
         ;
     }
 
-    /** @return array<int, UserActivityLogs> */
     public function findSecurityAlerts(int $limit = 50): array
     {
         return $this->createQueryBuilder('u')
@@ -65,7 +62,6 @@ class UserActivityLogsRepository extends ServiceEntityRepository
         ;
     }
 
-    /** @return array<int, mixed> */
     public function getMostActiveUsers(int $limit = 10): array
     {
         return $this->createQueryBuilder('u')
@@ -82,7 +78,6 @@ class UserActivityLogsRepository extends ServiceEntityRepository
         ;
     }
 
-    /** @return array<int, mixed> */
     public function getMostVisitedPages(int $limit = 10): array
     {
         return $this->createQueryBuilder('u')
@@ -98,7 +93,6 @@ class UserActivityLogsRepository extends ServiceEntityRepository
             ->getResult()
         ;
     }
-    /** @return array<int, mixed> */
     public function getLoginsPerDay(int $days = 30): array
     {
         $date = new \DateTime();
@@ -117,7 +111,6 @@ class UserActivityLogsRepository extends ServiceEntityRepository
         ;
     }
 
-    /** @return array<int, mixed> */
     public function getActionsDistribution(int $days = 30): array
     {
         $date = new \DateTime();

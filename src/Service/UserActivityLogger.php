@@ -54,33 +54,33 @@ class UserActivityLogger
             }
         }
 
-        if ($user !== null && strtoupper($user->getRole() ?? '') === 'ADMIN') {
+        // Ensure Admin users are NEVER tracked
+        if ($user !== null && strtoupper($user->getRole()) === 'ADMIN') {
             return;
         }
 
-        $conn = $this->entityManager->getConnection();
-        $sql = 'INSERT INTO user_activity_logs (user_id, action_type, description, status, page, ip_address, user_agent, session_id, created_at) VALUES (:u, :a, :d, :st, :p, :ip, :ua, :sess, :ct)';
-        
-        $sessId = null;
-        if ($request->hasSession() && $request->getSession()->isStarted()) {
-            $sessId = $request->getSession()->getId();
+        $log = new UserActivityLogs();
+        $log->setActionType($actionType);
+        $log->setDescription($description);
+        $log->setStatus($status);
+
+        if ($user !== null) {
+            $log->setUser($user);
         }
 
-        try {
-            $conn->executeStatement($sql, [
-                'u' => $user ? $user->getId() : null,
-                'a' => $actionType,
-                'd' => $description,
-                'st' => $status ?? 'SUCCESS',
-                'p' => $request->getPathInfo(),
-                'ip' => $request->getClientIp(),
-                'ua' => $request->headers->get('User-Agent'),
-                'sess' => $sessId,
-                'ct' => (new \DateTimeImmutable())->format('Y-m-d H:i:s')
-            ]);
-        } catch (\Exception $e) {
-            // Silently ignore log insertion failures
+        $log->setPage($request->getPathInfo());
+        $log->setIpAddress($request->getClientIp());
+        $log->setUserAgent($request->headers->get('User-Agent'));
+
+        if ($request->hasSession()) {
+            $session = $request->getSession();
+            if ($session->isStarted()) {
+                $log->setSessionId($session->getId());
+            }
         }
+
+        $this->entityManager->persist($log);
+        $this->entityManager->flush();
     }
 
     private function logWithoutRequestContext(
@@ -89,23 +89,21 @@ class UserActivityLogger
         ?string $status = 'SUCCESS',
         ?Users $user = null
     ): void {
-        if ($user !== null && strtoupper($user->getRole() ?? '') === 'ADMIN') {
+        // Ensure Admin users are NEVER tracked
+        if ($user !== null && strtoupper($user->getRole()) === 'ADMIN') {
             return;
         }
 
-        $conn = $this->entityManager->getConnection();
-        $sql = 'INSERT INTO user_activity_logs (user_id, action_type, description, status, created_at) VALUES (:u, :a, :d, :st, :ct)';
-        
-        try {
-            $conn->executeStatement($sql, [
-                'u' => $user ? $user->getId() : null,
-                'a' => $actionType,
-                'd' => $description,
-                'st' => $status ?? 'SUCCESS',
-                'ct' => (new \DateTimeImmutable())->format('Y-m-d H:i:s')
-            ]);
-        } catch (\Exception $e) {
-            // Silently ignore log insertion failures
+        $log = new UserActivityLogs();
+        $log->setActionType($actionType);
+        $log->setDescription($description);
+        $log->setStatus($status);
+
+        if ($user !== null) {
+            $log->setUser($user);
         }
+
+        $this->entityManager->persist($log);
+        $this->entityManager->flush();
     }
 }

@@ -29,7 +29,7 @@ class MentorshipChatController extends AbstractController
         }
 
         $bookings = $em->getRepository(Booking::class)->createQueryBuilder('b')
-            ->where('(b.entrepreneur = :uid OR b.mentor = :uid) AND b.status = :status')
+            ->where('(b.entrepreneurID = :uid OR b.mentorID = :uid) AND b.status = :status')
             ->setParameter('uid', $userId)
             ->setParameter('status', 'approved')
             ->getQuery()
@@ -37,7 +37,7 @@ class MentorshipChatController extends AbstractController
 
         $contactIds = [];
         foreach ($bookings as $b) {
-            $otherId = ($b->getEntrepreneur()->getId() == $userId) ? $b->getMentor()->getId() : $b->getEntrepreneur()->getId();
+            $otherId = ($b->getEntrepreneurID() == $userId) ? $b->getMentorID() : $b->getEntrepreneurID();
             if (!in_array($otherId, $contactIds)) {
                 $contactIds[] = $otherId;
             }
@@ -49,14 +49,14 @@ class MentorshipChatController extends AbstractController
             if ($user) {
                 // Get unread count specifically for this contact
                 $unreadCount = $em->getRepository(MentorshipMessage::class)->count([
-                    'sender' => $cid,
-                    'receiver' => $userId,
+                    'senderId' => $cid,
+                    'receiverId' => $userId,
                     'isRead' => false
                 ]);
 
                 // Get last message text
                 $lastMsg = $em->getRepository(MentorshipMessage::class)->findOneBy(
-                    ['sender' => [$cid, $userId], 'receiver' => [$cid, $userId]],
+                    ['senderId' => [$cid, $userId], 'receiverId' => [$cid, $userId]],
                     ['timestamp' => 'DESC']
                 );
 
@@ -65,7 +65,7 @@ class MentorshipChatController extends AbstractController
                     'name' => $user->getFullName(),
                     'role' => $user->getRole(),
                     'unread' => $unreadCount,
-                    'latestPreview' => $lastMsg ? substr((string)$lastMsg->getContent(), 0, 30) . (strlen((string)$lastMsg->getContent()) > 30 ? '...' : '') : ''
+                    'latestPreview' => $lastMsg ? substr($lastMsg->getContent(), 0, 30) . (strlen($lastMsg->getContent()) > 30 ? '...' : '') : ''
                 ];
             }
         }
@@ -91,8 +91,8 @@ class MentorshipChatController extends AbstractController
         $em->createQueryBuilder()
             ->update(MentorshipMessage::class, 'm')
             ->set('m.isRead', '1')
-            ->where('m.sender = :cid')
-            ->andWhere('m.receiver = :uid')
+            ->where('m.senderId = :cid')
+            ->andWhere('m.receiverId = :uid')
             ->andWhere('m.isRead = 0')
             ->setParameter('cid', $contactId)
             ->setParameter('uid', $userId)
@@ -101,7 +101,7 @@ class MentorshipChatController extends AbstractController
 
         // Fetch history
         $rawMessages = $em->getRepository(MentorshipMessage::class)->createQueryBuilder('m')
-            ->where('(m.sender = :uid AND m.receiver = :cid) OR (m.sender = :cid AND m.receiver = :uid)')
+            ->where('(m.senderId = :uid AND m.receiverId = :cid) OR (m.senderId = :cid AND m.receiverId = :uid)')
             ->setParameter('uid', $userId)
             ->setParameter('cid', $contactId)
             ->orderBy('m.timestamp', 'ASC')
@@ -110,21 +110,20 @@ class MentorshipChatController extends AbstractController
 
         $messages = [];
         foreach ($rawMessages as $m) {
-            $timestamp = $m->getTimestamp();
             $messages[] = [
                 'id' => $m->getId(),
-                'sender' => $m->getSender()->getId(),
+                'senderId' => $m->getSenderId(),
                 'content' => $m->getContent(),
-                'time' => $timestamp ? $timestamp->format('H:i') : '',
-                'date' => $timestamp ? $timestamp->format('M j') : ''
+                'time' => $m->getTimestamp()->format('H:i'),
+                'date' => $m->getTimestamp()->format('M j')
             ];
         }
 
         return $this->json($messages);
     }
 
-    #[Route('/send/{receiver}', name: 'app_mentorship_chat_send', methods: ['POST'])]
-    public function sendMessage(int $receiver, Request $request, EntityManagerInterface $em): Response
+    #[Route('/send/{receiverId}', name: 'app_mentorship_chat_send', methods: ['POST'])]
+    public function sendMessage(int $receiverId, Request $request, EntityManagerInterface $em): Response
     {
         $userId = $request->getSession()->get('user_id');
         $userRole = $request->getSession()->get('user_role');
@@ -137,12 +136,12 @@ class MentorshipChatController extends AbstractController
             return $this->json(['error' => 'Access Denied: Evaluators are not allowed to access Mentorship features.'], 403);
         }
 
-        $content = trim((string)$request->request->get('message', ''));
+        $content = trim($request->request->get('message', ''));
         if (empty($content)) return $this->json(['error' => 'Empty message'], 400);
 
         $msg = new MentorshipMessage();
-        $msg->setSender($em->getRepository(Users::class)->find($userId));
-        $msg->setReceiver($em->getRepository(Users::class)->find($receiver));
+        $msg->setSenderId($userId);
+        $msg->setReceiverId($receiverId);
         $msg->setContent($content);
         $msg->setTimestamp(new \DateTime());
         $msg->setIsRead(false);
@@ -150,14 +149,13 @@ class MentorshipChatController extends AbstractController
         $em->persist($msg);
         $em->flush();
 
-            $timestamp = $msg->getTimestamp();
-            return $this->json([
-                'id' => $msg->getId(),
-                'sender' => $msg->getSender()->getId(),
-                'content' => $msg->getContent(),
-                'time' => $timestamp ? $timestamp->format('H:i') : '',
-                'date' => $timestamp ? $timestamp->format('M j') : ''
-            ]);
+        return $this->json([
+            'id' => $msg->getId(),
+            'senderId' => $msg->getSenderId(),
+            'content' => $msg->getContent(),
+            'time' => $msg->getTimestamp()->format('H:i'),
+            'date' => $msg->getTimestamp()->format('M j')
+        ]);
     }
 
     #[Route('/poll', name: 'app_mentorship_chat_poll', methods: ['GET'])]
@@ -176,14 +174,8 @@ class MentorshipChatController extends AbstractController
 
         $activeContactId = $request->query->get('activeContact'); // ID of currently open chat
 
-        // Immediately unlock the session to prevent blocking subsequent page navigations
-        if ($request->hasSession() && $request->getSession()->isStarted()) {
-            $request->getSession()->save();
-        }
-
         $qb = $em->getRepository(MentorshipMessage::class)->createQueryBuilder('m')
-            ->leftJoin('m.sender', 's')->addSelect('s')
-            ->where('m.receiver = :uid')
+            ->where('m.receiverId = :uid')
             ->andWhere('m.isRead = 0')
             ->setParameter('uid', $userId);
             
@@ -196,7 +188,7 @@ class MentorshipChatController extends AbstractController
         ];
 
         foreach ($unreadMessages as $m) {
-            $sid = $m->getSender()->getId();
+            $sid = $m->getSenderId();
             if (!isset($payload['contactsUnread'][$sid])) {
                 $payload['contactsUnread'][$sid] = 0;
             }
@@ -204,12 +196,11 @@ class MentorshipChatController extends AbstractController
 
             // If this message belongs to the currently active window, forward it directly!
             if ($activeContactId && $sid == $activeContactId) {
-                $timestamp = $m->getTimestamp();
                 $payload['newActiveMessages'][] = [
                     'id' => $m->getId(),
                     'senderId' => $sid,
                     'content' => $m->getContent(),
-                    'time' => $timestamp ? $timestamp->format('H:i') : ''
+                    'time' => $m->getTimestamp()->format('H:i')
                 ];
                 $m->setIsRead(true);
             }

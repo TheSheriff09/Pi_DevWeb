@@ -3,67 +3,51 @@
 namespace App\Entity;
 
 use App\Repository\ForumPostsRepository;
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity]
 #[ORM\Table(name: '`forum_posts`')]
-#[ORM\Index(columns: ['user_id'], name: 'idx_post_user')]
 class ForumPosts
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: Types::INTEGER)]
     #[Assert\Type('integer')]
-    
-    /** @phpstan-ignore-next-line */
     private ?int $id = null;
 
-    #[ORM\Column(type: Types::STRING, length: 255, nullable: true)]
+    #[ORM\Column(type: Types::STRING, length: 255)]
     #[Assert\NotBlank]
     #[Assert\Length(max: 255)]
     #[Assert\Type('string')]
     private ?string $title = null;
 
-    #[ORM\Column(type: Types::TEXT, nullable: true)]
+    #[ORM\Column(type: Types::TEXT)]
     #[Assert\NotBlank]
     #[Assert\Type('string')]
     private ?string $content = null;
 
-    #[ORM\Column(name: 'created_at', type: Types::DATETIME_MUTABLE, nullable: true)]
+    #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     private ?\DateTimeInterface $createdAt = null;
 
-    #[ORM\Column(name: 'updated_at', type: Types::DATETIME_MUTABLE, nullable: true)]
+    #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     private ?\DateTimeInterface $updatedAt = null;
 
-    #[ORM\Column(name: 'image_url', type: Types::STRING, length: 400, nullable: true)]
+    #[ORM\Column(type: Types::STRING, length: 400)]
     #[Assert\NotBlank]
     #[Assert\Length(max: 400)]
     #[Assert\Type('string')]
     private ?string $imageUrl = null;
 
-    #[ORM\Column(name: 'author_name', type: Types::STRING, length: 255, nullable: true)]
+    #[ORM\Column(type: Types::INTEGER, nullable: true)]
+    #[Assert\Type('integer')]
+    private ?int $userId = null;
+
+    #[ORM\Column(type: Types::STRING, length: 255, nullable: true)]
     #[Assert\Length(max: 255)]
     #[Assert\Type('string')]
     private ?string $authorName = null;
-
-    #[ORM\OneToMany(mappedBy: 'post', targetEntity: Comments::class, orphanRemoval: true, cascade: ['persist', 'remove'])]
-    #[ORM\JoinColumn(onDelete: 'CASCADE')]
-    private Collection $comments;
-
-    #[ORM\ManyToOne(targetEntity: Users::class)]
-    #[ORM\JoinColumn(name: 'user_id', referencedColumnName: 'id', nullable: true)]
-    private ?Users $user = null;
-
-    public function __construct()
-    {
-        $this->comments = new ArrayCollection();
-        $this->createdAt = new \DateTime();
-        $this->updatedAt = new \DateTime();
-    }
 
     public function getId(): ?int
     {
@@ -125,46 +109,14 @@ class ForumPosts
         return $this;
     }
 
-    public function getUser(): ?Users
-    {
-        return $this->user;
-    }
-
-    public function setUser(?Users $user): static
-    {
-        $this->user = $user;
-        return $this;
-    }
-
     public function getUserId(): ?int
     {
-        return $this->user ? $this->user->getId() : null;
+        return $this->userId;
     }
 
-    /**
-     * @return Collection<int, Comments>
-     */
-    public function getComments(): Collection
+    public function setUserId(?int $userId): static
     {
-        return $this->comments;
-    }
-
-    public function addComment(Comments $comment): static
-    {
-        if (!$this->comments->contains($comment)) {
-            $this->comments->add($comment);
-            $comment->setPost($this);
-        }
-        return $this;
-    }
-
-    public function removeComment(Comments $comment): static
-    {
-        if ($this->comments->removeElement($comment)) {
-            if ($comment->getPost() === $this) {
-                $comment->setPost(null);
-            }
-        }
+        $this->userId = $userId;
         return $this;
     }
 
@@ -179,7 +131,7 @@ class ForumPosts
         return $this;
     }
 
-    #[ORM\Column(name: 'is_active', type: Types::BOOLEAN, options: ['default' => true])]
+    #[ORM\Column(type: Types::BOOLEAN, options: ['default' => true])]
     private bool $isActive = true;
 
     public function getIsActive(): bool
@@ -193,7 +145,7 @@ class ForumPosts
         return $this;
     }
 
-    #[ORM\Column(name: 'is_pinned', type: Types::BOOLEAN, options: ['default' => false])]
+    #[ORM\Column(type: Types::BOOLEAN, options: ['default' => false])]
     private bool $isPinned = false;
 
     public function getIsPinned(): bool
@@ -221,7 +173,7 @@ class ForumPosts
         return $this;
     }
 
-    #[ORM\Column(name: 'is_comments_locked', type: Types::BOOLEAN, options: ['default' => false])]
+    #[ORM\Column(type: Types::BOOLEAN, options: ['default' => false])]
     private bool $isCommentsLocked = false;
 
     public function getIsCommentsLocked(): bool

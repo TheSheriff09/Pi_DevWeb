@@ -16,15 +16,17 @@ class MentorFavorites
     #[Assert\Type('integer')]
     private ?int $id = null;
 
-    #[ORM\ManyToOne(targetEntity: Users::class)]
-    #[ORM\JoinColumn(name: 'entrepreneur_id', referencedColumnName: 'id', nullable: false)]
-    private ?Users $entrepreneur = null;
+    #[ORM\Column(name: '`entrepreneurID`', type: Types::INTEGER)]
+    #[Assert\NotBlank]
+    #[Assert\Type('integer')]
+    private ?int $entrepreneurID = null;
 
-    #[ORM\ManyToOne(targetEntity: Users::class)]
-    #[ORM\JoinColumn(name: 'mentor_id', referencedColumnName: 'id', nullable: false)]
-    private ?Users $mentor = null;
+    #[ORM\Column(name: '`mentorID`', type: Types::INTEGER)]
+    #[Assert\NotBlank]
+    #[Assert\Type('integer')]
+    private ?int $mentorID = null;
 
-    #[ORM\Column(name: 'created_at', type: Types::DATETIME_MUTABLE)]
+    #[ORM\Column(name: '`createdAt`', type: Types::DATETIME_MUTABLE)]
     private ?\DateTimeInterface $createdAt = null;
 
     public function getId(): ?int
@@ -38,25 +40,25 @@ class MentorFavorites
         return $this;
     }
 
-    public function getEntrepreneur(): ?Users
+    public function getEntrepreneurID(): ?int
     {
-        return $this->entrepreneur;
+        return $this->entrepreneurID;
     }
 
-    public function setEntrepreneur(?Users $entrepreneur): static
+    public function setEntrepreneurID(?int $entrepreneurID): static
     {
-        $this->entrepreneur = $entrepreneur;
+        $this->entrepreneurID = $entrepreneurID;
         return $this;
     }
 
-    public function getMentor(): ?Users
+    public function getMentorID(): ?int
     {
-        return $this->mentor;
+        return $this->mentorID;
     }
 
-    public function setMentor(?Users $mentor): static
+    public function setMentorID(?int $mentorID): static
     {
-        $this->mentor = $mentor;
+        $this->mentorID = $mentorID;
         return $this;
     }
 

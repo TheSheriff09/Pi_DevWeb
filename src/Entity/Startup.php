@@ -3,22 +3,17 @@
 namespace App\Entity;
 
 use App\Repository\StartupRepository;
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity]
 #[ORM\Table(name: '`startup`')]
-#[ORM\Index(columns: ['mentor_id'], name: 'idx_startup_mentor')]
-#[ORM\Index(columns: ['user_id'], name: 'idx_startup_user')]
-#[ORM\Index(columns: ['founder_id'], name: 'idx_startup_founder')]
 class Startup
 {
     #[ORM\Id]
     #[ORM\GeneratedValue(strategy: 'IDENTITY')]
-    #[ORM\Column(name: 'startup_id', type: Types::INTEGER)]
+    #[ORM\Column(name: 'startupID', type: Types::INTEGER)]
     #[Assert\Type('integer')]
     private ?int $startupID = null;
 
@@ -39,19 +34,19 @@ class Startup
     #[Assert\NotBlank(message: 'Sector cannot be blank.')]
     private ?string $sector = null;
 
-    #[ORM\Column(name: 'image_url', type: Types::STRING, length: 255, nullable: true)]
+    #[ORM\Column(name: 'imageURL', type: Types::STRING, length: 255, nullable: true)]
     #[Assert\Length(max: 255)]
     #[Assert\Type('string')]
     private ?string $imageURL = null;
 
-    #[ORM\Column(name: 'creation_date', type: Types::DATE_MUTABLE, nullable: true)]
+    #[ORM\Column(name: 'creationDate', type: Types::DATE_MUTABLE, nullable: true)]
     private ?\DateTimeInterface $creationDate = null;
 
-    #[ORM\Column(name: 'kpi_score', type: Types::FLOAT, nullable: true)]
+    #[ORM\Column(name: 'KPIscore', type: Types::FLOAT, nullable: true)]
     #[Assert\Type('float')]
     private ?float $kPIscore = null;
 
-    #[ORM\Column(name: 'last_evaluation_date', type: Types::DATE_MUTABLE, nullable: true)]
+    #[ORM\Column(name: 'lastEvaluationDate', type: Types::DATE_MUTABLE, nullable: true)]
     private ?\DateTimeInterface $lastEvaluationDate = null;
 
     #[ORM\Column(type: Types::STRING, length: 50, nullable: true)]
@@ -64,26 +59,30 @@ class Startup
     #[Assert\Type('string')]
     private ?string $status = null;
 
-    #[ORM\ManyToOne(targetEntity: Users::class)]
-    #[ORM\JoinColumn(name: 'mentor_id', referencedColumnName: 'id', nullable: true)]
-    private ?Users $mentor = null;
+    #[ORM\Column(name: 'mentorID', type: Types::INTEGER, nullable: true)]
+    #[Assert\Type('integer')]
+    private ?int $mentorID = null;
 
-    #[ORM\ManyToOne(targetEntity: Users::class)]
-    #[ORM\JoinColumn(name: 'founder_id', referencedColumnName: 'id', nullable: true)]
-    private ?Users $founder = null;
+    #[ORM\Column(name: 'fundingAmount', type: Types::FLOAT, nullable: true)]
+    #[Assert\Type('float')]
+    private ?float $fundingAmount = null;
 
-    #[ORM\ManyToOne(targetEntity: Businessplan::class)]
-    #[ORM\JoinColumn(name: 'business_plan_id', referencedColumnName: 'business_plan_id', nullable: true)]
-    private ?Businessplan $businessPlan = null;
+    #[ORM\Column(name: 'incubatorProgram', type: Types::STRING, length: 100, nullable: true)]
+    #[Assert\Length(max: 100)]
+    #[Assert\Type('string')]
+    private ?string $incubatorProgram = null;
 
-    #[ORM\ManyToOne(targetEntity: Users::class)]
-    #[ORM\JoinColumn(name: 'user_id', referencedColumnName: 'id', nullable: true)]
-    private ?Users $user = null;
+    #[ORM\Column(name: 'founderID', type: Types::INTEGER, nullable: true)]
+    #[Assert\Type('integer')]
+    private ?int $founderID = null;
 
-    public function __construct()
-    {
-        $this->creationDate = new \DateTime();
-    }
+    #[ORM\Column(name: 'businessPlanID', type: Types::INTEGER, nullable: true)]
+    #[Assert\Type('integer')]
+    private ?int $businessPlanID = null;
+
+    #[ORM\Column(type: Types::INTEGER, nullable: true)]
+    #[Assert\Type('integer')]
+    private ?int $userId = null;
 
     public function getStartupID(): ?int
     {
@@ -189,74 +188,70 @@ class Startup
         return $this;
     }
 
-    public function getMentor(): ?Users
+    public function getMentorID(): ?int
     {
-        return $this->mentor;
+        return $this->mentorID;
     }
 
-    public function setMentor(?Users $mentor): static
+    public function setMentorID(?int $mentorID): static
     {
-        $this->mentor = $mentor;
+        $this->mentorID = $mentorID;
         return $this;
-    }
-
-    public function getFounder(): ?Users
-    {
-        return $this->founder;
-    }
-
-    public function setFounder(?Users $founder): static
-    {
-        $this->founder = $founder;
-        return $this;
-    }
-
-    public function getBusinessPlan(): ?Businessplan
-    {
-        return $this->businessPlan;
-    }
-
-    public function setBusinessPlan(?Businessplan $businessPlan): static
-    {
-        $this->businessPlan = $businessPlan;
-        return $this;
-    }
-
-    public function getUser(): ?Users
-    {
-        return $this->user;
-    }
-
-    public function setUser(?Users $user): static
-    {
-        $this->user = $user;
-        return $this;
-    }
-
-    // Legacy compatibility methods for Twig templates
-    public function getIncubatorProgram(): ?string
-    {
-        return null;
     }
 
     public function getFundingAmount(): ?float
     {
-        return null;
+        return $this->fundingAmount;
     }
 
-    public function getMentorID(): ?int
+    public function setFundingAmount(?float $fundingAmount): static
     {
-        return $this->mentor ? $this->mentor->getId() : null;
+        $this->fundingAmount = $fundingAmount;
+        return $this;
+    }
+
+    public function getIncubatorProgram(): ?string
+    {
+        return $this->incubatorProgram;
+    }
+
+    public function setIncubatorProgram(?string $incubatorProgram): static
+    {
+        $this->incubatorProgram = $incubatorProgram;
+        return $this;
     }
 
     public function getFounderID(): ?int
     {
-        return $this->founder ? $this->founder->getId() : null;
+        return $this->founderID;
+    }
+
+    public function setFounderID(?int $founderID): static
+    {
+        $this->founderID = $founderID;
+        return $this;
     }
 
     public function getBusinessPlanID(): ?int
     {
-        return $this->businessPlan ? $this->businessPlan->getBusinessPlanID() : null;
+        return $this->businessPlanID;
+    }
+
+    public function setBusinessPlanID(?int $businessPlanID): static
+    {
+        $this->businessPlanID = $businessPlanID;
+        return $this;
+    }
+
+    public function getUserId(): ?int
+    {
+        return $this->userId;
+    }
+
+    public function setUserId(?int $userId): static
+    {
+        $this->userId = $userId;
+        return $this;
     }
 
 }

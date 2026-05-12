@@ -9,37 +9,36 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity]
 #[ORM\Table(name: '`session`')]
-#[ORM\Index(columns: ['mentorID'], name: 'idx_session_mentor')]
-#[ORM\Index(columns: ['entrepreneurID'], name: 'idx_session_entrepreneur')]
-#[ORM\Index(columns: ['startupID'], name: 'idx_session_startup')]
 class Session
 {
     #[ORM\Id]
-    #[ORM\Column(name: 'sessionID', type: Types::INTEGER)]
+    #[ORM\Column(name: '`sessionID`', type: Types::INTEGER)]
     #[Assert\NotBlank]
     #[Assert\Type('integer')]
     private ?int $sessionID = null;
 
-    #[ORM\ManyToOne(targetEntity: Users::class)]
-    #[ORM\JoinColumn(name: 'mentorID', referencedColumnName: 'id', nullable: false)]
-    private ?Users $mentor = null;
+    #[ORM\Column(name: '`mentorID`', type: Types::INTEGER)]
+    #[Assert\NotBlank]
+    #[Assert\Type('integer')]
+    private ?int $mentorID = null;
 
-    #[ORM\ManyToOne(targetEntity: Users::class)]
-    #[ORM\JoinColumn(name: 'entrepreneurID', referencedColumnName: 'id', nullable: false)]
-    private ?Users $entrepreneur = null;
+    #[ORM\Column(name: '`entrepreneurID`', type: Types::INTEGER)]
+    #[Assert\NotBlank]
+    #[Assert\Type('integer')]
+    private ?int $entrepreneurID = null;
 
-    #[ORM\ManyToOne(targetEntity: Startup::class)]
-    #[ORM\JoinColumn(name: 'startupID', referencedColumnName: 'startup_id', nullable: false)]
-    private ?Startup $startup = null;
+    #[ORM\Column(name: '`startupID`', type: Types::INTEGER)]
+    #[Assert\Type('integer')]
+    private ?int $startupID = null;
 
-    #[ORM\Column(name: 'scheduleID', type: Types::INTEGER, nullable: true)]
+    #[ORM\Column(name: '`scheduleID`', type: Types::INTEGER, nullable: true)]
     #[Assert\Type('integer')]
     private ?int $scheduleID = null;
 
-    #[ORM\Column(name: 'sessionDate', type: Types::DATE_MUTABLE, nullable: true)]
+    #[ORM\Column(name: '`sessionDate`', type: Types::DATE_MUTABLE)]
     private ?\DateTimeInterface $sessionDate = null;
 
-    #[ORM\Column(name: 'sessionType', type: Types::STRING, nullable: true)]
+    #[ORM\Column(name: '`sessionType`', type: Types::STRING)]
     #[Assert\Length(max: 255)]
     #[Assert\Type('string')]
     private ?string $sessionType = null;
@@ -53,11 +52,11 @@ class Session
     #[Assert\Type('string')]
     private ?string $notes = null;
 
-    #[ORM\Column(name: 'successProbability', type: Types::FLOAT, nullable: true)]
+    #[ORM\Column(name: '`successProbability`', type: Types::FLOAT, nullable: true)]
     #[Assert\Type('float')]
     private ?float $successProbability = null;
 
-    #[ORM\Column(name: 'meetingLink', type: Types::STRING, length: 255, nullable: true)]
+    #[ORM\Column(name: '`meetingLink`', type: Types::STRING, length: 255, nullable: true)]
     #[Assert\Type('string')]
     private ?string $meetingLink = null;
 
@@ -72,36 +71,36 @@ class Session
         return $this;
     }
 
-    public function getMentor(): ?Users
+    public function getMentorID(): ?int
     {
-        return $this->mentor;
+        return $this->mentorID;
     }
 
-    public function setMentor(?Users $mentor): static
+    public function setMentorID(?int $mentorID): static
     {
-        $this->mentor = $mentor;
+        $this->mentorID = $mentorID;
         return $this;
     }
 
-    public function getEntrepreneur(): ?Users
+    public function getEntrepreneurID(): ?int
     {
-        return $this->entrepreneur;
+        return $this->entrepreneurID;
     }
 
-    public function setEntrepreneur(?Users $entrepreneur): static
+    public function setEntrepreneurID(?int $entrepreneurID): static
     {
-        $this->entrepreneur = $entrepreneur;
+        $this->entrepreneurID = $entrepreneurID;
         return $this;
     }
 
-    public function getStartup(): ?Startup
+    public function getStartupID(): ?int
     {
-        return $this->startup;
+        return $this->startupID;
     }
 
-    public function setStartup(?Startup $startup): static
+    public function setStartupID(?int $startupID): static
     {
-        $this->startup = $startup;
+        $this->startupID = $startupID;
         return $this;
     }
 

@@ -26,7 +26,7 @@ class DashboardController extends AbstractController
             return $this->redirectToRoute('app_login');
         }
         
-        if (strtoupper((string)$user->getRole()) !== 'ENTREPRENEUR') {
+        if (strtoupper($user->getRole()) !== 'ENTREPRENEUR') {
             $this->addFlash('error', 'Access Denied: This dashboard is reserved for Entrepreneurs.');
             return $this->redirectToRoute('app_home');
         }
@@ -44,7 +44,7 @@ class DashboardController extends AbstractController
             return $this->redirectToRoute('app_login');
         }
         
-        if (strtoupper((string)$user->getRole()) !== 'MENTOR') {
+        if (strtoupper($user->getRole()) !== 'MENTOR') {
             $this->addFlash('error', 'Access Denied: This dashboard is reserved for Mentors.');
             return $this->redirectToRoute('app_home');
         }
@@ -62,7 +62,7 @@ class DashboardController extends AbstractController
             return $this->redirectToRoute('app_login');
         }
         
-        if (strtoupper((string)$user->getRole()) !== 'EVALUATOR') {
+        if (strtoupper($user->getRole()) !== 'EVALUATOR') {
             $this->addFlash('error', 'Access Denied: This dashboard is reserved for Evaluators.');
             return $this->redirectToRoute('app_home');
         }

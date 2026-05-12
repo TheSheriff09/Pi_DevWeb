@@ -45,20 +45,20 @@ class BusinessplanController extends AbstractController
         if ($request->isMethod('POST')) {
             $bp = new Businessplan();
             
-            $bp->setTitle((string) $request->request->get('title'));
-            $bp->setDescription((string) $request->request->get('description'));
-            $bp->setMarketAnalysis((string) $request->request->get('marketAnalysis'));
-            $bp->setValueProposition((string) $request->request->get('valueProposition'));
-            $bp->setBusinessModel((string) $request->request->get('businessModel'));
-            $bp->setMarketingStrategy((string) $request->request->get('marketingStrategy'));
-            $bp->setFinancialForecast((string) $request->request->get('financialForecast'));
+            $bp->setTitle($request->request->get('title'));
+            $bp->setDescription($request->request->get('description'));
+            $bp->setMarketAnalysis($request->request->get('marketAnalysis'));
+            $bp->setValueProposition($request->request->get('valueProposition'));
+            $bp->setBusinessModel($request->request->get('businessModel'));
+            $bp->setMarketingStrategy($request->request->get('marketingStrategy'));
+            $bp->setFinancialForecast($request->request->get('financialForecast'));
             
             if ($request->request->get('fundingRequired')) {
                 $bp->setFundingRequired(floatval($request->request->get('fundingRequired')));
             }
 
-            $bp->setTimeline((string) $request->request->get('timeline'));
-            $bp->setStatus((string) ($request->request->get('status') ?: 'Draft'));
+            $bp->setTimeline($request->request->get('timeline'));
+            $bp->setStatus($request->request->get('status') ?: 'Draft');
             
             $now = new \DateTime();
             $bp->setCreationDate($now);
@@ -112,20 +112,20 @@ class BusinessplanController extends AbstractController
         }
 
         if ($request->isMethod('POST')) {
-            $bp->setTitle((string) $request->request->get('title'));
-            $bp->setDescription((string) $request->request->get('description'));
-            $bp->setMarketAnalysis((string) $request->request->get('marketAnalysis'));
-            $bp->setValueProposition((string) $request->request->get('valueProposition'));
-            $bp->setBusinessModel((string) $request->request->get('businessModel'));
-            $bp->setMarketingStrategy((string) $request->request->get('marketingStrategy'));
-            $bp->setFinancialForecast((string) $request->request->get('financialForecast'));
+            $bp->setTitle($request->request->get('title'));
+            $bp->setDescription($request->request->get('description'));
+            $bp->setMarketAnalysis($request->request->get('marketAnalysis'));
+            $bp->setValueProposition($request->request->get('valueProposition'));
+            $bp->setBusinessModel($request->request->get('businessModel'));
+            $bp->setMarketingStrategy($request->request->get('marketingStrategy'));
+            $bp->setFinancialForecast($request->request->get('financialForecast'));
             
             if ($request->request->get('fundingRequired')) {
                 $bp->setFundingRequired(floatval($request->request->get('fundingRequired')));
             }
 
-            $bp->setTimeline((string) $request->request->get('timeline'));
-            $bp->setStatus((string) $request->request->get('status'));
+            $bp->setTimeline($request->request->get('timeline'));
+            $bp->setStatus($request->request->get('status'));
             $bp->setLastUpdate(new \DateTime());
             
             $errors = $validator->validate($bp);
@@ -208,7 +208,7 @@ class BusinessplanController extends AbstractController
         $targetMarket = $request->request->get('targetMarket', 'General Public');
         
         $projectDir = $this->getParameter('kernel.project_dir');
-        $pythonScript = (is_string($projectDir) ? $projectDir : '') . '/bin/business_plan_generator.py';
+        $pythonScript = $projectDir . '/bin/business_plan_generator.py';
         $pythonExe = DIRECTORY_SEPARATOR === '\\' ? 'py' : 'python3';
 
         $process = new Process([

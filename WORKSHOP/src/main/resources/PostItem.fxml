@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.layout.Region?>
+
+<VBox xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="tn.esprit.GUI.PostItemController"
+      stylesheets="@css/entrepreneur_dashboard.css"
+      styleClass="mainCard" spacing="10" style="-fx-padding: 20;">
+    
+    <!-- Header: Author & Time -->
+    <HBox spacing="10" alignment="CENTER_LEFT">
+        <Label fx:id="lblAuthor" text="User" styleClass="brandTitle"/>
+        <Label text="•" style="-fx-text-fill: #999;"/>
+        <Label fx:id="lblDate" text="Just now" style="-fx-text-fill: #999; -fx-font-size: 13px;"/>
+    </HBox>
+
+    <!-- Title -->
+    <Label fx:id="lblTitle" text="Post Title" style="-fx-font-size: 22px; -fx-font-weight: 800; -fx-text-fill: #333;" wrapText="true"/>
+
+    <!-- Content -->
+    <Label fx:id="lblContent" text="Post content..." style="-fx-font-size: 14px; -fx-text-fill: #444;" wrapText="true" minHeight="20"/>
+
+    <!-- Image (Optional) -->
+    <ImageView fx:id="imgPost" fitWidth="500" preserveRatio="true"/>
+
+    <Region prefHeight="5"/>
+
+    <!-- Stats Row -->
+    <HBox spacing="15" alignment="CENTER_LEFT">
+        <Label fx:id="lblLikes" text="0 Likes" style="-fx-text-fill: #666; -fx-font-size: 12px;"/>
+    </HBox>
+
+    <Region prefHeight="5"/>
+
+    <!-- Actions Row -->
+    <HBox spacing="15" alignment="CENTER_LEFT" style="-fx-border-color: rgba(123, 97, 255, 0.15); -fx-border-width: 1 0 0 0; -fx-padding: 15 0 0 0;">
+        <Button fx:id="btnLike" text="👍 Like" onAction="#likePost" styleClass="actionBtn" style="-fx-pref-width: 100px; -fx-padding: 8 16 8 16;"/>
+        <Button fx:id="btnLove" text="😊 Love" onAction="#lovePost" styleClass="actionBtn" style="-fx-pref-width: 100px; -fx-padding: 8 16 8 16;"/>
+        <Button fx:id="btnHaha" text="😂 Haha" onAction="#hahaPost" styleClass="actionBtn" style="-fx-pref-width: 100px; -fx-padding: 8 16 8 16;"/>
+        <Region HBox.hgrow="ALWAYS"/>
+        <Button text="💬 Comment" onAction="#onComment" styleClass="actionBtn" style="-fx-pref-width: 140px; -fx-padding: 8 16 8 16;"/>
+    </HBox>
+    
+    <!-- Comments Section -->
+    <VBox fx:id="commentsContainer" spacing="10" visible="false" managed="false" style="-fx-background-color: #f9f9f9; -fx-padding: 10; -fx-background-radius: 8;">
+        <!-- Input -->
+        <HBox spacing="10">
+            <TextArea fx:id="taComment" promptText="Write a comment..." prefRowCount="1" prefHeight="35" wrapText="true" HBox.hgrow="ALWAYS" style="-fx-background-radius: 15;"/>
+            <Button text="Post" onAction="#submitComment" style="-fx-background-color: #7b61ff; -fx-text-fill: white; -fx-background-radius: 15; -fx-cursor: hand;"/>
+        </HBox>
+        <!-- List of comments (dynamic) -->
+        <VBox fx:id="commentList" spacing="8">
+            <!-- Items added here -->
+        </VBox>
+    </VBox>
+
+</VBox>
+

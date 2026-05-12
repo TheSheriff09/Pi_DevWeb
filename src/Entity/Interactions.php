@@ -15,25 +15,25 @@ class Interactions
     #[ORM\GeneratedValue]
     #[ORM\Column(type: Types::INTEGER)]
     #[Assert\Type('integer')]
-    
-    /** @phpstan-ignore-next-line */
     private ?int $id = null;
 
-    #[ORM\ManyToOne(targetEntity: ForumPosts::class)]
-    #[ORM\JoinColumn(name: 'post_id', referencedColumnName: 'id', nullable: false)]
-    private ?ForumPosts $post = null;
+    #[ORM\Column(type: Types::INTEGER)]
+    #[Assert\NotBlank]
+    #[Assert\Type('integer')]
+    private ?int $postId = null;
 
-    #[ORM\ManyToOne(targetEntity: Users::class)]
-    #[ORM\JoinColumn(name: 'user_id', referencedColumnName: 'id', nullable: false)]
-    private ?Users $user = null;
+    #[ORM\Column(type: Types::INTEGER)]
+    #[Assert\NotBlank]
+    #[Assert\Type('integer')]
+    private ?int $userId = null;
 
-    #[ORM\Column(name: 'interaction_type', type: Types::STRING, length: 20)]
+    #[ORM\Column(type: Types::STRING, length: 20)]
     #[Assert\NotBlank]
     #[Assert\Length(max: 20)]
     #[Assert\Type('string')]
     private ?string $type = null;
 
-    #[ORM\Column(name: 'created_at', type: Types::DATETIME_MUTABLE)]
+    #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     private ?\DateTimeInterface $createdAt = null;
 
     public function getId(): ?int
@@ -41,25 +41,25 @@ class Interactions
         return $this->id;
     }
 
-    public function getPost(): ?ForumPosts
+    public function getPostId(): ?int
     {
-        return $this->post;
+        return $this->postId;
     }
 
-    public function setPost(?ForumPosts $post): static
+    public function setPostId(?int $postId): static
     {
-        $this->post = $post;
+        $this->postId = $postId;
         return $this;
     }
 
-    public function getUser(): ?Users
+    public function getUserId(): ?int
     {
-        return $this->user;
+        return $this->userId;
     }
 
-    public function setUser(?Users $user): static
+    public function setUserId(?int $userId): static
     {
-        $this->user = $user;
+        $this->userId = $userId;
         return $this;
     }
 

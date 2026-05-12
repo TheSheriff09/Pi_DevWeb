@@ -12,24 +12,21 @@ class Report
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: Types::INTEGER)]
-    
-    /** @phpstan-ignore-next-line */
     private ?int $id = null;
 
-    #[ORM\ManyToOne(targetEntity: Users::class)]
-    #[ORM\JoinColumn(name: 'reporter_id', referencedColumnName: 'id', nullable: false)]
-    private ?Users $reporter = null;
+    #[ORM\Column(type: Types::INTEGER)]
+    private ?int $reporterId = null;
 
-    #[ORM\Column(name: 'target_type', type: Types::STRING, length: 50)]
+    #[ORM\Column(type: Types::STRING, length: 50)]
     private ?string $targetType = null; // 'post' or 'comment'
 
-    #[ORM\Column(name: 'target_id_int', type: Types::INTEGER)]
+    #[ORM\Column(type: Types::INTEGER)]
     private ?int $targetId = null;
 
-    #[ORM\Column(name: 'reason', type: Types::TEXT)]
+    #[ORM\Column(type: Types::TEXT)]
     private ?string $reason = null;
 
-    #[ORM\Column(name: 'created_at', type: Types::DATETIME_MUTABLE)]
+    #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     private ?\DateTimeInterface $createdAt = null;
 
     public function getId(): ?int
@@ -37,14 +34,14 @@ class Report
         return $this->id;
     }
 
-    public function getReporter(): ?Users
+    public function getReporterId(): ?int
     {
-        return $this->reporter;
+        return $this->reporterId;
     }
 
-    public function setReporter(?Users $reporter): static
+    public function setReporterId(int $reporterId): static
     {
-        $this->reporter = $reporter;
+        $this->reporterId = $reporterId;
         return $this;
     }
 

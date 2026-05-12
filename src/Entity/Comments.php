@@ -9,40 +9,36 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity]
 #[ORM\Table(name: '`comments`')]
-#[ORM\Index(columns: ['post_id'], name: 'idx_comment_post')]
-#[ORM\Index(columns: ['user_id'], name: 'idx_comment_user')]
 class Comments
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: Types::INTEGER)]
     #[Assert\Type('integer')]
-    
-    /** @phpstan-ignore-next-line */
     private ?int $id = null;
 
-    #[ORM\Column(type: Types::TEXT, nullable: true)]
+    #[ORM\Column(type: Types::TEXT)]
     #[Assert\NotBlank]
     #[Assert\Type('string')]
     private ?string $content = null;
 
-    #[ORM\Column(name: 'created_at', type: Types::DATETIME_MUTABLE, nullable: true)]
+    #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     private ?\DateTimeInterface $createdAt = null;
 
-    #[ORM\ManyToOne(targetEntity: ForumPosts::class, inversedBy: 'comments')]
-    #[ORM\JoinColumn(name: 'post_id', referencedColumnName: 'id', nullable: false)]
-    private ?ForumPosts $post = null;
+    #[ORM\Column(type: Types::INTEGER, nullable: true)]
+    #[Assert\Type('integer')]
+    private ?int $postId = null;
 
-    #[ORM\ManyToOne(targetEntity: Users::class)]
-    #[ORM\JoinColumn(name: 'user_id', referencedColumnName: 'id', nullable: true)]
-    private ?Users $user = null;
+    #[ORM\Column(type: Types::INTEGER, nullable: true)]
+    #[Assert\Type('integer')]
+    private ?int $userId = null;
 
-    #[ORM\Column(name: 'author_name', type: Types::STRING, length: 255, nullable: true)]
+    #[ORM\Column(type: Types::STRING, length: 255, nullable: true)]
     #[Assert\Length(max: 255)]
     #[Assert\Type('string')]
     private ?string $authorName = null;
 
-    #[ORM\Column(name: 'parent_id', type: Types::INTEGER, nullable: true)]
+    #[ORM\Column(type: Types::INTEGER, nullable: true)]
     private ?int $parentId = null;
 
     public function getId(): ?int
@@ -72,25 +68,25 @@ class Comments
         return $this;
     }
 
-    public function getPost(): ?ForumPosts
+    public function getPostId(): ?int
     {
-        return $this->post;
+        return $this->postId;
     }
 
-    public function setPost(?ForumPosts $post): static
+    public function setPostId(?int $postId): static
     {
-        $this->post = $post;
+        $this->postId = $postId;
         return $this;
     }
 
-    public function getUser(): ?Users
+    public function getUserId(): ?int
     {
-        return $this->user;
+        return $this->userId;
     }
 
-    public function setUser(?Users $user): static
+    public function setUserId(?int $userId): static
     {
-        $this->user = $user;
+        $this->userId = $userId;
         return $this;
     }
 

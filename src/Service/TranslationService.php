@@ -60,8 +60,6 @@ class TranslationService
     /**
      * Returns the list of supported languages with their flag emojis.
      * This is used by the frontend language picker.
-     *
-     * @return array<string, array{name: string, flag: string}>
      */
     public static function supportedLanguages(): array
     {
@@ -125,8 +123,6 @@ class TranslationService
 
     /**
      * Split text into sentences / words so each chunk ≤ CHUNK chars.
-     *
-     * @return array<int, string>
      */
     private function splitText(string $text): array
     {

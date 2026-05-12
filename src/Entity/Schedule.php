@@ -12,28 +12,29 @@ use Symfony\Component\Validator\Constraints as Assert;
 class Schedule
 {
     #[ORM\Id]
-    #[ORM\GeneratedValue]
-    #[ORM\Column(name: 'scheduleID', type: Types::INTEGER)]
+    #[ORM\Column(name: '`scheduleID`', type: Types::INTEGER)]
+    #[Assert\NotBlank]
     #[Assert\Type('integer')]
     private ?int $scheduleID = null;
 
-    #[ORM\ManyToOne(targetEntity: Users::class)]
-    #[ORM\JoinColumn(name: 'mentorID', referencedColumnName: 'id', nullable: false)]
-    private ?Users $mentor = null;
+    #[ORM\Column(name: '`mentorID`', type: Types::INTEGER)]
+    #[Assert\NotBlank]
+    #[Assert\Type('integer')]
+    private ?int $mentorID = null;
 
-    #[ORM\Column(name: 'availableDate', type: Types::DATE_MUTABLE, nullable: true)]
+    #[ORM\Column(name: '`availableDate`', type: Types::DATE_MUTABLE)]
     #[Assert\NotBlank(message: 'Available Date cannot be empty.')]
     private ?\DateTimeInterface $availableDate = null;
 
-    #[ORM\Column(name: 'startTime', type: Types::TIME_MUTABLE, nullable: true)]
+    #[ORM\Column(name: '`startTime`', type: Types::TIME_MUTABLE)]
     #[Assert\NotBlank(message: 'Start Time cannot be empty.')]
     private ?\DateTimeInterface $startTime = null;
 
-    #[ORM\Column(name: 'endTime', type: Types::TIME_MUTABLE, nullable: true)]
+    #[ORM\Column(name: '`endTime`', type: Types::TIME_MUTABLE)]
     #[Assert\NotBlank(message: 'End Time cannot be empty.')]
     private ?\DateTimeInterface $endTime = null;
 
-    #[ORM\Column(name: 'isBooked', type: Types::BOOLEAN)]
+    #[ORM\Column(name: '`isBooked`', type: Types::BOOLEAN)]
     private ?bool $isBooked = null;
 
     public function getScheduleID(): ?int
@@ -47,14 +48,14 @@ class Schedule
         return $this;
     }
 
-    public function getMentor(): ?Users
+    public function getMentorID(): ?int
     {
-        return $this->mentor;
+        return $this->mentorID;
     }
 
-    public function setMentor(?Users $mentor): static
+    public function setMentorID(?int $mentorID): static
     {
-        $this->mentor = $mentor;
+        $this->mentorID = $mentorID;
         return $this;
     }
 

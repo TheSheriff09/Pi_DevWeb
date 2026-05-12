@@ -25,7 +25,7 @@ class MentorController extends AbstractController
             return $this->redirectToRoute('app_login');
         }
         
-        if (strtoupper((string) $userRole) === 'EVALUATOR') {
+        if (strtoupper($userRole) === 'EVALUATOR') {
             $this->addFlash('error', 'Access Denied: Evaluators are not allowed to access Mentorship features.');
             return $this->redirectToRoute('app_home');
         }
@@ -50,7 +50,7 @@ class MentorController extends AbstractController
                     $em->createQueryBuilder()
                        ->select('1')
                        ->from(Schedule::class, 's')
-                       ->where('s.mentor = u.id AND s.isBooked = false AND s.availableDate >= :today')
+                       ->where('s.mentorID = u.id AND s.isBooked = false AND s.availableDate >= :today')
                        ->getDQL()
                 )
             )->setParameter('today', new \DateTime('today'));
@@ -59,15 +59,17 @@ class MentorController extends AbstractController
         $mentors = $qb->getQuery()->getResult();
         
         $favoritesRepo = $em->getRepository(MentorFavorites::class);
-        $favorites = $favoritesRepo->findBy(['entrepreneur' => $userId]);
-        $favoriteIds = array_map(fn($f) => $f->getMentor()->getId(), $favorites);
+        $favorites = $favoritesRepo->findBy(['entrepreneurID' => $userId]);
+        $favoriteIds = array_map(fn($f) => $f->getMentorID(), $favorites);
 
-        // Fetch aggregate ratings using fast DQL grouping instead of fetching all entities
-        $evalsData = $em->createQuery('SELECT IDENTITY(e.mentor) as mId, SUM(e.rating) as totalRating, COUNT(e.id) as evCount FROM App\Entity\MentorEvaluations e GROUP BY e.mentor')->getResult();
+        // Fetch aggregate ratings for fast UI loads
+        $evaluations = $em->getRepository(MentorEvaluations::class)->findAll();
         $ratingsMap = [];
-        foreach ($evalsData as $row) {
-            $mId = $row['mId'];
-            $ratingsMap[$mId] = ['sum' => (int)$row['totalRating'], 'count' => (int)$row['evCount']];
+        foreach ($evaluations as $ev) {
+            $mId = $ev->getMentorID();
+            if (!isset($ratingsMap[$mId])) { $ratingsMap[$mId] = ['sum' => 0, 'count' => 0]; }
+            $ratingsMap[$mId]['sum'] += $ev->getRating();
+            $ratingsMap[$mId]['count']++;
         }
         $mentorRatings = [];
         foreach ($mentors as $m) {
@@ -107,7 +109,7 @@ class MentorController extends AbstractController
             return $this->redirectToRoute('app_login');
         }
         
-        if (strtoupper((string) $userRole) === 'EVALUATOR') {
+        if (strtoupper($userRole) === 'EVALUATOR') {
             $this->addFlash('error', 'Access Denied: Evaluators are not allowed to access Mentorship features.');
             return $this->redirectToRoute('app_home');
         }
@@ -122,7 +124,7 @@ class MentorController extends AbstractController
         $qb = $em->createQueryBuilder()
             ->select('s')
             ->from(Schedule::class, 's')
-            ->where('s.mentor = :mentorId')
+            ->where('s.mentorID = :mentorId')
             ->andWhere('s.isBooked = false')
             ->andWhere('s.availableDate >= :today')
             ->setParameter('mentorId', $id)
@@ -137,17 +139,16 @@ class MentorController extends AbstractController
             'Thursday' => [], 'Friday' => [], 'Saturday' => [], 'Sunday' => []
         ];
         foreach ($schedule as $slot) {
-            $availableDate = $slot->getAvailableDate();
-            $dayName = $availableDate ? $availableDate->format('l') : 'Unknown';
+            $dayName = $slot->getAvailableDate()->format('l');
             $groupedSchedule[$dayName][] = $slot;
         }
         
         $favorite = $em->getRepository(MentorFavorites::class)->findOneBy([
-            'entrepreneur' => $userId,
-            'mentor' => $id
+            'entrepreneurID' => $userId,
+            'mentorID' => $id
         ]);
 
-        $evaluations = $em->getRepository(MentorEvaluations::class)->findBy(['mentor' => $id], ['createdAt' => 'DESC']);
+        $evaluations = $em->getRepository(MentorEvaluations::class)->findBy(['mentorID' => $id], ['createdAt' => 'DESC']);
         $totalRating = 0;
         foreach ($evaluations as $ev) { $totalRating += $ev->getRating(); }
         $avgRating = count($evaluations) > 0 ? round($totalRating / count($evaluations), 1) : 0;
@@ -171,17 +172,17 @@ class MentorController extends AbstractController
             return $this->redirectToRoute('app_login');
         }
         
-        if (strtoupper((string) $userRole) === 'EVALUATOR') {
+        if (strtoupper($userRole) === 'EVALUATOR') {
             $this->addFlash('error', 'Access Denied: Evaluators are not allowed to access Mentorship features.');
             return $this->redirectToRoute('app_home');
         }
         
-        if (strtoupper((string) $userRole) !== 'ENTREPRENEUR' && strtoupper((string) $userRole) !== 'MENTOR') {
+        if (strtoupper($userRole) !== 'ENTREPRENEUR' && strtoupper($userRole) !== 'MENTOR') {
             return $this->redirectToRoute('app_login');
         }
 
-        $favorites = $em->getRepository(MentorFavorites::class)->findBy(['entrepreneur' => $userId]);
-        $mentorIds = array_map(fn($f) => $f->getMentor()->getId(), $favorites);
+        $favorites = $em->getRepository(MentorFavorites::class)->findBy(['entrepreneurID' => $userId]);
+        $mentorIds = array_map(fn($f) => $f->getMentorID(), $favorites);
         
         $mentors = [];
         if (!empty($mentorIds)) {
@@ -193,16 +194,14 @@ class MentorController extends AbstractController
             $mentors = $qb->getQuery()->getResult();
         }
 
-        // Fetch aggregate ratings using fast DQL
+        // Fetch ratings identically for Favorites view
+        $evaluations = $em->getRepository(MentorEvaluations::class)->findBy(['mentorID' => $mentorIds]);
         $ratingsMap = [];
-        if (!empty($mentorIds)) {
-            $evalsData = $em->createQuery('SELECT IDENTITY(e.mentor) as mId, SUM(e.rating) as totalRating, COUNT(e.id) as evCount FROM App\Entity\MentorEvaluations e WHERE e.mentor IN (:mIds) GROUP BY e.mentor')
-                ->setParameter('mIds', $mentorIds)
-                ->getResult();
-            foreach ($evalsData as $row) {
-                $mId = $row['mId'];
-                $ratingsMap[$mId] = ['sum' => (int)$row['totalRating'], 'count' => (int)$row['evCount']];
-            }
+        foreach ($evaluations as $ev) {
+            $mId = $ev->getMentorID();
+            if (!isset($ratingsMap[$mId])) { $ratingsMap[$mId] = ['sum' => 0, 'count' => 0]; }
+            $ratingsMap[$mId]['sum'] += $ev->getRating();
+            $ratingsMap[$mId]['count']++;
         }
         $mentorRatings = [];
         foreach ($mentors as $m) {
@@ -247,9 +246,9 @@ class MentorController extends AbstractController
                 ->getSingleScalarResult();
 
             $favorite = new MentorFavorites();
-            $favorite->setId((int) ($maxId ?? 0) + 1);
-            $favorite->setEntrepreneur($em->getRepository(Users::class)->find($userId));
-            $favorite->setMentor($em->getRepository(Users::class)->find($id));
+            $favorite->setId(($maxId ?? 0) + 1);
+            $favorite->setEntrepreneurID($userId);
+            $favorite->setMentorID($id);
             $favorite->setCreatedAt(new \DateTime());
             $em->persist($favorite);
             $action = 'added';

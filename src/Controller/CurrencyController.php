@@ -10,7 +10,7 @@ use Symfony\Component\Routing\Annotation\Route;
 
 class CurrencyController extends AbstractController
 {
-    private CurrencyService $currencyService;
+    private $currencyService;
 
     public function __construct(CurrencyService $currencyService)
     {
@@ -22,7 +22,7 @@ class CurrencyController extends AbstractController
     {
         $amount = (float) $request->get('amount');
         $from = strtoupper($request->get('from', 'USD'));
-        $to = strtoupper((string)$request->get('to', 'EUR'));
+        $to = strtoupper($request->get('to', 'EUR'));
 
         if ($amount <= 0) {
             return new JsonResponse(['error' => 'Amount must be greater than zero'], 400);

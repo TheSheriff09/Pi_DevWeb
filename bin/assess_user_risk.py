@@ -39,6 +39,7 @@ def main():
             for p in predictions:
                 total_score += weights.get(p, 0)
                 
+        # Classification Engine Rules
         if total_score > 80:
             risk_level = "DANGEROUS"
         elif total_score > 40:

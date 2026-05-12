@@ -26,21 +26,21 @@ class BookingController extends AbstractController
             return $this->redirectToRoute('app_login');
         }
         
-        if (strtoupper((string) $userRole) === 'EVALUATOR') {
+        if (strtoupper($userRole) === 'EVALUATOR') {
             $this->addFlash('error', 'Access Denied: Evaluators are not allowed to access Mentorship features.');
             return $this->redirectToRoute('app_home');
         }
 
         $schedule = $em->getRepository(Schedule::class)->find($scheduleId);
-        if (!$schedule || $schedule->getMentor()->getId() !== $mentorId || $schedule->getIsBooked()) {
+        if (!$schedule || $schedule->getMentorID() !== $mentorId || $schedule->getIsBooked()) {
             // Already booked or invalid
             return $this->redirectToRoute('app_mentor_profile', ['id' => $mentorId]);
         }
 
         // Check double booking
         $existing = $em->getRepository(Booking::class)->findOneBy([
-            'entrepreneur' => $userId,
-            'mentor' => $mentorId,
+            'entrepreneurID' => $userId,
+            'mentorID' => $mentorId,
             'requestedDate' => $schedule->getAvailableDate(),
             'requestedTime' => $schedule->getStartTime(),
             'status' => 'PENDING'
@@ -53,13 +53,13 @@ class BookingController extends AbstractController
         }
 
         if ($request->isMethod('POST')) {
-            $topic = (string) $request->request->get('topic', '');
+            $topic = $request->request->get('topic', '');
                 
-            $startup = $em->getRepository(Startup::class)->findOneBy(['founder' => $userId]);
+            $startup = $em->getRepository(Startup::class)->findOneBy(['founderID' => $userId]);
             if (!$startup) {
-                $startup = $em->getRepository(Startup::class)->findOneBy(['user' => $userId]);
+                $startup = $em->getRepository(Startup::class)->findOneBy(['userId' => $userId]);
             }
-            $startupObj = $startup;
+            $startupId = $startup ? $startup->getStartupID() : 0;
 
             $maxId = $em->createQueryBuilder()
                 ->select('MAX(b.bookingID)')
@@ -68,10 +68,10 @@ class BookingController extends AbstractController
                 ->getSingleScalarResult();
 
             $booking = new Booking();
-            $booking->setBookingID((int) ($maxId ?? 0) + 1);
-            $booking->setEntrepreneur($em->getRepository(Users::class)->find($userId));
-            $booking->setMentor($em->getRepository(Users::class)->find($mentorId));
-            $booking->setStartup($startupObj);
+            $booking->setBookingID(($maxId ?? 0) + 1);
+            $booking->setEntrepreneurID($userId);
+            $booking->setMentorID($mentorId);
+            $booking->setStartupID($startupId);
             $booking->setRequestedDate($schedule->getAvailableDate());
             $booking->setRequestedTime($schedule->getStartTime());
             $booking->setTopic($topic);
@@ -80,8 +80,7 @@ class BookingController extends AbstractController
                 
             $errors = $validator->validate($booking);
             if (count($errors) > 0) {
-                $errorMessage = (string) $errors->get(0)->getMessage();
-                $this->addFlash('error', 'Booking validation failed: ' . $errorMessage);
+                $this->addFlash('error', 'Booking validation failed: ' . $errors[0]->getMessage());
                 return $this->redirectToRoute('app_mentorship_book', ['mentorId' => $mentorId, 'scheduleId' => $scheduleId]);
             }
                 
@@ -103,8 +102,8 @@ class BookingController extends AbstractController
     #[Route('/bookings', name: 'app_my_bookings')]
     public function myBookings(Request $request, EntityManagerInterface $em): Response
     {
-        $userId = (int) $request->getSession()->get('user_id');
-        $userRole = (string) $request->getSession()->get('user_role');
+        $userId = $request->getSession()->get('user_id');
+        $userRole = $request->getSession()->get('user_role');
         
         if (!$userId) {
             return $this->redirectToRoute('app_login');
@@ -118,18 +117,18 @@ class BookingController extends AbstractController
         $role = $userRole;
 
         if ($role === 'MENTOR') {
-            $bookingsRaw = $em->getRepository(Booking::class)->findBy(['mentor' => $userId], ['creationDate' => 'DESC']);
+            $bookingsRaw = $em->getRepository(Booking::class)->findBy(['mentorID' => $userId], ['creationDate' => 'DESC']);
         } else {
-            $bookingsRaw = $em->getRepository(Booking::class)->findBy(['entrepreneur' => $userId], ['creationDate' => 'DESC']);
+            $bookingsRaw = $em->getRepository(Booking::class)->findBy(['entrepreneurID' => $userId], ['creationDate' => 'DESC']);
         }
 
         $bookings = [];
         foreach ($bookingsRaw as $b) {
-            $otherId = $role === 'MENTOR' ? (int) $b->getEntrepreneur()->getId() : (int) $b->getMentor()->getId();
+            $otherId = $role === 'MENTOR' ? $b->getEntrepreneurID() : $b->getMentorID();
             $otherUser = $em->getRepository(\App\Entity\Users::class)->find($otherId);
             $bookings[] = [
                 'booking' => $b,
-                'counterpartName' => $otherUser ? (string) $otherUser->getFullName() : 'Unknown'
+                'counterpartName' => $otherUser ? $otherUser->getFullName() : 'Unknown'
             ];
         }
 
@@ -142,8 +141,8 @@ class BookingController extends AbstractController
     #[Route('/booking/{id}/handle', name: 'app_handle_booking', methods: ['POST'])]
     public function handleBooking(int $id, Request $request, EntityManagerInterface $em): Response
     {
-        $userId = (int) $request->getSession()->get('user_id');
-        $userRole = (string) $request->getSession()->get('user_role');
+        $userId = $request->getSession()->get('user_id');
+        $userRole = $request->getSession()->get('user_role');
         
         if (!$userId) {
             return $this->json(['status' => 'error', 'message' => 'Unauthorized'], 401);
@@ -157,22 +156,20 @@ class BookingController extends AbstractController
             return $this->json(['status' => 'error', 'message' => 'Unauthorized'], 401);
         }
 
-        $booking = $em->getRepository(Booking::class)->findOneBy(['bookingID' => $id, 'mentor' => $userId]);
-        $status = $booking ? (string) $booking->getStatus() : null;
-        if (!$booking || ($status !== null && strtoupper($status) !== 'PENDING')) {
+        $booking = $em->getRepository(Booking::class)->findOneBy(['bookingID' => $id, 'mentorID' => $userId]);
+        if (!$booking || strtoupper($booking->getStatus()) !== 'PENDING') {
             return $this->json(['status' => 'error', 'message' => 'Invalid booking'], 400);
         }
 
-        $action = (string) $request->request->get('action');
+        $action = $request->request->get('action'); // 'accept' or 'reject'
         
         if ($action === 'accept') {
             $booking->setStatus('approved');
-            $bookingDate = $booking->getRequestedDate();
-            $this->pushNotification((int) $booking->getEntrepreneur()->getId(), 'success', 'Your booking on ' . ($bookingDate ? $bookingDate->format('j M Y') : '') . ' was Approved!');
+            $this->pushNotification($booking->getEntrepreneurID(), 'success', 'Your booking on ' . $booking->getRequestedDate()->format('j M Y') . ' was Approved!');
             
             // Mark corresponding schedule as booked
             $schedule = $em->getRepository(Schedule::class)->findOneBy([
-                'mentor' => $userId,
+                'mentorID' => $userId,
                 'availableDate' => $booking->getRequestedDate(),
                 'startTime' => $booking->getRequestedTime(),
                 'isBooked' => false
@@ -181,7 +178,7 @@ class BookingController extends AbstractController
             $scheduleId = null;
             if ($schedule) {
                 $schedule->setIsBooked(true);
-                $scheduleId = (int) $schedule->getScheduleID();
+                $scheduleId = $schedule->getScheduleID();
             }
             
             $maxSessionId = $em->createQueryBuilder()
@@ -191,10 +188,10 @@ class BookingController extends AbstractController
                 ->getSingleScalarResult();
 
             $session = new Session();
-            $session->setSessionID((int) ($maxSessionId ?? 0) + 1);
-            $session->setMentor($em->getRepository(Users::class)->find($userId));
-            $session->setEntrepreneur($booking->getEntrepreneur());
-            $session->setStartup($booking->getStartup());
+            $session->setSessionID(($maxSessionId ?? 0) + 1);
+            $session->setMentorID($userId);
+            $session->setEntrepreneurID($booking->getEntrepreneurID());
+            $session->setStartupID($booking->getStartupID() ?? 0);
             if ($scheduleId) {
                 $session->setScheduleID($scheduleId);
             }
@@ -206,8 +203,7 @@ class BookingController extends AbstractController
 
         } elseif ($action === 'reject') {
             $booking->setStatus('rejected');
-            $bookingDate = $booking->getRequestedDate();
-            $this->pushNotification((int) $booking->getEntrepreneur()->getId(), 'error', 'Your booking on ' . ($bookingDate ? $bookingDate->format('j M Y') : '') . ' was Rejected.');
+            $this->pushNotification($booking->getEntrepreneurID(), 'error', 'Your booking on ' . $booking->getRequestedDate()->format('j M Y') . ' was Rejected.');
         }
 
         $em->flush();
@@ -216,12 +212,10 @@ class BookingController extends AbstractController
 
     private function pushNotification(int $userId, string $type, string $msg): void
     {
-        $projectDir = $this->getParameter('kernel.project_dir');
-        $file = (is_string($projectDir) ? $projectDir : '') . '/var/notifications.json';
+        $file = $this->getParameter('kernel.project_dir') . '/var/notifications.json';
         $data = [];
         if (file_exists($file)) {
-            $content = file_get_contents($file);
-            $data = $content ? (json_decode($content, true) ?? []) : [];
+            $data = json_decode(file_get_contents($file), true) ?? [];
         }
         $data[] = ['userId' => $userId, 'type' => $type, 'msg' => $msg];
         file_put_contents($file, json_encode($data));
@@ -233,23 +227,16 @@ class BookingController extends AbstractController
         $userId = $request->getSession()->get('user_id');
         $userRole = $request->getSession()->get('user_role');
         
-        // Immediately unlock the session to prevent blocking subsequent page navigations
-        if ($request->hasSession() && $request->getSession()->isStarted()) {
-            $request->getSession()->save();
-        }
-
-        if (!$userId || strtoupper((string) $userRole) === 'EVALUATOR' || $userRole !== 'ENTREPRENEUR') {
+        if (!$userId || strtoupper($userRole) === 'EVALUATOR' || $userRole !== 'ENTREPRENEUR') {
             return $this->json([]);
         }
 
-        $projectDir = $this->getParameter('kernel.project_dir');
-        $file = (is_string($projectDir) ? $projectDir : '') . '/var/notifications.json';
+        $file = $this->getParameter('kernel.project_dir') . '/var/notifications.json';
         if (!file_exists($file)) {
             return $this->json([]);
         }
 
-        $content = file_get_contents($file);
-        $data = $content ? (json_decode($content, true) ?? []) : [];
+        $data = json_decode(file_get_contents($file), true) ?? [];
         $userNotifs = [];
         $remaining = [];
         

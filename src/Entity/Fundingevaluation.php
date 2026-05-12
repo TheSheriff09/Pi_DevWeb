@@ -17,40 +17,42 @@ class Fundingevaluation
     #[Assert\Type('integer')]
     private ?int $id = null;
 
-    #[ORM\ManyToOne(targetEntity: Fundingapplication::class)]
-    #[ORM\JoinColumn(name: 'funding_application_id', referencedColumnName: 'id', nullable: false)]
-    private ?Fundingapplication $fundingApplication = null;
+    #[ORM\Column(name: 'fundingApplicationId', type: Types::INTEGER)]
+    #[Assert\NotBlank]
+    #[Assert\Type('integer')]
+    private ?int $fundingApplicationId = null;
 
-    #[ORM\Column(type: Types::INTEGER, nullable: true)]
+    #[ORM\Column(type: Types::INTEGER)]
     #[Assert\NotBlank]
     #[Assert\Type('integer')]
     private ?int $score = null;
 
-    #[ORM\Column(type: Types::STRING, length: 50, nullable: true)]
+    #[ORM\Column(type: Types::STRING, length: 50)]
     #[Assert\NotBlank]
     #[Assert\Length(max: 50)]
     #[Assert\Type('string')]
     private ?string $decision = null;
 
-    #[ORM\Column(name: 'evaluation_comments', type: Types::TEXT, nullable: true)]
+    #[ORM\Column(name: 'evaluationComments', type: Types::TEXT, nullable: true)]
     #[Assert\Type('string')]
     private ?string $evaluationComments = null;
 
-    #[ORM\ManyToOne(targetEntity: Users::class)]
-    #[ORM\JoinColumn(name: 'evaluator_id', referencedColumnName: 'id', nullable: false)]
-    private ?Users $evaluator = null;
+    #[ORM\Column(name: 'evaluatorId', type: Types::INTEGER)]
+    #[Assert\NotBlank]
+    #[Assert\Type('integer')]
+    private ?int $evaluatorId = null;
 
-    #[ORM\Column(name: 'risk_level', type: Types::STRING, length: 50, nullable: true)]
+    #[ORM\Column(name: 'riskLevel', type: Types::STRING, length: 50, nullable: true)]
     #[Assert\Length(max: 50)]
     #[Assert\Type('string')]
     private ?string $riskLevel = null;
 
-    #[ORM\Column(name: 'funding_category', type: Types::STRING, length: 50, nullable: true)]
+    #[ORM\Column(name: 'fundingCategory', type: Types::STRING, length: 50, nullable: true)]
     #[Assert\Length(max: 50)]
     #[Assert\Type('string')]
     private ?string $fundingCategory = null;
 
-    #[ORM\Column(name: 'created_at', type: Types::DATETIME_MUTABLE, nullable: true)]
+    #[ORM\Column(name: 'created_at', type: Types::DATETIME_MUTABLE)]
     private ?\DateTimeInterface $createdAt = null;
 
     public function getId(): ?int
@@ -64,14 +66,14 @@ class Fundingevaluation
         return $this;
     }
 
-    public function getFundingApplication(): ?Fundingapplication
+    public function getFundingApplicationId(): ?int
     {
-        return $this->fundingApplication;
+        return $this->fundingApplicationId;
     }
 
-    public function setFundingApplication(?Fundingapplication $fundingApplication): static
+    public function setFundingApplicationId(?int $fundingApplicationId): static
     {
-        $this->fundingApplication = $fundingApplication;
+        $this->fundingApplicationId = $fundingApplicationId;
         return $this;
     }
 
@@ -108,14 +110,14 @@ class Fundingevaluation
         return $this;
     }
 
-    public function getEvaluator(): ?Users
+    public function getEvaluatorId(): ?int
     {
-        return $this->evaluator;
+        return $this->evaluatorId;
     }
 
-    public function setEvaluator(?Users $evaluator): static
+    public function setEvaluatorId(?int $evaluatorId): static
     {
-        $this->evaluator = $evaluator;
+        $this->evaluatorId = $evaluatorId;
         return $this;
     }
 

@@ -15,24 +15,25 @@ class Responses
     #[ORM\GeneratedValue]
     #[ORM\Column(type: Types::INTEGER)]
     #[Assert\Type('integer')]
-    /** @phpstan-ignore-next-line */
     private ?int $id = null;
 
-    #[ORM\Column(name: 'content', type: Types::TEXT)]
+    #[ORM\Column(type: Types::TEXT)]
     #[Assert\NotBlank]
     #[Assert\Type('string')]
     private ?string $content = null;
 
-    #[ORM\Column(name: 'created_at', type: Types::DATETIME_MUTABLE)]
+    #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     private ?\DateTimeInterface $createdAt = null;
 
-    #[ORM\ManyToOne(targetEntity: Reclamations::class)]
-    #[ORM\JoinColumn(name: 'reclamation_id', referencedColumnName: 'id', nullable: false)]
-    private ?Reclamations $reclamation = null;
+    #[ORM\Column(type: Types::INTEGER)]
+    #[Assert\NotBlank]
+    #[Assert\Type('integer')]
+    private ?int $reclamationId = null;
 
-    #[ORM\ManyToOne(targetEntity: Users::class)]
-    #[ORM\JoinColumn(name: 'responder_user_id', referencedColumnName: 'id', nullable: false)]
-    private ?Users $responder = null;
+    #[ORM\Column(type: Types::INTEGER)]
+    #[Assert\NotBlank]
+    #[Assert\Type('integer')]
+    private ?int $responderUserId = null;
 
     public function getId(): ?int
     {
@@ -61,25 +62,25 @@ class Responses
         return $this;
     }
 
-    public function getReclamation(): ?Reclamations
+    public function getReclamationId(): ?int
     {
-        return $this->reclamation;
+        return $this->reclamationId;
     }
 
-    public function setReclamation(?Reclamations $reclamation): static
+    public function setReclamationId(?int $reclamationId): static
     {
-        $this->reclamation = $reclamation;
+        $this->reclamationId = $reclamationId;
         return $this;
     }
 
-    public function getResponder(): ?Users
+    public function getResponderUserId(): ?int
     {
-        return $this->responder;
+        return $this->responderUserId;
     }
 
-    public function setResponder(?Users $responder): static
+    public function setResponderUserId(?int $responderUserId): static
     {
-        $this->responder = $responder;
+        $this->responderUserId = $responderUserId;
         return $this;
     }
 

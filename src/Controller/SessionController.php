@@ -23,12 +23,11 @@ class SessionController extends AbstractController
         $userId = $request->getSession()->get('user_id');
         $userRole = $request->getSession()->get('user_role');
         
-        $now = new \DateTime();
         if (!$userId) {
             return $this->redirectToRoute('app_login');
         }
         
-        if (strtoupper((string) $userRole) === 'EVALUATOR') {
+        if (strtoupper($userRole) === 'EVALUATOR') {
             $this->addFlash('error', 'Access Denied: Evaluators are not allowed to access Mentorship features.');
             return $this->redirectToRoute('app_home');
         }
@@ -36,41 +35,23 @@ class SessionController extends AbstractController
         $role = $userRole;
 
         if ($role === 'MENTOR') {
-            $sessionsRaw = $em->getRepository(Session::class)->createQueryBuilder('s')
-                ->leftJoin('s.mentor', 'm')->addSelect('m')
-                ->leftJoin('s.entrepreneur', 'e')->addSelect('e')
-                ->leftJoin('s.startup', 'st')->addSelect('st')
-                ->where('s.mentor = :uid')
-                ->setParameter('uid', $userId)
-                ->orderBy('s.sessionDate', 'DESC')
-                ->getQuery()
-                ->getResult();
+            $sessionsRaw = $em->getRepository(Session::class)->findBy(['mentorID' => $userId], ['sessionDate' => 'DESC']);
         } else {
-            $sessionsRaw = $em->getRepository(Session::class)->createQueryBuilder('s')
-                ->leftJoin('s.mentor', 'm')->addSelect('m')
-                ->leftJoin('s.entrepreneur', 'e')->addSelect('e')
-                ->leftJoin('s.startup', 'st')->addSelect('st')
-                ->where('s.entrepreneur = :uid')
-                ->setParameter('uid', $userId)
-                ->orderBy('s.sessionDate', 'DESC')
-                ->getQuery()
-                ->getResult();
+            $sessionsRaw = $em->getRepository(Session::class)->findBy(['entrepreneurID' => $userId], ['sessionDate' => 'DESC']);
         }
 
         $sessions = [];
-        $upcomingSessionsData = [];
         foreach ($sessionsRaw as $s) {
-            $otherUser = $role === 'MENTOR' ? $s->getEntrepreneur() : $s->getMentor();
-            $sessionDate = $s->getSessionDate();
-            $upcomingSessionsData[] = [
+            $otherId = $role === 'MENTOR' ? $s->getEntrepreneurID() : $s->getMentorID();
+            $otherUser = $em->getRepository(Users::class)->find($otherId);
+            $sessions[] = [
                 'session' => $s,
-                'partnerName' => $otherUser ? $otherUser->getFullName() : 'Unknown',
-                'isToday' => $sessionDate && $sessionDate->format('Y-m-d') === $now->format('Y-m-d')
+                'counterpartName' => $otherUser ? $otherUser->getFullName() : 'Unknown'
             ];
         }
 
         return $this->render('FrontOffice/mentorship/sessions.html.twig', [
-            'sessions' => $upcomingSessionsData,
+            'sessions' => $sessions,
             'role' => $role
         ]);
     }
@@ -85,7 +66,7 @@ class SessionController extends AbstractController
             return $this->redirectToRoute('app_login');
         }
         
-        if (strtoupper((string) $userRole) === 'EVALUATOR') {
+        if (strtoupper($userRole) === 'EVALUATOR') {
             $this->addFlash('error', 'Access Denied: Evaluators are not allowed to access Mentorship features.');
             return $this->redirectToRoute('app_home');
         }
@@ -93,7 +74,7 @@ class SessionController extends AbstractController
         $role = $userRole;
 
         $session = $em->getRepository(Session::class)->find($id);
-        if (!$session || ($session->getMentor()->getId() !== $userId && $session->getEntrepreneur()->getId() !== $userId)) {
+        if (!$session || ($session->getMentorID() !== $userId && $session->getEntrepreneurID() !== $userId)) {
             throw $this->createNotFoundException('Session not found or forbidden.');
         }
 
@@ -107,16 +88,15 @@ class SessionController extends AbstractController
                     ->getSingleScalarResult();
 
                 $note = new SessionNotes();
-                $note->setNoteID((int) ($maxId ?? 0) + 1);
-                $note->setSession($session);
-                $note->setEntrepreneur($session->getEntrepreneur());
-                $note->setNotes((string) $request->request->get('note_content'));
+                $note->setNoteID(($maxId ?? 0) + 1);
+                $note->setSessionID($id);
+                $note->setEntrepreneurID($session->getEntrepreneurID());
+                $note->setNotes($request->request->get('note_content'));
                 $note->setNoteDate(new \DateTime());
                 
                 $errors = $validator->validate($note);
                 if (count($errors) > 0) {
-                    $errorMessage = $errors->get(0)->getMessage();
-                    $this->addFlash('error', 'Note validation failed: ' . $errorMessage);
+                    $this->addFlash('error', 'Note validation failed: ' . $errors[0]->getMessage());
                     return $this->redirectToRoute('app_session_details', ['id' => $id]);
                 }
                 
@@ -136,16 +116,15 @@ class SessionController extends AbstractController
                     ->getSingleScalarResult();
 
                 $todo = new SessionTodos();
-                $todo->setId((int) ($maxId ?? 0) + 1);
-                $todo->setSession($session);
-                $todo->setTaskDescription((string) $request->request->get('todo_content'));
+                $todo->setId(($maxId ?? 0) + 1);
+                $todo->setSessionID($id);
+                $todo->setTaskDescription($request->request->get('todo_content'));
                 $todo->setIsDone(false);
                 $todo->setCreatedAt(new \DateTime());
                 
                 $errors = $validator->validate($todo);
                 if (count($errors) > 0) {
-                    $errorMessage = $errors->get(0)->getMessage();
-                    $this->addFlash('error', 'Todo validation failed: ' . $errorMessage);
+                    $this->addFlash('error', 'Todo validation failed: ' . $errors[0]->getMessage());
                     return $this->redirectToRoute('app_session_details', ['id' => $id]);
                 }
                 
@@ -155,11 +134,11 @@ class SessionController extends AbstractController
             return $this->redirectToRoute('app_session_details', ['id' => $id]);
         }
 
-        $notes = $em->getRepository(SessionNotes::class)->findBy(['session' => $id], ['noteDate' => 'DESC']);
-        $todos = $em->getRepository(SessionTodos::class)->findBy(['session' => $id], ['id' => 'ASC']);
+        $notes = $em->getRepository(SessionNotes::class)->findBy(['sessionID' => $id], ['noteDate' => 'DESC']);
+        $todos = $em->getRepository(SessionTodos::class)->findBy(['sessionID' => $id], ['id' => 'ASC']);
 
         // Fetch partner details
-        $partnerId = $role === 'MENTOR' ? $session->getEntrepreneur()->getId() : $session->getMentor()->getId();
+        $partnerId = $role === 'MENTOR' ? $session->getEntrepreneurID() : $session->getMentorID();
         $partner = $em->getRepository(Users::class)->find($partnerId);
 
         return $this->render('FrontOffice/mentorship/session_details.html.twig', [
@@ -181,7 +160,7 @@ class SessionController extends AbstractController
             return $this->json(['status' => 'error', 'message' => 'Unauthorized'], 401);
         }
         
-        if (strtoupper((string) $userRole) === 'EVALUATOR') {
+        if (strtoupper($userRole) === 'EVALUATOR') {
             return $this->json(['status' => 'error', 'message' => 'Access Denied: Evaluators are not allowed to access Mentorship features.'], 403);
         }
         
@@ -192,8 +171,8 @@ class SessionController extends AbstractController
         $todo = $em->getRepository(SessionTodos::class)->find($id);
         if (!$todo) return $this->json(['status' => 'error'], 404);
 
-        $session = $todo->getSession();
-        if (!$session || $session->getEntrepreneur()->getId() !== $userId) return $this->json(['status' => 'error'], 403);
+        $session = $em->getRepository(Session::class)->find($todo->getSessionID());
+        if ($session->getEntrepreneurID() !== $userId) return $this->json(['status' => 'error'], 403);
 
         $isDone = filter_var($request->request->get('isDone'), FILTER_VALIDATE_BOOLEAN);
         $todo->setIsDone($isDone);
@@ -215,11 +194,11 @@ class SessionController extends AbstractController
         if (!$todo) return $this->json(['status' => 'error'], 404);
 
         $session = $em->getRepository(Session::class)->find($todo->getSessionID());
-        if (!$session || $session->getMentorID() !== $userId) return $this->json(['status' => 'error'], 403);
+        if ($session->getMentorID() !== $userId) return $this->json(['status' => 'error'], 403);
 
         $newDesc = $request->request->get('description');
         if ($newDesc) {
-            $todo->setTaskDescription((string) $newDesc);
+            $todo->setTaskDescription($newDesc);
             $em->flush();
         }
 
@@ -239,7 +218,7 @@ class SessionController extends AbstractController
         if (!$todo) return $this->json(['status' => 'error'], 404);
 
         $session = $em->getRepository(Session::class)->find($todo->getSessionID());
-        if (!$session || $session->getMentorID() !== $userId) return $this->json(['status' => 'error'], 403);
+        if ($session->getMentorID() !== $userId) return $this->json(['status' => 'error'], 403);
 
         $em->remove($todo);
         $em->flush();
@@ -257,7 +236,7 @@ class SessionController extends AbstractController
             return $this->redirectToRoute('app_login');
         }
         
-        if (strtoupper((string) $userRole) === 'EVALUATOR') {
+        if (strtoupper($userRole) === 'EVALUATOR') {
             $this->addFlash('error', 'Access Denied: Evaluators are not allowed to access Mentorship features.');
             return $this->redirectToRoute('app_home');
         }
@@ -267,7 +246,7 @@ class SessionController extends AbstractController
         }
 
         $session = $em->getRepository(Session::class)->find($id);
-        if (!$session || $session->getEntrepreneur()->getId() !== $userId) {
+        if (!$session || $session->getEntrepreneurID() !== $userId) {
             return $this->json(['status' => 'error'], 404);
         }
 
@@ -282,18 +261,17 @@ class SessionController extends AbstractController
                 ->getSingleScalarResult();
 
             $evaluation = new MentorEvaluations();
-            $evaluation->setId((int) ($maxId ?? 0) + 1);
-            $evaluation->setEntrepreneur($em->getRepository(Users::class)->find($userId));
-            $evaluation->setMentor($session->getMentor());
-            $evaluation->setSession($session);
+            $evaluation->setId(($maxId ?? 0) + 1);
+            $evaluation->setEntrepreneurID($userId);
+            $evaluation->setMentorID($session->getMentorID());
+            $evaluation->setSessionID($session->getSessionID());
             $evaluation->setRating($rating);
-            $evaluation->setComment((string) $comment);
+            $evaluation->setComment($comment);
             $evaluation->setCreatedAt(new \DateTime());
             
             $errors = $validator->validate($evaluation);
             if (count($errors) > 0) {
-                $errorMessage = $errors->get(0)->getMessage();
-                $this->addFlash('error', 'Feedback validation failed: ' . $errorMessage);
+                $this->addFlash('error', 'Feedback validation failed: ' . $errors[0]->getMessage());
                 return $this->redirectToRoute('app_session_details', ['id' => $id]);
             }
             
