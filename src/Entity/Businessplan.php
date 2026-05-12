@@ -9,8 +9,8 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity]
 #[ORM\Table(name: '`businessplan`')]
-#[ORM\Index(columns: ['startup_id'], name: 'idx_plan_startup')]
-#[ORM\Index(columns: ['user_id'], name: 'idx_plan_user')]
+#[ORM\Index(columns: ['startupID'], name: 'idx_plan_startup')]
+#[ORM\Index(columns: ['userId'], name: 'idx_plan_user')]
 class Businessplan
 {
     #[ORM\Id]
